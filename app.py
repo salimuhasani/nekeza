@@ -177,9 +177,13 @@ def _adapt_sql(sql, use_pg):
         sql,
         flags=re.IGNORECASE,
     )
+    # Boolean 0/1 -> FALSE/TRUE (works in WHERE and SET on Postgres)
+    sql = re.sub(r"\b(is_void|initial_pin_used)\s*=\s*0\b", r"\1 = FALSE", sql, flags=re.IGNORECASE)
+    sql = re.sub(r"\b(is_void|initial_pin_used)\s*=\s*1\b", r"\1 = TRUE", sql, flags=re.IGNORECASE)
     # ? placeholders -> %s
     sql = sql.replace("?", "%s")
     return sql
+
 
 
 def get_db():
