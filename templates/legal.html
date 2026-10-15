@@ -104,7 +104,8 @@
   .legal-section:nth-child(6) { animation-delay: .3s; }
   .legal-section:nth-child(7) { animation-delay: .35s; }
   .legal-section:nth-child(8) { animation-delay: .4s; }
-  .legal-section:last-child {
+  .legal-section:nth-child(9) { animation-delay: .45s; }
+  .legal-section:last-of-type {
     border-bottom: 0;
     margin-bottom: 0;
     padding-bottom: 0;
@@ -159,6 +160,17 @@
     display: flex;
     gap: 10px;
     align-items: flex-start;
+  }
+  .legal-protect {
+    margin-top: 12px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+    border: 1px solid #a7f3d0;
+    font-size: 12.5px;
+    color: #065f46;
+    font-weight: 600;
+    line-height: 1.55;
   }
   .legal-actions {
     display: flex;
@@ -254,7 +266,48 @@
     </div>
 
     <div class="legal-section">
-      <h2><span class="num">7</span> Haki zako</h2>
+      <h2><span class="num">7</span> Ulinzi wa data — hatuzitoki nje</h2>
+      <p>
+        Tunachukulia ulinzi wa data yako kama jukumu kuu. Taarifa za biashara yako
+        (mauzo, stock, wafanyakazi, chat, na akaunti) zimehifadhiwa kwa usalama
+        na <strong>hazitolewi nje ya mfumo wetu</strong> kwa matumizi ya kibiashara
+        au kwa watu wasioidhinishwa.
+      </p>
+      <ul>
+        <li>
+          <strong>Hatuziuza data.</strong> Hatouzi, hatukodi, wala hatushiriki
+          data yako kwa makampuni ya matangazo au wadau wa nje kwa faida.
+        </li>
+        <li>
+          <strong>Ufikiaji wa ndani tu.</strong> Data inaonekana na watumiaji
+          wenye ruhusa kwenye akaunti yako (Admin / Boss / Mfanyakazi) kulingana
+          na majukumu yao — si kwa umma.
+        </li>
+        <li>
+          <strong>Hakuna uwasilishaji wa kiotomatiki kwa TRA au mamlaka nyingine.</strong>
+          {{ app_name|default('NEKEZA') }} <strong>haitumiwi kama chombo cha kuripoti kodi</strong>
+          na <strong>haitoi kiotomatiki</strong> rekodi zako za mauzo au stock
+          kwa TRA au taasisi nyingine za serikali.
+        </li>
+        <li>
+          <strong>Wewe ndiye mmiliki wa data ya biashara yako.</strong>
+          Rekodi ni za akaunti yako; jukumu la kutoa ripoti za kodi au taarifa
+          za kisheria kwa mamlaka (ikiwa zinahitajika) ni la mmiliki wa biashara,
+          si la mfumo wetu kutuma data bila ruhusa yako.
+        </li>
+        <li>
+          <strong>Uhifadhi salama.</strong> Tunatumia database salama na udhibiti
+          wa ufikiaji ili kuzuia uvujaji au ufikiaji usioidhinishwa.
+        </li>
+      </ul>
+      <div class="legal-protect">
+        Kwa ufupi: data yako inabaki ndani ya {{ app_name|default('NEKEZA') }}
+        kwa ajili ya kuendesha biashara yako — si kwa kusambazwa nje wala kwa kupelekwa TRA na sisi.
+      </div>
+    </div>
+
+    <div class="legal-section">
+      <h2><span class="num">8</span> Haki zako</h2>
       <ul>
         <li>Kuona na kuhariri taarifa za profile yako.</li>
         <li>Kuomba kufuta akaunti kupitia sehemu ya <strong>Futa Akaunti</strong>.</li>
@@ -263,7 +316,7 @@
     </div>
 
     <div class="legal-section">
-      <h2><span class="num">8</span> Mawasiliano</h2>
+      <h2><span class="num">9</span> Mawasiliano</h2>
       <p>
         Maswali kuhusu sera hii: tumia <strong>Customer Care</strong> au <strong>Contact Admin</strong>
         ndani ya app. Tutajibu haraka iwezekanavyo.
@@ -331,7 +384,21 @@
     </div>
 
     <div class="legal-section">
-      <h2><span class="num">7</span> Vikomo vya dhima</h2>
+      <h2><span class="num">7</span> Ulinzi na umiliki wa data</h2>
+      <p>
+        Data ya mauzo, stock, na timu ni mali ya mmiliki wa akaunti.
+        Hatuzishiriki data hizo na wahusika wa nje kwa matangazo au biashara.
+        Mfumo <strong>hautoi kiotomatiki</strong> taarifa kwa TRA; ripoti za kodi (kama zinahitajika)
+        ni jukumu la mmiliki wa biashara — si la app kutuma data bila ruhusa yako.
+      </p>
+      <div class="legal-protect">
+        Data yako inabaki ndani ya {{ app_name|default('NEKEZA') }}.
+        Hatuzitoki nje kwa hiari, wala hatuzipeleki TRA kiotomatiki.
+      </div>
+    </div>
+
+    <div class="legal-section">
+      <h2><span class="num">8</span> Vikomo vya dhima</h2>
       <p>
         Huduma inatolewa “kama ilivyo”. Hatuhakikishii kuwa itakuwa bila usumbufu kila wakati.
         Hatuwajibiki kwa hasara isiyo ya moja kwa moja inayotokana na matumizi ya app,
@@ -340,7 +407,7 @@
     </div>
 
     <div class="legal-section">
-      <h2><span class="num">8</span> Mabadiliko ya masharti</h2>
+      <h2><span class="num">9</span> Mabadiliko ya masharti</h2>
       <p>
         Tunaweza kusasisha masharti haya. Toleo jipya litaonekana kwenye ukurasa huu
         pamoja na tarehe ya kuboreshwa. Matumizi endelevu yanamaanisha unakubali mabadiliko.
