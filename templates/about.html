@@ -1,34 +1,525 @@
 {% extends "base.html" %}
+{% block title %}Kuhusu · {{ app_name }}{% endblock %}
+
+{% block head %}
+<style>
+  .about-wrap {
+    max-width: 860px;
+    margin: 0 auto 32px;
+    animation: aboutIn .55s cubic-bezier(.22,1,.36,1) both;
+  }
+  @keyframes aboutIn {
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .about-hero {
+    text-align: center;
+    padding: 40px 20px 32px;
+    background: linear-gradient(145deg, #0f1f4d 0%, #1e3a8a 40%, #2563eb 75%, #3b82f6 100%);
+    border-radius: 24px;
+    color: #fff;
+    margin-bottom: 18px;
+    box-shadow: 0 20px 50px rgba(30,58,138,.32);
+    position: relative;
+    overflow: hidden;
+  }
+  .about-hero::before,
+  .about-hero::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255,255,255,.07);
+  }
+  .about-hero::before {
+    width: 220px; height: 220px;
+    top: -70px; left: -50px;
+  }
+  .about-hero::after {
+    width: 160px; height: 160px;
+    bottom: -40px; right: -30px;
+  }
+  .about-logo {
+    width: 100px; height: 100px;
+    border-radius: 26px;
+    object-fit: cover;
+    background: #fff;
+    box-shadow: 0 12px 32px rgba(0,0,0,.25);
+    margin-bottom: 16px;
+    position: relative;
+    z-index: 1;
+    animation: logoPop .6s .1s cubic-bezier(.22,1,.36,1) both;
+  }
+  @keyframes logoPop {
+    from { opacity: 0; transform: scale(.75); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  .about-hero h1 {
+    margin: 0 0 8px;
+    font-size: clamp(28px, 7vw, 42px);
+    font-weight: 800;
+    letter-spacing: -.6px;
+    position: relative;
+    z-index: 1;
+    line-height: 1.15;
+  }
+  .about-hero .tagline {
+    font-size: clamp(14px, 3.5vw, 16px);
+    font-weight: 700;
+    opacity: .95;
+    position: relative;
+    z-index: 1;
+    margin-bottom: 14px;
+  }
+  .about-hero .pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    position: relative;
+    z-index: 1;
+  }
+  .about-hero .pill {
+    background: rgba(255,255,255,.16);
+    border: 1px solid rgba(255,255,255,.25);
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .3px;
+  }
+  .about-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 22px 18px;
+    box-shadow: 0 8px 28px rgba(15,23,42,.06);
+    margin-bottom: 14px;
+  }
+  .about-card h2 {
+    font-size: clamp(17px, 4vw, 20px);
+    font-weight: 800;
+    margin: 0 0 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #0f172a;
+    letter-spacing: -.3px;
+  }
+  .about-card h2 .ico {
+    width: 38px; height: 38px;
+    border-radius: 12px;
+    background: var(--primary-soft);
+    color: var(--primary);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+  .about-card p {
+    font-size: 14px;
+    line-height: 1.7;
+    color: #475569;
+    margin: 0 0 12px;
+  }
+  .about-card p:last-child { margin-bottom: 0; }
+  .about-card ul {
+    margin: 0 0 8px;
+    padding-left: 18px;
+    color: #475569;
+    font-size: 14px;
+    line-height: 1.65;
+  }
+  .about-card li { margin-bottom: 8px; }
+
+  .feature-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  @media (max-width: 640px) {
+    .feature-grid { grid-template-columns: 1fr; }
+  }
+  .feature-item {
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 14px;
+    transition: .2s;
+  }
+  .feature-item:hover {
+    border-color: #93c5fd;
+    background: #eff6ff;
+    transform: translateY(-2px);
+  }
+  .feature-item .fn {
+    display: inline-flex;
+    width: 26px; height: 26px;
+    border-radius: 8px;
+    background: #1e3a8a;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+  }
+  .feature-item strong {
+    display: block;
+    font-size: 14px;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 6px;
+  }
+  .feature-item span {
+    font-size: 13px;
+    color: #64748b;
+    line-height: 1.55;
+  }
+
+  .ceo-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  @media (max-width: 560px) {
+    .ceo-grid { grid-template-columns: 1fr; }
+  }
+  .ceo-card {
+    text-align: center;
+    padding: 24px 16px;
+    border-radius: 18px;
+    background: linear-gradient(180deg, #eff6ff 0%, #fff 50%);
+    border: 1px solid #dbeafe;
+    transition: .25s;
+  }
+  .ceo-card:hover {
+    box-shadow: 0 12px 32px rgba(37,99,235,.14);
+    transform: translateY(-3px);
+  }
+  .ceo-avatar {
+    width: 84px; height: 84px;
+    border-radius: 50%;
+    margin: 0 auto 14px;
+    background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -.5px;
+    box-shadow: 0 10px 24px rgba(30,58,138,.28);
+  }
+  .ceo-card h3 {
+    margin: 0 0 6px;
+    font-size: 17px;
+    font-weight: 800;
+    color: #0f172a;
+  }
+  .ceo-role {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--primary);
+    background: var(--primary-soft);
+    padding: 5px 12px;
+    border-radius: 999px;
+    margin-bottom: 10px;
+  }
+  .ceo-card p {
+    font-size: 13px;
+    color: #64748b;
+    line-height: 1.55;
+    margin: 0;
+  }
+
+  .contact-box {
+    background: linear-gradient(135deg, #0f1f4d, #1e3a8a);
+    color: #fff;
+    border-radius: 18px;
+    padding: 24px 18px;
+    box-shadow: 0 14px 36px rgba(30,58,138,.25);
+  }
+  .contact-box h2 {
+    color: #fff;
+    margin: 0 0 8px;
+    font-size: clamp(18px, 4vw, 22px);
+    font-weight: 800;
+  }
+  .contact-box .intro {
+    opacity: .9;
+    font-size: 13.5px;
+    margin-bottom: 16px;
+    line-height: 1.55;
+  }
+  .contact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  @media (max-width: 560px) {
+    .contact-grid { grid-template-columns: 1fr; }
+  }
+  .contact-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(255,255,255,.1);
+    border: 1px solid rgba(255,255,255,.18);
+    border-radius: 14px;
+    padding: 14px 12px;
+    color: #fff;
+    transition: .2s;
+  }
+  .contact-item:hover {
+    background: rgba(255,255,255,.18);
+    transform: translateY(-2px);
+  }
+  .contact-item .ci {
+    width: 40px; height: 40px;
+    border-radius: 12px;
+    background: rgba(255,255,255,.15);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+  .contact-item strong {
+    display: block;
+    font-size: 12px;
+    opacity: .85;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+  .contact-item span {
+    font-size: 13.5px;
+    font-weight: 800;
+  }
+  .about-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 16px;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
+<div class="about-wrap">
 
-<h1>Kuhusu NEKEZA</h1>
+  <!-- HERO -->
+  <div class="about-hero">
+    <img class="about-logo" src="/static/android-chrome-192x192.png" alt="{{ app_name }}">
+    <h1>{{ app_name|default('NEKEZA') }}</h1>
+    <div class="tagline">Mfumo wa Mauzo, Stock na Usimamizi wa Timu</div>
+    <div class="pills">
+      <span class="pill">Tanzania</span>
+      <span class="pill">Mauzo</span>
+      <span class="pill">Stock</span>
+      <span class="pill">Team</span>
+      <span class="pill">Secure</span>
+    </div>
+  </div>
 
-<div class="card">
+  <!-- INTRO -->
+  <div class="about-card">
+    <h2>
+      <span class="ico">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      </span>
+      Kuhusu {{ app_name|default('NEKEZA') }}
+    </h2>
+    <p>
+      <strong>{{ app_name|default('NEKEZA') }}</strong> ni jukwaa la kidijitali lililoundwa mahsusi kwa wafanyabiashara
+      wadogo na wa kati nchini Tanzania. Tunasaidia maduka, mawakala, na biashara mbalimbali
+      kusimamia mauzo, stock, wafanyakazi, na ripoti kwa urahisi na uwazi.
+    </p>
+    <p>
+      Lengo letu ni kupunguza hasara zinazotokana na makosa ya kurekodi, udanganyifu, au ukosefu
+      wa taarifa za wakati halisi. Kila kitendo kwenye mfumo kinaweza kufuatiliwa, na kila
+      mtumiaji ana ruhusa kulingana na jukumu lake — Admin, Boss, au Mfanyakazi.
+    </p>
+    <p>
+      Tunajenga teknolojia rahisi kutumia kwenye simu na kompyuta, yenye usalama, customer care,
+      na taarifa (notifications) zinazokusaidia kuendesha biashara yako kila siku.
+    </p>
+  </div>
 
-<p><strong>NEKEZA</strong> ni mfumo wa kisasa ulioundwa mahsusi kusaidia wafanyabiashara kusimamia biashara zao kwa ufanisi zaidi. Lengo kuu la programu hii ni kuongeza uwazi katika uendeshaji wa biashara, kurahisisha ufuatiliaji wa mauzo, pamoja na kupunguza hasara zinazoweza kusababishwa na makosa au vitendo vya udanganyifu wa wafanyakazi.</p>
+  <!-- MISSION -->
+  <div class="about-card">
+    <h2>
+      <span class="ico">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      </span>
+      Dhamira na Maono
+    </h2>
+    <p>
+      <strong>Dhamira:</strong> Kuwawezesha wafanyabiashara wa Tanzania kudhibiti biashara zao
+      kwa data sahihi, zana rahisi, na usalama wa taarifa.
+    </p>
+    <p>
+      <strong>Maono:</strong> Kuwa jukwaa linaloaminika zaidi la usimamizi wa mauzo na stock
+      kwa biashara ndogo na za kati Afrika Mashariki.
+    </p>
+    <ul>
+      <li>Uwazi kamili kati ya mmiliki na wafanyakazi</li>
+      <li>Rekodi sahihi za mauzo na stock kwa wakati</li>
+      <li>Uamuzi bora kutokana na takwimu na ripoti</li>
+      <li>Uzoefu wa kisasa kwenye simu na desktop</li>
+    </ul>
+  </div>
 
-<p>Programu hii imejengwa kwa kuzingatia usalama wa hali ya juu, ikiwa na mfumo wa kumbukumbu (logs) unaorekodi kila tukio linalofanyika ndani ya mfumo. Aidha, NEKEZA ina utaratibu maalum wa PIN wenye muda wa uhalali wa hadi miezi sita kwa mmiliki (Boss), ili kuhakikisha ulinzi wa taarifa muhimu za biashara.</p>
+  <!-- FEATURES -->
+  <div class="about-card">
+    <h2>
+      <span class="ico">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/></svg>
+      </span>
+      Huduma na Vipengele
+    </h2>
+    <div class="feature-grid">
+      <div class="feature-item">
+        <div class="fn">1</div>
+        <strong>Usimamizi wa Mauzo</strong>
+        <span>Rekodi kila mauzo kwa usahihi. Hesabu mapato kiotomatiki. Angalia ripoti za siku, wiki, au mwezi.</span>
+      </div>
+      <div class="feature-item">
+        <div class="fn">2</div>
+        <strong>Stock & Thamani ya Duka</strong>
+        <span>Fuatilia bidhaa, bei ya kununua/kuuza, stock iliyobaki, na thamani ya duka kabla ya mauzo.</span>
+      </div>
+      <div class="feature-item">
+        <div class="fn">3</div>
+        <strong>Wafanyakazi & Ruhusa</strong>
+        <span>Kila mfanyakazi ana akaunti yake. Boss anasimamia timu yake; Admin anasimamia mfumo.</span>
+      </div>
+      <div class="feature-item">
+        <div class="fn">4</div>
+        <strong>Dashboard ya Biashara</strong>
+        <span>Ona mauzo ya leo, salio, na bidhaa zinazoongoza kwa mtazamo mmoja.</span>
+      </div>
+      <div class="feature-item">
+        <div class="fn">5</div>
+        <strong>Ripoti za PDF</strong>
+        <span>Pakua ripoti kwa kumbukumbu, uchambuzi, au mahitaji ya uhasibu.</span>
+      </div>
+      <div class="feature-item">
+        <div class="fn">6</div>
+        <strong>Customer Care & Chat</strong>
+        <span>Ticket, live chat, na msaada wa haraka kwa watumiaji na wageni.</span>
+      </div>
+      <div class="feature-item">
+        <div class="fn">7</div>
+        <strong>Notifications</strong>
+        <span>Taarifa za mauzo, bidhaa mpya, chat, na muda wa akaunti kwenye kifaa chako.</span>
+      </div>
+      <div class="feature-item">
+        <div class="fn">8</div>
+        <strong>Usalama & Muda</strong>
+        <span>PIN, muda wa akaunti, na udhibiti wa admin wa kuongeza siku.</span>
+      </div>
+    </div>
+  </div>
 
-<p>NEKEZA ni suluhisho bora kwa usimamizi wa biashara za kisasa hapa Tanzania, likilenga kuwapa wafanyabiashara uwezo wa kufanya maamuzi sahihi kwa kutumia takwimu halisi za biashara zao.</p>
+  <!-- WHO -->
+  <div class="about-card">
+    <h2>
+      <span class="ico">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+      </span>
+      Kwa nani {{ app_name|default('NEKEZA') }} inafaa?
+    </h2>
+    <ul>
+      <li>Maduka ya rejareja na jumla</li>
+      <li>Mawakala wa mitandao ya simu na lipa namba</li>
+      <li>Biashara zenye wafanyakazi wanaohitaji udhibiti</li>
+      <li>Wamiliki wanaotaka kuona mauzo na stock kwa simu</li>
+      <li>Timu zinazohitaji ripoti na kumbukumbu za kila siku</li>
+    </ul>
+  </div>
 
-<hr>
+  <!-- LEADERSHIP -->
+  <div class="about-card">
+    <h2>
+      <span class="ico">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </span>
+      Uongozi (Leadership)
+    </h2>
+    <div class="ceo-grid">
+      <div class="ceo-card">
+        <div class="ceo-avatar">KK</div>
+        <h3>Keya Keya</h3>
+        <div class="ceo-role">CEO</div>
+        <p>
+          Anaongoza maono ya {{ app_name|default('NEKEZA') }}, uhusiano na wateja,
+          na mkakati wa kupanua huduma kwa wafanyabiashara kote nchini.
+        </p>
+      </div>
+      <div class="ceo-card">
+        <div class="ceo-avatar">NJ</div>
+        <h3>Nestor Jorojick</h3>
+        <div class="ceo-role">CEO</div>
+        <p>
+          Anaongoza teknolojia, ubora wa mfumo, usalama, na uzoefu wa mtumiaji
+          kwenye app ya simu na tovuti.
+        </p>
+      </div>
+    </div>
+  </div>
 
-<h2>Kazi Kuu za NEKEZA</h2>
+  <!-- CONTACT -->
+  <div class="contact-box">
+    <h2>Wasiliana Nasi</h2>
+    <p class="intro">
+      Una swali, unahitaji msaada, au unataka kuongeza muda wa akaunti?
+      Tuko tayari kukuhudumia.
+    </p>
+    <div class="contact-grid">
+      <a class="contact-item" href="{{ url_for('support') if not session.get('user_id') else url_for('contact_admin') }}">
+        <span class="ci">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </span>
+        <span>
+          <strong>Customer Care</strong>
+          <span>Chat / Ticket ndani ya app</span>
+        </span>
+      </a>
+      <a class="contact-item" href="tel:+255699783062">
+        <span class="ci">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.81.36 1.6.68 2.34a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.74.32 1.53.55 2.34.68A2 2 0 0 1 22 16.92z"/></svg>
+        </span>
+        <span>
+          <strong>Simu</strong>
+          <span>+255 699 783 062</span>
+        </span>
+      </a>
+      <a class="contact-item" href="https://wa.me/255699783062" target="_blank" rel="noopener">
+        <span class="ci">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.47 14.38c-.3-.15-1.77-.87-2.04-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.08-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.49-1.77-1.66-2.07-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.61-.92-2.2-.24-.58-.49-.5-.67-.5h-.57c-.2 0-.52.07-.8.37-.27.3-1.05 1.02-1.05 2.49s1.07 2.89 1.22 3.09c.15.2 2.11 3.22 5.11 4.51.71.31 1.27.49 1.7.63.71.23 1.36.2 1.87.12.57-.09 1.77-.72 2.02-1.42.25-.7.25-1.3.17-1.42-.07-.12-.27-.2-.57-.35z"/><path d="M12 2C6.48 2 2 6.48 2 12c0 1.95.56 3.76 1.52 5.3L2 22l4.85-1.47A9.96 9.96 0 0 0 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm0 18a8 8 0 0 1-4.1-1.13l-.29-.17-2.88.87.88-2.8-.19-.3A7.96 7.96 0 0 1 4 12c0-4.41 3.59-8 8-8s8 3.59 8 8-3.59 8-8 8z"/></svg>
+        </span>
+        <span>
+          <strong>WhatsApp</strong>
+          <span>+255 699 783 062</span>
+        </span>
+      </a>
+      <a class="contact-item" href="{{ url_for('download_app') }}">
+        <span class="ci">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </span>
+        <span>
+          <strong>Download App</strong>
+          <span>Pakua APK ya Android</span>
+        </span>
+      </a>
+    </div>
+  </div>
 
-<p><strong>1. Usimamizi wa Mauzo (Sales Tracking)</strong><br>
-NEKEZA inamwezesha mtumiaji kurekodi kila bidhaa inayouzwa kwa usahihi na kwa wakati halisi. Mfumo huhesabu mapato kiotomatiki, na kumruhusu mmiliki wa biashara kuona ripoti za mauzo kwa vipindi tofauti kama siku, wiki, au mwezi. Hii husaidia kufuatilia mwenendo wa biashara na kufanya maamuzi sahihi kwa haraka.</p>
-
-<p><strong>2. Udhibiti wa Wafanyakazi</strong><br>
-Kila mfanyakazi ndani ya mfumo anakuwa na akaunti yake binafsi yenye viwango maalum vya upatikanaji wa taarifa. Mfumo hurekodi kila kitendo kinachofanywa na mfanyakazi, hivyo kuongeza uwajibikaji. Aidha, wafanyakazi hawawezi kubadilisha au kufuta taarifa muhimu bila ruhusa, jambo linalopunguza uwezekano wa udanganyifu.</p>
-
-<p><strong>3. Ufuatiliaji wa Bidhaa (Stock Management)</strong><br>
-Mfumo unatoa uwezo wa kufuatilia kwa karibu idadi ya bidhaa zilizopo dukani. Mtumiaji anaweza kuona bidhaa zilizouzwa, zilizobaki, na kugundua tofauti yoyote inayoweza kuashiria hasara au upotevu wa mali. Hii husaidia kuweka udhibiti madhubuti wa stoo.</p>
-
-<p><strong>4. Dashibodi ya Biashara (Business Dashboard)</strong><br>NEKEZA ina dashibodi inayoonyesha hali ya biashara kwa wakati halisi. Hapa, mmiliki anaweza kuona salio la sasa, mwenendo wa mauzo, pamoja na takwimu mbalimbali zinazoonyesha maendeleo ya biashara kwa vipindi tofauti.</p>
-
-<p><strong>5. Utoaji wa Ripoti (PDF Reports)</strong><br>
-Mfumo unaruhusu utoaji wa ripoti katika mfumo wa PDF ambazo zinaweza kupakuliwa kwa urahisi. Ripoti hizi zinaweza kutumika kwa ajili ya kumbukumbu, uchambuzi wa biashara, au mahitaji ya kihasibu.</p>
+  <div class="about-actions">
+    <a href="{{ url_for('privacy') }}" class="btn btn-secondary">Privacy</a>
+    <a href="{{ url_for('terms') }}" class="btn btn-secondary">Terms</a>
+    <a href="{{ url_for('dashboard') if session.get('user_id') else url_for('login') }}" class="btn">Anza Sasa</a>
+  </div>
 
 </div>
-
 {% endblock %}
