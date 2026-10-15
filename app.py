@@ -852,10 +852,11 @@ def manage_employees():
 
         conn = get_db()
         try:
+            pin_flag = False if USE_PG else 0
             conn.execute("""
                 INSERT INTO users (username, password, role, boss_id, pin_expiry, initial_pin_used, created_by)
-                VALUES (?, ?, ?, ?, ?, 0, ?)
-            """, (username, hashed, role, boss_id_for_employee, expiry, session['user_id']))
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (username, hashed, role, boss_id_for_employee, expiry, pin_flag, session['user_id']))
             conn.commit()
             flash(f"{role.capitalize()} '{username}' ameongezwa! Initial PIN: {initial_pin}", "success")
         except IntegrityErrors:
@@ -1146,11 +1147,12 @@ def setup_initial():
 
         conn = get_db()
         try:
+            pin_flag = False if USE_PG else 0
             conn.execute("""
                 INSERT INTO users
                 (username, password, role, boss_id, pin_expiry, initial_pin_used, created_by)
-                VALUES (?, ?, ?, ?, ?, 0, ?)
-            """, (username, hashed, role, boss_id_for_user, expiry, session['user_id']))
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (username, hashed, role, boss_id_for_user, expiry, pin_flag, session['user_id']))
 
             conn.commit()
             flash(f"{role.capitalize()} '{username}' amesajiriwa! Initial PIN: {initial_pin}", "success")
