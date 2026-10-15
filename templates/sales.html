@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+    body {
+        background: #f4f7fc;
+    }
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .header h1 {
+        color: #1e3a8a;
+        font-size: 1.75rem;
+        font-weight: 600;
+    }
+
+    /* Form - Compact for Employees */
+    .sale-card {
+        background: white;
+        padding: 20px;
+        border-radius: 16px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.07);
+        margin-bottom: 25px;
+    }
+
+    .form-title {
+        font-size: 1.25rem;
+        color: #1e3a8a;
+        margin-bottom: 18px;
+        text-align: center;
+    }
+
+    label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: 600;
+        color: #374151;
+        font-size: 0.95rem;
+    }
+
+    select, input[type="number"] {
+        width: 100%;
+        padding: 12px 14px;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        font-size: 16px;
+        margin-bottom: 16px;
+    }
+
+    .btn {
+        width: 100%;
+        padding: 14px;
+        background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 1.05rem;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .btn:hover {
+        background: linear-gradient(135deg, #1e40af, #2563eb);
+    }
+
+    /* Table */
+    .table-container {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.07);
+        overflow-x: auto;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    th {
+        background: #1e3a8a;
+        color: white;
+        padding: 14px 12px;
+        text-align: left;
+        font-weight: 500;
+        white-space: nowrap;
+    }
+
+    td {
+        padding: 14px 12px;
+        border-bottom: 1px solid #e2e8f0;
+        font-size: 15px;
+    }
+
+    .product-name {
+        font-weight: 600;
+        color: #1f2937;
+    }
+
+    .amount {
+        font-weight: 700;
+        color: #166534;
+    }
+
+    .date-col {
+        color: #64748b;
+        font-size: 14px;
+    }
+
+    .empty {
+        text-align: center;
+        padding: 50px 20px;
+        color: #64748b;
+    }
+
+    .note {
+        text-align: center;
+        margin-top: 20px;
+        color: #64748b;
+        font-size: 14px;
+    }
+
+    th:nth-child(1), td:nth-child(1) { text-align: left; }
+    th:nth-child(2), td:nth-child(2) { text-align: left; }
+    th:nth-child(3), td:nth-child(3) { text-align: center; }
+    th:nth-child(4), td:nth-child(4) { text-align: right; }
+
+    .action-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin: 25px 0 30px 0;
+        flex-wrap: wrap;
+    }
+
+    .action-btn {
+        padding: 14px 28px;
+        border: none;
+        border-radius: 12px;
+        font-size: 1.05rem;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s;
+    }
+
+    .record-btn { background: #ef4444; color: white; }
+    .approval-btn { background: #f59e0b; color: white; }
+
+    .action-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+    }
+</style>
+
+<div class="header">
+    <h1>Rekodi Mauzo</h1>
+</div>
+
+<div class="action-buttons">
+    {% if session['role'] == 'employee' %}
+        <a href="{{ url_for('record_defect') }}" class="action-btn record-btn">
+            ⚠️ Rekodi Kasoro / Expired
+        </a>
+    {% endif %}
+
+    {% if session['role'] == 'boss' %}
+        <a href="{{ url_for('pending_approvals') }}" class="action-btn approval-btn">
+            ⏳ Kasoro Zinazosubiri Approval
+        </a>
+    {% endif %}
+</div>
+
+<!-- FORM -->
+{% if session['role'] == 'employee' %}
+<div class="sale-card">
+    <h2 class="form-title">Rekodi Mauzo Mapya</h2>
+
+    <form method="POST">
+        <label>Bidhaa</label>
+        <select name="product_id" required>
+            <option value="">-- Chagua Bidhaa --</option>
+            {% for p in products %}
+            <option value="{{ p.id }}">
+                {{ p.name }} — {{ p.price | int }} TZS
+            </option>
+            {% endfor %}
+        </select>
+
+        <label>Idadi</label>
+        <input type="number" name="quantity" min="1" required>
+
+        <button type="submit" class="btn">✅ Rekodi Mauzo</button>
+    </form>
+</div>
+{% endif %}  <!-- ✅ HII NDIO FIX -->
+
+<!-- HEADER -->
+{% if session['role'] == 'employee' %}
+
+<h2 style="text-align:center; color:#1e3a8a; margin:15px 0; font-size:18px; white-space:nowrap;">
+    📅 Mauzo Yangu Leo
+    <span style="background:#e0e7ff; padding:2px 8px; border-radius:12px; font-size:12px;">
+        {{ today }}
+    </span>
+</h2>
+
+{% else %}
+<h2 style="text-align:center; color:#1e3a8a; margin:20px 0;">
+    📋 Mauzo Yote
+    <span style="background:#f1f5f9; padding:4px 10px; border-radius:20px;">
+        History
+    </span>
+</h2>
+{% endif %}
+
+<!-- TABLE -->
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Tarehe</th>
+                <th>Bidhaa</th>
+                <th>Idadi</th>
+                <th>Jumla</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sale in sales %}
+            <tr>
+                <td class="date-col">{{ sale.timestamp | tz }}</td>
+                <td class="product-name">{{ sale.name or 'Bidhaa haipo' }}</td>
+                <td>{{ sale.quantity }}</td>
+                <td class="amount">{{ sale.total | format_money }} TZS</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if not sales %}
+<div class="empty">
+    <p>Hakuna mauzo yaliyorekodiwa bado.</p>
+</div>
+{% endif %}
+
+<div class="note">
+    {% if session['role'] == 'boss' %}
+        Unaona mauzo yote ya wafanyakazi wako hapa.
+    {% elif session['role'] == 'employee' %}
+        Unaweza tu kurekodi mauzo. Kila kitu kinarekodiwa kwa Boss wako.
+    {% endif %}
+</div>
+
+{% endblock %}

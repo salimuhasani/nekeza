@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+    body {
+        background: #f8fafc;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .container {
+        max-width: 1250px;
+        margin: 0 auto;
+        padding: 15px;
+    }
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .header h1 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0;
+    }
+
+    .add-btn {
+        background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .search {
+        padding: 10px 14px;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        width: 250px;
+    }
+
+    .table-container {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+        overflow-x: auto;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+        font-size: 0.92rem;
+    }
+
+    /* 👉 Boss ana scroll */
+    {% if session['role'] == 'boss' %}
+    table {
+        min-width: 900px;
+    }
+    {% else %}
+    /* 👉 Mfanyakazi hakuna scroll */
+    table {
+        min-width: 100%;
+    }
+    {% endif %}
+
+    th, td {
+        padding: 12px 8px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    th {
+        background: #1e3a8a;
+        color: white;
+        font-weight: 600;
+    }
+
+    tr:hover {
+        background: #f8fafc;
+    }
+
+    /* Alignment */
+    th:nth-child(1), td:nth-child(1) { text-align: left; }
+    th:nth-child(2), td:nth-child(2) { text-align: center; }
+    th:nth-child(3), td:nth-child(3) { text-align: center; }
+    th:nth-child(4), td:nth-child(4) { text-align: center; }
+
+    {% if session['role'] == 'boss' %}
+    th:nth-child(5), td:nth-child(5),
+    th:nth-child(6), td:nth-child(6),
+    th:nth-child(7), td:nth-child(7),
+    th:nth-child(8), td:nth-child(8) {
+        text-align: right;
+    }
+    {% endif %}
+
+    td {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-weight: 600;
+    }
+
+    .goods { color: #1e3a8a; }
+    .profit { color: #16a34a; }
+    .profit-total { color: #15803d; }
+    .low-stock { color: #ef4444; font-weight: 700; }
+
+    /* Scrollbar */
+    .table-container::-webkit-scrollbar {
+        height: 6px;
+    }
+
+    .table-container::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+    }
+
+    /* 📱 MOBILE */
+    @media (max-width: 600px) {
+
+        {% if session['role'] == 'boss' %}
+        table {
+            min-width: 750px;
+        }
+        {% else %}
+        table {
+            min-width: 100%;
+        }
+        {% endif %}
+
+        /* Mfanyakazi (4 columns) */
+        th:nth-child(1), td:nth-child(1) { width: 40%; }
+        th:nth-child(2), td:nth-child(2) { width: 20%; }
+        th:nth-child(3), td:nth-child(3) { width: 20%; }
+        th:nth-child(4), td:nth-child(4) { width: 20%; }
+
+        {% if session['role'] == 'boss' %}
+        /* Boss extra columns */
+        th:nth-child(5), td:nth-child(5),
+        th:nth-child(6), td:nth-child(6),
+        th:nth-child(7), td:nth-child(7),
+        th:nth-child(8), td:nth-child(8) {
+            width: 20%;
+        }
+        {% endif %}
+    }
+
+</style>
+
+<div class="container">
+
+    <div class="header">
+        <h1>📦 Bidhaa</h1>
+
+        <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+            <input type="text" id="search" class="search" placeholder="🔍 Tafuta bidhaa...">
+
+            {% if session['role'] == 'boss' %}
+                <a href="{{ url_for('add_product') }}" class="add-btn">
+                    ➕ Ongeza Bidhaa
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if products %}
+    <div class="table-container">
+        <table id="productTable">
+            <thead>
+                <tr>
+                    <th>Goods</th>
+                    <th>Start</th>
+                    <th>Sold</th>
+                    <th>Left</th>
+
+                    {% if session['role'] == 'boss' %}
+                    <th>Buy</th>
+                    <th>Sell</th>
+                    <th>Profit</th>
+                    <th>Profit T</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in products %}
+                <tr>
+                    <td class="goods">{{ product.name }}</td>
+                    <td>{{ product.start_quantity or 0 }}</td>
+                    <td>{{ product.sold_quantity or 0 }}</td>
+                    <td class="{% if product.quantity <= 5 %}low-stock{% endif %}">
+                        {{ product.quantity }}
+                    </td>
+
+                    {% if session['role'] == 'boss' %}
+                    <td>{{ product.buy_price | default(0) | int }}</td>
+                    <td>{{ product.price | int }}</td>
+                    <td class="profit">
+                        {{ "{:,}".format(product.profit_per_unit | default(0) | int) }}
+                    </td>
+                    <td class="profit-total">
+                        {{ "{:,}".format(((product.profit_per_unit or 0) * (product.sold_quantity or 0)) | int) }}
+                    </td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+        <div style="background:white; padding:60px; text-align:center; border-radius:16px;">
+            <h3>Hakuna bidhaa zilizosajiliwa bado.</h3>
+        </div>
+    {% endif %}
+
+</div>
+
+<script>
+    document.getElementById('search').addEventListener('keyup', function() {
+        const value = this.value.toLowerCase();
+        const rows = document.querySelectorAll('#productTable tbody tr');
+
+        rows.forEach(row => {
+            row.style.display = row.textContent.toLowerCase().includes(value) ? '' : 'none';
+        });
+    });
+</script>
+
+{% endblock %}

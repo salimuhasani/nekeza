@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+     <meta name="google-site-verification" content="mgQGzlVr3yr7O8MbaQfa5BuzB3851Vp0tZIcULGj7Iw" />
+
+    <!-- SEO Meta Tags - SALAM HUB -->
+    <title>NEKEZA - Mfumo wa Mauzo, Stock na Wafanyakazi</title>
+    <meta name="description" content="NEKEZA ni mfumo rahisi na wa kisasa wa kurekodi mauzo, kusimamia stock na wafanyakazi kwa maduka na biashara ndogo Tanzania.">
+    <meta name="keywords" content="NEKEZA, mauzo, stock management, pos system, biashara ndogo, sales system, tanzania, ramkey">
+    <meta name="author" content="NEKEZA">
+    <meta name="robots" content="index, follow">
+
+    <!-- Open Graph Meta Tags (WhatsApp, Facebook, Telegram) -->
+    <meta property="og:title" content="NEKEZA - Mfumo wa Mauzo na Stock">
+    <meta property="og:description" content="Rekodi mauzo, simamia stock na wafanyakazi kwa urahisi na usalama.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://ramkey1.pythonanywhere.com">
+    <meta property="og:image" content="https://ramkey1.pythonanywhere.com/static/logo.png">
+
+
+        <!-- FAVICON - Logo yako -->
+    <link rel="icon" href="{{ url_for('static', filename='logo.png') }}" type="image/png">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='logo.png') }}" type="image/png">
+
+    <!-- Kwa simu (Android na iPhone) -->
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='logo.png') }}">
+
+    <title> NEKEZA- {{ title|default('Biashara Yako') }}</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #f4f7fc;
+            color: #1e2937;
+        }
+
+        /* Top Bar */
+        .topbar {
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+            color: white;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .topbar .logo {
+            font-size: 1.65rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+        }
+
+        .topbar .hamburger {
+            font-size: 1.9rem;
+            cursor: pointer;
+            margin-right: 18px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: 0.3s;
+        }
+
+        .topbar .hamburger:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .topbar .user-info {
+            margin-left: auto;
+            background: rgba(255,255,255,0.15);
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -300px;
+            width: 300px;
+            height: 100vh;
+            background: white;
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.18);
+            transition: all 0.4s ease;
+            z-index: 1100;
+            overflow-y: auto;
+        }
+
+        .sidebar.active {
+            left: 0;
+        }
+
+        .sidebar-header {
+            padding: 25px 20px;
+            background: #1e3a8a;
+            color: white;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .sidebar a {
+            display: block;
+            padding: 16px 25px;
+            color: #334155;
+            text-decoration: none;
+            font-size: 1.02rem;
+            border-bottom: 1px solid #f1f5f9;
+            transition: all 0.3s;
+        }
+
+        .sidebar a:hover {
+            background: #f0f9ff;
+            color: #1e40af;
+            padding-left: 35px;
+        }
+
+        .sidebar .logout {
+            color: #ef4444;
+            margin-top: 30px;
+        }
+
+        .sidebar .close-btn {
+            position: absolute;
+            top: 18px;
+            right: 20px;
+            font-size: 2rem;
+            cursor: pointer;
+            color: white;
+        }
+
+        /* Overlay */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1050;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+
+        .overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Main Content */
+        .container {
+            max-width: 1350px;
+            margin: 35px auto;
+            padding: 0 25px 90px; /* nafasi ya bottom nav */
+        }
+
+        h1 {
+            color: #1e3a8a;
+            margin-bottom: 30px;
+            font-size: 1.8rem;
+        }
+
+        .flash {
+            padding: 16px 22px;
+            margin: 15px 0;
+            border-radius: 10px;
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .success { background: #ecfdf5; color: #166534; border-left: 5px solid #10b981; }
+        .danger  { background: #fef2f2; color: #991b1b; border-left: 5px solid #ef4444; }
+        .info    { background: #eff6ff; color: #1e40af; border-left: 5px solid #3b82f6; }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            border-radius: 40px;
+            padding: 8px 12px;
+            display: flex;
+            gap: 10px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            z-index: 1200;
+        }
+
+        .bottom-nav a {
+            text-decoration: none;
+            color: #475569;
+            font-size: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 10px;
+            border-radius: 12px;
+            transition: 0.2s;
+        }
+
+        .bottom-nav a:hover {
+            background: #f1f5f9;
+        }
+
+        .bottom-nav a.active {
+            background: #1e3a8a;
+            color: white;
+        }
+
+        .bottom-nav span {
+            font-size: 1.2rem;
+        }
+
+        @media (max-width: 768px) {
+            .topbar .logo { font-size: 1.4rem; }
+            .container { padding: 0 15px 90px; margin: 20px auto; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Top Navigation -->
+    <div class="topbar">
+        <span class="hamburger" onclick="toggleSidebar()">☰</span>
+
+	<div class="logo" style="display:flex; align-items:center; gap:4px; margin-left:-5px;">
+    NEKEZA
+    <img src="{{ url_for('static', filename='logo.png') }}"
+         style="height:28px; width:28px; object-fit:contain; margin-left:2px;">
+	</div>
+
+	<div class="user-info">
+    {% if session.username %}
+        {{ session.username }} • {{ session.role|capitalize }}
+    {% else %}
+        Guest
+    {% endif %}
+	</div>
+
+    </div>
+
+    <!-- Overlay -->
+    <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+<div class="sidebar" id="sidebar">
+
+    <div class="sidebar-header" style="display:flex; align-items:center; gap:10px;">
+        NEKEZA
+        <img src="{{ url_for('static', filename='logo.png') }}"
+             style="height:28px; width:28px; object-fit:contain;">
+        <span class="close-btn" onclick="toggleSidebar()">×</span>
+    </div>
+
+    {% if session.username %}
+        <!-- USER AMELOGIN -->
+
+        <a href="{{ url_for('dashboard') }}">🏠 Dashboard</a>
+
+        {% if session.role == 'admin' %}
+            <a href="{{ url_for('setup_initial') }}">➕ Sajiri Boss Mpya</a>
+            <a href="{{ url_for('manage_employees') }}">👥 Manage Maboss</a>
+
+        {% elif session.role == 'boss' %}
+            <a href="{{ url_for('products') }}">📦 Bidhaa</a>
+            <a href="{{ url_for('sales') }}">💰 Mauzo</a>
+            <a href="{{ url_for('manage_employees') }}">👥 Wafanyakazi Wangu</a>
+            <a href="{{ url_for('export_pdf') }}">📄 Export PDF</a>
+
+        {% else %}
+            <a href="{{ url_for('products') }}">📦 Bidhaa</a>
+            <a href="{{ url_for('sales') }}">💰 Rekodi Mauzo</a>
+        {% endif %}
+
+        <a href="{{ url_for('settings') }}">⚙️ Settings</a>
+        <a href="{{ url_for('about') }}">ℹ️ Kuhusu App</a>
+
+        {% if session.role != 'employee' %}
+            <a href="{{ url_for('contact_admin') }}">📞 Contact Admin</a>
+        {% endif %}
+
+        <a href="{{ url_for('logout') }}" class="logout">🚪 Logout</a>
+
+    {% else %}
+        <!-- HAKUNA USER (LOGIN PAGE MODE) -->
+
+        <a href="{{ url_for('login') }}">🔐 Login</a>
+        <a href="{{ url_for('about') }}">ℹ️ About</a>
+        <a href="{{ url_for('contact_admin') }}">📞 Contact</a>
+
+    {% endif %}
+
+	</div>
+    <!-- Main Content -->
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+
+	{% if session.username %}
+<!-- Bottom Navigation -->
+<div class="bottom-nav">
+
+    {% if session.role == 'admin' %}
+        <a href="{{ url_for('dashboard') }}">
+            <span>🏠</span> Home
+        </a>
+        <a href="{{ url_for('manage_employees') }}">
+            <span>👥</span> Watu
+        </a>
+
+    {% elif session.role == 'boss' %}
+        <a href="{{ url_for('dashboard') }}">
+            <span>🏠</span> Home
+        </a>
+        <a href="{{ url_for('products') }}">
+            <span>📦</span> Bidhaa
+        </a>
+        <a href="{{ url_for('sales') }}">
+            <span>💰</span> Mauzo
+        </a>
+        <a href="{{ url_for('manage_employees') }}">
+            <span>👥</span> Watu
+        </a>
+
+    {% else %}
+        <a href="{{ url_for('dashboard') }}">
+            <span>🏠</span> Home
+        </a>
+        <a href="{{ url_for('products') }}">
+            <span>📦</span> Bidhaa
+        </a>
+        <a href="{{ url_for('sales') }}">
+            <span>💰</span> Mauzo
+        </a>
+    {% endif %}
+
+</div>
+{% endif %}
+
+
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === "Escape") {
+                const sidebar = document.getElementById('sidebar');
+                const overlay = document.getElementById('overlay');
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+            }
+        });
+    </script>
+
+</body>
+</html>

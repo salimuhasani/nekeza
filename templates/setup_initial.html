@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+    body {
+        background: #f1f5f9;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .container {
+        max-width: 600px;
+        margin: auto;
+        padding: 20px;
+    }
+
+    h1 {
+        text-align: center;
+        margin-bottom: 25px;
+        color: #0f172a;
+    }
+
+    .card {
+        background: #ffffff;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+    }
+
+    label {
+        display: block;
+        margin-top: 15px;
+        margin-bottom: 5px;
+        color: #334155;
+        font-size: 0.95rem;
+    }
+
+    input, select {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #cbd5f5;
+        border-radius: 8px;
+        outline: none;
+        transition: 0.3s;
+    }
+
+    input:focus, select:focus {
+        border-color: #0f172a;
+        box-shadow: 0 0 5px rgba(15,23,42,0.3);
+    }
+
+    .btn {
+        width: 100%;
+        padding: 14px;
+        margin-top: 20px;
+        background: #0f172a;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 1rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+
+    .btn:hover {
+        background: #1e293b;
+    }
+
+    .info-box {
+        margin-top: 25px;
+        padding: 15px;
+        background: #e2e8f0;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        color: #1e293b;
+        line-height: 1.6;
+    }
+
+    .info-box strong {
+        display: block;
+        margin-bottom: 5px;
+    }
+</style>
+
+<div class="container">
+
+    <h1>
+        {% if session.role == 'admin' %}
+            Sajiri Boss Mpya
+        {% else %}
+            Ongeza Mfanyakazi Wangu
+        {% endif %}
+    </h1>
+
+    <div class="card">
+        <form method="post">
+
+            <label>Jina la User (Username)</label>
+            <input type="text" name="username" placeholder="Mfano: johnshop" required>
+
+            <label>Initial PIN / Password ya Kwanza</label>
+            <input type="password" name="initial_pin" placeholder="Mfano: 123456" required>
+
+            <label>Aina ya User</label>
+            <select name="role" required>
+                {% if session.role == 'admin' %}
+                    <option value="boss">Boss (Mmiliki wa Duka)</option>
+                {% else %}
+                    <option value="employee">Mfanyakazi</option>
+                {% endif %}
+            </select>
+
+            <button type="submit" class="btn">Sajiri User</button>
+
+        </form>
+
+        <div class="info-box">
+            <strong>Baada ya kusajiri:</strong>
+            • User atapewa PIN uliyoingiza<br>
+            • Ata-set password mpya + jina la mama mara ya kwanza<br>
+            • Ataanza kutumia mfumo moja kwa moja
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

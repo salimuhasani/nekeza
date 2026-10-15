@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block navbar %}{% endblock %}
+
+{% block content %}
+
+<style>
+    body {
+        background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .login-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 90vh;
+    }
+
+    .card {
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        width: 100%;
+        max-width: 400px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        text-align: center;
+    }
+
+    .logo {
+        width: 90px;
+        margin-bottom: 15px;
+    }
+
+    h1 {
+        margin-bottom: 15px;
+        color: #2c5364;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+        width: 100%;
+        padding: 12px;
+        margin: 10px 0;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        outline: none;
+        transition: 0.3s;
+    }
+
+    input:focus {
+        border-color: #2c5364;
+        box-shadow: 0 0 5px rgba(44,83,100,0.5);
+    }
+
+    input[type="submit"] {
+        width: 100%;
+        padding: 12px;
+        background: #2c5364;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        margin-top: 10px;
+        font-weight: bold;
+        transition: 0.3s;
+    }
+
+    input[type="submit"]:hover {
+        background: #203a43;
+    }
+</style>
+
+<div class="login-container">
+    <div class="card">
+
+        <!-- LOGO -->
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="logo">
+
+        <h1>Ingia</h1>
+
+        <form method="post">
+            <input type="text" name="username" placeholder="Username" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <input type="submit" value="Ingia">
+        </form>
+
+    </div>
+</div>
+
+{% endblock %}

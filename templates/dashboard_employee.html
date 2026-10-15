@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+    body {
+        background: #f8fafc;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 15px;
+    }
+
+    .welcome {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 8px;
+    }
+
+    .subtitle {
+        color: #64748b;
+        font-size: 1rem;
+        margin-bottom: 25px;
+    }
+
+    /* Balance Card */
+    .balance-card {
+        background: linear-gradient(135deg, #16a34a, #22c55e);
+        color: white;
+        padding: 22px 18px;
+        border-radius: 16px;
+        text-align: center;
+        margin-bottom: 25px;
+        box-shadow: 0 8px 20px rgba(22, 163, 74, 0.25);
+    }
+
+    .balance-card h2 {
+        margin: 0 0 8px 0;
+        font-size: 1rem;
+        opacity: 0.95;
+    }
+
+    .balance-amount {
+        font-size: 2.1rem;
+        font-weight: 800;
+        margin: 0;
+    }
+
+    /* Stat Card */
+    .stat-card {
+        background: white;
+        padding: 20px;
+        border-radius: 16px;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+        text-align: center;
+        margin-bottom: 25px;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        color: #64748b;
+        margin-bottom: 8px;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1e3a8a;
+    }
+
+    /* Action Buttons */
+    .actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin: 30px 0;
+    }
+
+    .action-btn {
+        padding: 16px 12px;
+        font-size: 1.05rem;
+        font-weight: 600;
+        border: none;
+        border-radius: 12px;
+        text-decoration: none;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transition: all 0.3s;
+    }
+
+    .btn-products {
+        background: linear-gradient(135deg, #3b82f6, #60a5fa);
+        color: white;
+    }
+
+    .btn-sales {
+        background: linear-gradient(135deg, #ea580c, #f97316);
+        color: white;
+    }
+
+    .action-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    }
+
+    /* Instructions Card */
+    .info-card {
+        background: #fefce8;
+        border: 1px solid #facc15;
+        padding: 18px;
+        border-radius: 14px;
+        font-size: 0.95rem;
+        line-height: 1.6;
+    }
+
+    .info-card strong {
+        color: #854d0e;
+    }
+</style>
+
+<div class="container">
+
+    <h1 class="welcome">Karibu, {{ username }} 👋</h1>
+    <p class="subtitle">Unafanya kazi chini ya Boss wako</p>
+
+    <!-- Mauzo Yangu Leo -->
+    <div class="balance-card">
+        <h2>MAUZO YANGU LEO</h2>
+	<p class="balance-amount">TZS {{ today_sales | int | format_money | default(0) }}</p>
+    </div>
+
+    <!-- Bidhaa Inayouzwa Zaidi -->
+    <div class="stat-card">
+        <div class="stat-label">BIDHAA INAYOUZWA ZAIDI</div>
+        <div class="stat-value">{{ top_product or 'Hakuna bado' }}</div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="actions">
+        <a href="{{ url_for('products') }}" class="action-btn btn-products">
+            📦 Tazama Bidhaa
+        </a>
+        <a href="{{ url_for('sales') }}" class="action-btn btn-sales">
+            💰 Rekodi Mauzo
+        </a>
+    </div>
+
+    <!-- Maagizo -->
+
+</div>
+
+{% endblock %}

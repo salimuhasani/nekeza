@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+    body {
+        background: linear-gradient(135deg, #0f172a, #1e293b);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 90vh;
+        padding: 20px;
+    }
+
+    .card {
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        width: 100%;
+        max-width: 420px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+        text-align: center;
+    }
+
+    h1 {
+        margin-bottom: 15px;
+        color: #0f172a;
+    }
+
+    .intro {
+        font-size: 0.95rem;
+        color: #475569;
+        margin-bottom: 20px;
+        line-height: 1.5;
+    }
+
+    .intro strong {
+        color: #0f172a;
+    }
+
+    input {
+        width: 100%;
+        padding: 12px;
+        margin: 10px 0;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        outline: none;
+        transition: 0.3s;
+    }
+
+    input:focus {
+        border-color: #0f172a;
+        box-shadow: 0 0 5px rgba(15,23,42,0.3);
+    }
+
+    .btn {
+        width: 100%;
+        padding: 14px;
+        margin-top: 10px;
+        background: #0f172a;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+
+    .btn:hover {
+        background: #1e293b;
+    }
+
+    .note {
+        margin-top: 15px;
+        font-size: 0.8rem;
+        color: #64748b;
+    }
+</style>
+
+<div class="container">
+
+    <div class="card">
+        <h1>🔐 Wezesha Akaunti</h1>
+
+        <p class="intro">
+            <strong>Karibu {{ username }}!</strong><br>
+            Tafadhali weka password mpya na jina la mama kwa usalama wa akaunti yako.
+        </p>
+
+        <form method="post">
+            <input type="password" name="new_pin" placeholder="Password Mpya" required>
+
+            <input type="password" name="confirm_pin" placeholder="Thibitisha Password Mpya" required>
+
+            <input type="text" name="mother_name" placeholder="Jina la Mama (kwa kurejesha akaunti)" required>
+
+            <button type="submit" class="btn">Hifadhi na Endelea</button>
+        </form>
+
+        <div class="note">
+            Hakikisha password ni salama na haishirikiwi na mtu mwingine.
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.container {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 0 15px;
+}
+
+.page-title {
+    text-align: center;
+    color: #1e3a8a;
+    margin-bottom: 30px;
+    font-weight: 600;
+}
+
+.defects-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+}
+
+.defect-card {
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+    padding: 20px;
+    transition: 0.2s;
+}
+
+.defect-card:hover {
+    transform: translateY(-3px);
+}
+
+.defect-item {
+    margin-bottom: 8px;
+    font-size: 15px;
+}
+
+.label {
+    font-weight: 600;
+    color: #374151;
+}
+
+.status {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.status-pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-approved {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.status-rejected {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+}
+
+.empty-state p {
+    margin-top: 10px;
+    color: #6b7280;
+}
+</style>
+
+<div class="container">
+
+    <h2 class="page-title">📋 Review ya Kasoro Zangu</h2>
+
+    {% if defects %}
+    <div class="defects-grid">
+        {% for d in defects %}
+        <div class="defect-card">
+
+            <div class="defect-item">
+                <span class="label">Bidhaa:</span> {{ d.name }}
+            </div>
+
+            <div class="defect-item">
+                <span class="label">Idadi:</span> {{ d.quantity }}
+            </div>
+
+            <div class="defect-item">
+                <span class="label">Sababu:</span> {{ d.reason }}
+            </div>
+
+            <div class="defect-item">
+                <span class="label">Tarehe:</span> {{ d.timestamp[:16] }}
+            </div>
+
+            <div class="defect-item">
+                <span class="label">Hali:</span>
+                {% if d.status == 'pending' %}
+                    <span class="status status-pending">⏳ Inasubiri Approval</span>
+                {% elif d.status == 'approved' %}
+                    <span class="status status-approved">✅ Imeapproved</span>
+                {% elif d.status == 'rejected' %}
+                    <span class="status status-rejected">❌ Imekataliwa</span>
+                {% endif %}
+            </div>
+
+        </div>
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="empty-state">
+        <h3>Hakuna Kasoro Bado</h3>
+        <p>Bado hujarekodi kasoro yoyote.</p>
+    </div>
+    {% endif %}
+
+</div>
+
+{% endblock %}

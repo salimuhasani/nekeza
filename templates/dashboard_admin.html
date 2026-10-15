@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block navbar %}{% endblock %}
+
+{% block content %}
+
+<style>
+    body {
+        background: #f1f5f9;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .container {
+        max-width: 1100px;
+        margin: auto;
+        padding: 20px;
+    }
+
+    h1 {
+        text-align: center;
+        color: #1e293b;
+        margin-bottom: 10px;
+    }
+
+    .welcome {
+        text-align: center;
+        font-size: 1.1rem;
+        color: #64748b;
+        margin-bottom: 30px;
+    }
+
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+    }
+
+    .card {
+        background: white;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+        transition: 0.3s;
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+    }
+
+    .card h2 {
+        margin-bottom: 10px;
+        color: #0f172a;
+    }
+
+    .card p {
+        color: #475569;
+        margin-bottom: 20px;
+    }
+
+    .btn {
+        display: inline-block;
+        width: 100%;
+        padding: 12px;
+        background: #0f172a;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        text-decoration: none;
+        text-align: center;
+        font-weight: bold;
+        transition: 0.3s;
+    }
+
+    .btn:hover {
+        background: #1e293b;
+    }
+
+    .note {
+        margin-top: 40px;
+        background: #e2e8f0;
+        padding: 20px;
+        border-radius: 12px;
+        text-align: center;
+        color: #1e293b;
+    }
+</style>
+
+<div class="container">
+    <h1>Dashboard ya Admin</h1>
+
+    <p class="welcome">
+        Karibu <strong>{{ username }}</strong>. Unaweza kusajiri na kudhibiti Maboss hapa.
+    </p>
+
+    <div class="grid">
+
+        <div class="card">
+            <h2>➕ Sajiri Boss Mpya</h2>
+            <p>Sajiri Boss mpya ili aanze kutumia app.</p>
+            <a href="{{ url_for('setup_initial') }}" class="btn">Fungua</a>
+        </div>
+
+        <div class="card">
+            <h2>👥 Manage Maboss</h2>
+            <p>Tazama, reset PIN au dhibiti mabosi wote.</p>
+            <a href="{{ url_for('manage_employees') }}" class="btn">Fungua</a>
+        </div>
+
+    </div>
+
+    <div class="note">
+        <strong>Kumbuka:</strong><br>
+        Wafanyakazi wanasetiwa na Mabosi wao wenyewe. Wewe kama Admin unasimamia Mabosi tu.
+    </div>
+</div>
+
+{% endblock %}

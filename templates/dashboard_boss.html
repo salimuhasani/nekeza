@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+    body {
+        background: #f8fafc;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 15px;
+        min-height: 100vh;
+    }
+
+    .welcome {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 6px;
+    }
+
+    .subtitle {
+        color: #64748b;
+        font-size: 1rem;
+        margin-bottom: 20px;
+    }
+
+    /* Total Balance */
+    .total-balance {
+        background: linear-gradient(135deg, #1e40af, #3b82f6);
+        color: white;
+        padding: 24px 15px;
+        border-radius: 18px;
+        text-align: center;
+        margin-bottom: 25px;
+        box-shadow: 0 8px 25px rgba(59, 130, 246, 0.25);
+    }
+
+    .total-balance h2 {
+        font-size: 0.95rem;
+        margin-bottom: 6px;
+        opacity: 0.95;
+    }
+
+    .total-amount {
+        font-size: 2.2rem;
+        font-weight: 800;
+        margin: 0;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        margin-bottom: 30px;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 18px 12px;
+        border-radius: 14px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+        text-align: center;
+    }
+
+    .stat-label {
+        font-size: 0.82rem;
+        color: #64748b;
+        margin-bottom: 6px;
+    }
+
+    .stat-value {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #1e3a8a;
+    }
+
+    .green { color: #16a34a; }
+
+    /* Button - Ukubwa Uliopunguzwa */
+    .main-action {
+        text-align: center;
+        margin: 25px 0 35px 0;
+    }
+
+    .btn-large {
+        display: inline-block;
+        background: linear-gradient(135deg, #1e3a8a, #2563eb);
+        color: white;
+        padding: 12px 28px;
+        font-size: 1.05rem;
+        font-weight: 600;
+        border-radius: 12px;
+        text-decoration: none;
+        box-shadow: 0 5px 15px rgba(37, 99, 235, 0.3);
+        transition: all 0.3s ease;
+        min-width: 220px;
+    }
+
+    .btn-large:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4);
+    }
+
+    .export-section {
+        text-align: center;
+        margin-top: 15px;
+    }
+</style>
+
+<div class="container">
+
+    <h1 class="welcome">Karibu, {{ username }} 👋</h1>
+    <p class="subtitle">Muhtasari wa biashara yako leo</p>
+
+    <!-- Total Balance -->
+    <div class="total-balance">
+        <h2>JUMLA YA MAUZO YAKO</h2>
+	<p class="total-amount">TZS {{ total_balance | format_money }}</p>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">MAUZO YA LEO</div>
+	<div class="stat-value green">TZS {{ today_sales | format_money }}</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-label">BIDHAA INAYOUZWA ZAIDI</div>
+            <div class="stat-value">{{ top_product or 'Hakuna bado' }}</div>
+        </div>
+    </div>
+
+    <!-- Button -->
+    <div class="main-action">
+        <a href="{{ url_for('sales') }}" class="btn-large">
+            📊 TAZAMA MAUZO YOTE
+        </a>
+    </div>
+
+
+<!-- ==================== EXPORT PDF BUTTON & HIDDEN FORM ==================== -->
+<div style="margin: 40px 0; text-align: center;">
+    <button onclick="toggleExportForm()"
+            style="padding: 14px 32px; background: linear-gradient(135deg, #1e3a8a, #3b82f6); color: white; border: none; border-radius: 12px; font-size: 1.1rem; font-weight: 600; cursor: pointer;">
+        📥 Pakua Ripoti ya PDF
+    </button>
+</div>
+
+<!-- Hidden Export Form -->
+<div id="exportForm" style="display: none; margin: 30px 0; padding: 25px; background: white; border-radius: 16px; box-shadow: 0 8px 25px rgba(0,0,0,0.08);">
+
+    <h3 style="text-align: center; color: #1e3a8a; margin-bottom: 20px;">Chagua Aina ya Ripoti</h3>
+
+    <form method="POST" action="{{ url_for('export_pdf') }}">
+
+        <label style="font-weight: 600; display: block; margin-bottom: 8px;">Aina ya Ripoti:</label>
+
+        <select name="filter_type" id="filter_type" style="width: 100%; padding: 12px; border-radius: 10px; border: 2px solid #e2e8f0; margin-bottom: 20px;" required>
+            <option value="today">Leo (Today)</option>
+            <option value="weekly">Wiki hii (Weekly)</option>
+            <option value="monthly">Mwezi huu (Monthly)</option>
+            <option value="yearly">Mwaka huu (Yearly)</option>
+            <option value="custom">Chagua Tarehe Mwenyewe</option>
+        </select>
+
+        <!-- Custom Date Range -->
+        <div id="custom_dates" style="display: none; margin-bottom: 20px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div>
+                    <label>Tarehe ya Kuanza</label>
+                    <input type="date" name="start_date" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
+                </div>
+                <div>
+                    <label>Tarehe ya Mwisho</label>
+                    <input type="date" name="end_date" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
+                </div>
+            </div>
+        </div>
+
+        <button type="submit"
+                style="width: 100%; padding: 14px; background: linear-gradient(135deg, #16a34a, #22c55e); color: white; border: none; border-radius: 12px; font-size: 1.1rem; font-weight: 600;">
+            📄 Pakua Ripoti ya PDF
+        </button>
+    </form>
+</div>
+
+<script>
+function toggleExportForm() {
+    const form = document.getElementById('exportForm');
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+}
+
+// Show/Hide custom date fields
+document.getElementById('filter_type').addEventListener('change', function() {
+    const customDiv = document.getElementById('custom_dates');
+    customDiv.style.display = this.value === 'custom' ? 'block' : 'none';
+});
+</script>
+
+    <!-- Export -->
+    <div class="export-section">
+        <a href="{{ url_for('export_pdf') }}" style="color: #64748b; text-decoration: none; font-size: 0.95rem;">
+            📄 Pakua Ripoti ya Mauzo (PDF)
+        </a>
+    </div>
+
+</div>
+
+<script>
+document.querySelector('select[name="filter_type"]').addEventListener('change', function() {
+    const customDiv = document.getElementById('custom_dates');
+    if (this.value === 'custom') {
+        customDiv.style.display = 'block';
+    } else {
+        customDiv.style.display = 'none';
+    }
+});
+</script>
+
+{% endblock %}

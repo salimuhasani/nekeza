@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div style="max-width: 600px; margin: 40px auto; padding: 30px; background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+
+    <h1 style="text-align: center; color: #1e3a8a; margin-bottom: 30px;">Ongeza Bidhaa Mpya</h1>
+
+    <form method="POST" style="max-width: 500px; margin: 0 auto;">
+
+        <div style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; font-weight: bold;">Jina la Bidhaa</label>
+            <input type="text" name="name" required
+                   style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px;"
+                   placeholder="Mfano: Mchele 5kg">
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; font-weight: bold;">Bei ya Kununua (Buy Price)</label>
+            <input type="number" name="buy_price" step="0.01" required
+                   style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px;"
+                   placeholder="Mfano: 18000">
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; font-weight: bold;">Bei ya Kuuza (Sell Price)</label>
+            <input type="number" name="price" step="0.01" required
+                   style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px;"
+                   placeholder="Mfano: 25000">
+        </div>
+
+        <div style="margin-bottom: 25px;">
+            <label style="display: block; margin-bottom: 8px; font-weight: bold;">Idadi Iliyoongezwa</label>
+            <input type="number" name="quantity" required
+                   style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px;"
+                   placeholder="Mfano: 50">
+        </div>
+
+        <button type="submit"
+                style="width: 100%; padding: 14px; background: #1e3a8a; color: white; border: none; border-radius: 10px; font-size: 1.1rem; font-weight: bold;">
+            Ongeza Bidhaa
+        </button>
+    </form>
+
+</div>
+
+{% endblock %}
