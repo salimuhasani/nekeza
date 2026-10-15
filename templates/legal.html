@@ -1,37 +1,364 @@
 {% extends "base.html" %}
-{% block title %}{% if page == 'privacy' %}Privacy{% else %}Terms{% endif %} · {{ app_name }}{% endblock %}
+{% block title %}{% if page == 'privacy' %}Sera ya Faragha{% else %}Vigezo na Masharti{% endif %} · {{ app_name }}{% endblock %}
+
+{% block head %}
+<style>
+  .legal-wrap {
+    max-width: 780px;
+    margin: 0 auto 28px;
+    animation: legalFade .55s cubic-bezier(.22,1,.36,1) both;
+  }
+  @keyframes legalFade {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .legal-hero {
+    text-align: center;
+    padding: 28px 18px 22px;
+    background: linear-gradient(145deg, #1e3a8a 0%, #2563eb 55%, #3b82f6 100%);
+    border-radius: 20px;
+    color: #fff;
+    margin-bottom: 18px;
+    box-shadow: 0 16px 40px rgba(30,58,138,.28);
+    position: relative;
+    overflow: hidden;
+  }
+  .legal-hero::after {
+    content: "";
+    position: absolute;
+    width: 180px; height: 180px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.08);
+    top: -40px; right: -30px;
+  }
+  .legal-logo {
+    width: 72px; height: 72px;
+    border-radius: 18px;
+    object-fit: cover;
+    background: #fff;
+    box-shadow: 0 8px 24px rgba(0,0,0,.2);
+    margin-bottom: 14px;
+    animation: legalPop .6s .15s cubic-bezier(.22,1,.36,1) both;
+  }
+  @keyframes legalPop {
+    from { opacity: 0; transform: scale(.8); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  .legal-hero h1 {
+    margin: 0 0 6px;
+    font-size: clamp(22px, 5vw, 28px);
+    font-weight: 800;
+    letter-spacing: -.4px;
+    position: relative;
+    z-index: 1;
+  }
+  .legal-hero .sub {
+    font-size: 13px;
+    opacity: .9;
+    font-weight: 600;
+    position: relative;
+    z-index: 1;
+  }
+  .legal-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .legal-tabs a {
+    flex: 1;
+    text-align: center;
+    padding: 11px 12px;
+    border-radius: 12px;
+    font-weight: 800;
+    font-size: 12.5px;
+    background: #fff;
+    border: 1.5px solid var(--border);
+    color: var(--muted);
+    transition: .2s;
+  }
+  .legal-tabs a:hover { border-color: #93c5fd; color: var(--primary); }
+  .legal-tabs a.active {
+    background: linear-gradient(135deg, #1e3a8a, #2563eb);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 6px 18px rgba(37,99,235,.3);
+  }
+  .legal-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 22px 18px 26px;
+    box-shadow: 0 8px 28px rgba(15,23,42,.06);
+  }
+  .legal-section {
+    margin-bottom: 22px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid #f1f5f9;
+    animation: legalItem .5s ease both;
+  }
+  .legal-section:nth-child(1) { animation-delay: .05s; }
+  .legal-section:nth-child(2) { animation-delay: .1s; }
+  .legal-section:nth-child(3) { animation-delay: .15s; }
+  .legal-section:nth-child(4) { animation-delay: .2s; }
+  .legal-section:nth-child(5) { animation-delay: .25s; }
+  .legal-section:nth-child(6) { animation-delay: .3s; }
+  .legal-section:nth-child(7) { animation-delay: .35s; }
+  .legal-section:nth-child(8) { animation-delay: .4s; }
+  .legal-section:last-child {
+    border-bottom: 0;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+  @keyframes legalItem {
+    from { opacity: 0; transform: translateX(-8px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  .legal-section .num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px; height: 28px;
+    border-radius: 9px;
+    background: var(--primary-soft);
+    color: var(--primary);
+    font-size: 12px;
+    font-weight: 800;
+    margin-right: 8px;
+    flex-shrink: 0;
+  }
+  .legal-section h2 {
+    display: flex;
+    align-items: center;
+    font-size: 15px;
+    font-weight: 800;
+    margin: 0 0 10px;
+    color: #0f172a;
+    letter-spacing: -.2px;
+  }
+  .legal-section p, .legal-section li {
+    font-size: 13.5px;
+    line-height: 1.65;
+    color: #475569;
+    margin: 0 0 8px;
+  }
+  .legal-section ul {
+    margin: 0;
+    padding-left: 18px;
+  }
+  .legal-section li { margin-bottom: 6px; }
+  .legal-note {
+    margin-top: 18px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #eff6ff, #dbeafe);
+    border: 1px solid #bfdbfe;
+    font-size: 12.5px;
+    color: #1e40af;
+    font-weight: 600;
+    line-height: 1.5;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .legal-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 18px;
+    justify-content: center;
+  }
+  .legal-updated {
+    text-align: center;
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 600;
+    margin-top: 8px;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="card" style="max-width:720px;margin:0 auto">
-{% if page == 'privacy' %}
-  <h1>Sera ya Faragha (Privacy Policy)</h1>
-  <p class="muted">Imeboreshwa: Oktoba 2026</p>
-  <h2>1. Data tunayokusanya</h2>
-  <p>Jina la mtumiaji, namba ya simu (support), rekodi za mauzo, stock, na ujumbe wa customer care.</p>
-  <h2>2. Matumizi</h2>
-  <p>Data inatumika kuendesha huduma za mauzo, stock, usimamizi wa wafanyakazi, na msaada kwa wateja.</p>
-  <h2>3. Uhifadhi</h2>
-  <p>Data inahifadhiwa kwenye database salama (Supabase/Postgres). Ufikiaji ni kwa watumiaji wenye ruhusa tu.</p>
-  <h2>4. Push notifications</h2>
-  <p>Ukikubali, tunaweza kutuma taarifa kwenye kifaa chako kuhusu chat, akaunti, au matukio muhimu.</p>
-  <h2>5. Haki zako</h2>
-  <p>Unaweza kuomba kufuta akaunti yako kupitia sehemu ya <strong>Futa Akaunti</strong> ndani ya app.</p>
-  <h2>6. Mawasiliano</h2>
-  <p>Maswali kuhusu faragha: tumia Customer Care ndani ya app.</p>
-{% else %}
-  <h1>Vigezo na Masharti (Terms of Service)</h1>
-  <p class="muted">Imeboreshwa: Oktoba 2026</p>
-  <h2>1. Huduma</h2>
-  <p>{{ app_name }} ni mfumo wa kurekodi mauzo, stock, na usimamizi wa wafanyakazi.</p>
-  <h2>2. Akaunti</h2>
-  <p>Una wajibu wa kulinda password yako. Admin anaweza kuweka muda wa kuisha kwa akaunti za boss.</p>
-  <h2>3. Matumizi sahihi</h2>
-  <p>Usitumie mfumo kwa udanganyifu, spam, au uvunjaji wa sheria za Tanzania.</p>
-  <h2>4. Data ya biashara</h2>
-  <p>Rekodi za mauzo na stock ni za mmiliki wa akaunti (boss/admin). Mfanyakazi anaona data aliyoidhinishwa tu.</p>
-  <h2>5. Muda wa huduma</h2>
-  <p>Akaunti inaweza kuwa na tarehe ya kuisha. Ongeza muda kupitia admin.</p>
-  <h2>6. Mabadiliko</h2>
-  <p>Tunaweza kusasisha masharti haya; toleo jipya litaonekana kwenye ukurasa huu.</p>
-{% endif %}
+<div class="legal-wrap">
+  <div class="legal-hero">
+    <img class="legal-logo" src="/static/android-chrome-192x192.png" alt="{{ app_name }}">
+    <h1>
+      {% if page == 'privacy' %}Sera ya Faragha{% else %}Vigezo na Masharti{% endif %}
+    </h1>
+    <div class="sub">{{ app_name|default('NEKEZA') }} · Oktoba 2026</div>
+  </div>
+
+  <div class="legal-tabs">
+    <a href="{{ url_for('privacy') }}" class="{% if page == 'privacy' %}active{% endif %}">Privacy</a>
+    <a href="{{ url_for('terms') }}" class="{% if page != 'privacy' %}active{% endif %}">Terms</a>
+  </div>
+
+  <div class="legal-card">
+  {% if page == 'privacy' %}
+
+    <div class="legal-section">
+      <h2><span class="num">1</span> Utangulizi</h2>
+      <p>
+        Karibu kwenye {{ app_name|default('NEKEZA') }}. Tunathamini faragha yako.
+        Sera hii inaeleza jinsi tunavyokusanya, kutumia, kuhifadhi, na kulinda taarifa zako
+        unapotumia huduma zetu za mauzo, stock, usimamizi wa wafanyakazi, na customer care.
+      </p>
+    </div>
+
+    <div class="legal-section">
+      <h2><span class="num">2</span> Data tunayokusanya</h2>
+      <p>Tunaweza kukusanya aina zifuatazo za data:</p>
+      <ul>
+        <li><strong>Akaunti:</strong> username, jina, namba ya simu, na taarifa za kuingia.</li>
+        <li><strong>Biashara:</strong> rekodi za mauzo, stock, bei, na ripoti.</li>
+        <li><strong>Timu:</strong> taarifa za wafanyakazi na ruhusa zao.</li>
+        <li><strong>Msaada:</strong> ujumbe wa customer care, tickets, na chat.</li>
+        <li><strong>Kifaa:</strong> data ya push notifications (ukiidhinisha).</li>
+      </ul>
+    </div>
+
+    <div class="legal-section">
+      <h2><span class="num">3</span> Jinsi tunavyotumia data</h2>
+      <ul>
+        <li>Kuendesha na kuboresha huduma za mauzo na stock.</li>
+        <li>Kusimamia akaunti, muda wa matumizi, na usalama.</li>
+        <li>Kutoa msaada kupitia Customer Care na live chat.</li>
+        <li>Kutuma taarifa muhimu (mauzo, bidhaa, muda wa akaunti) ukiruhusu.</li>
+        <li>Kuzuia matumizi mabaya na kulinda mfumo.</li>
+      </ul>
+    </div>
+
+    <div class="legal-section">
+      <h2><span class="num">4</span> Uhifadhi na usalama</h2>
+      <p>
+        Data inahifadhiwa kwenye database salama (mfano Supabase / Postgres).
+        Ufikiaji unadhibitiwa kwa majukumu (admin, boss, employee).
+        Tunatumia hatua za kiufundi na za kiutawala kulinda data dhidi ya ufikiaji usioidhinishwa.
+      </p>
+    </div>
+
+    <div class="legal-section">
+      <h2><span class="num">5</span> Push notifications</h2>
+      <p>
+        Ukikubali, tunaweza kutuma taarifa kwenye kifaa chako kuhusu chat, mauzo, bidhaa mpya,
+        muda wa akaunti, au matukio muhimu ya biashara. Unaweza kuzima ruhusa kwenye settings za kifaa chako.
+      </p>
+    </div>
+
+    <div class="legal-section">
+      <h2><span class="num">6</span> Kushiriki data</h2>
+      <p>
+        Hatouzi data yako kwa watu wa nje kwa madhumuni ya kibiashara.
+        Tunaweza kushiriki data tu pale inapohitajika kisheria, au kwa watoa huduma wanaosaidia
+        kuendesha app (mfano hosting / database) chini ya makubaliano ya usiri.
+      </p>
+    </div>
+
+    <div class="legal-section">
+      <h2><span class="num">7</span> Haki zako</h2>
+      <ul>
+        <li>Kuona na kuhariri taarifa za profile yako.</li>
+        <li>Kuomba kufuta akaunti kupitia sehemu ya <strong>Futa Akaunti</strong>.</li>
+        <li>Kuwasiliana nasi kuhusu maswali ya faragha kupitia Customer Care.</li>
+      </ul>
+    </div>
+
+    <div class="legal-section">
+      <h2><span class="num">8</span> Mawasiliano</h2>
+      <p>
+        Maswali kuhusu sera hii: tumia <strong>Customer Care</strong> au <strong>Contact Admin</strong>
+        ndani ya app. Tutajibu haraka iwezekanavyo.
+      </p>
+    </div>
+
+    <div class="legal-note">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      <span>Kwa kuendelea kutumia {{ app_name|default('NEKEZA') }}, unakubali sera hii ya faragha.</span>
+    </div>
+
+  {% else %}
+
+    <div class="legal-section">
+      <h2><span class="num">1</span> Kukubali masharti</h2>
+      <p>
+        Kwa kusajili, kuingia, au kutumia {{ app_name|default('NEKEZA') }}, unakubali
+        Vigezo na Masharti haya. Usipokubali, tafadhali usitumie huduma.
+      </p>
+    </div>
+
+    <div class="legal-section">
+      <h2><span class="num">2</span> Maelezo ya huduma</h2>
+      <p>
+        {{ app_name|default('NEKEZA') }} ni mfumo wa kidijitali wa kusaidia biashara:
+        kurekodi mauzo, kusimamia stock, wafanyakazi, ripoti, na mawasiliano ya msaada.
+        Huduma inaweza kuboreshwa au kusasishwa mara kwa mara.
+      </p>
+    </div>
+
+    <div class="legal-section">
+      <h2><span class="num">3</span> Akaunti na usalama</h2>
+      <ul>
+        <li>Una wajibu wa kulinda username na password / PIN yako.</li>
+        <li>Usishiriki taarifa za kuingia na mtu mwingine.</li>
+        <li>Admin anaweza kuweka au kuongeza muda wa akaunti za boss.</li>
+        <li>Tunahifadhi haki ya kusimamisha akaunti inayotumiwa vibaya.</li>
+      </ul>
+    </div>
+
+    <div class="legal-section">
+      <h2><span class="num">4</span> Matumizi yanayoruhusiwa</h2>
+      <p>Unakubali kutotumia mfumo kwa:</p>
+      <ul>
+        <li>Udanganyifu, spam, au uvunjaji wa sheria za Tanzania.</li>
+        <li>Kujaribu kuvunja usalama au kufikia data ya watu wengine.</li>
+        <li>Kurekodi taarifa za uongo kimakusudi.</li>
+      </ul>
+    </div>
+
+    <div class="legal-section">
+      <h2><span class="num">5</span> Data ya biashara</h2>
+      <p>
+        Rekodi za mauzo, stock, na ripoti ni za mmiliki wa akaunti (boss / admin).
+        Mfanyakazi anaona na kurekodi data aliyoidhinishwa tu kulingana na jukumu lake.
+      </p>
+    </div>
+
+    <div class="legal-section">
+      <h2><span class="num">6</span> Muda wa huduma na malipo</h2>
+      <p>
+        Akaunti inaweza kuwa na tarehe ya kuisha. Boss anaona siku zilizobaki.
+        Ongeza muda kupitia admin. Ukumbusho unaweza kutumwa siku chache kabla ya kuisha.
+      </p>
+    </div>
+
+    <div class="legal-section">
+      <h2><span class="num">7</span> Vikomo vya dhima</h2>
+      <p>
+        Huduma inatolewa “kama ilivyo”. Hatuhakikishii kuwa itakuwa bila usumbufu kila wakati.
+        Hatuwajibiki kwa hasara isiyo ya moja kwa moja inayotokana na matumizi ya app,
+        isipokuwa pale inapohitajika kisheria.
+      </p>
+    </div>
+
+    <div class="legal-section">
+      <h2><span class="num">8</span> Mabadiliko ya masharti</h2>
+      <p>
+        Tunaweza kusasisha masharti haya. Toleo jipya litaonekana kwenye ukurasa huu
+        pamoja na tarehe ya kuboreshwa. Matumizi endelevu yanamaanisha unakubali mabadiliko.
+      </p>
+    </div>
+
+    <div class="legal-note">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+      <span>Soma pia <a href="{{ url_for('privacy') }}" style="color:#1e40af;font-weight:800">Sera ya Faragha</a> yetu kwa maelezo ya data.</span>
+    </div>
+
+  {% endif %}
+
+    <div class="legal-actions">
+      <a href="{{ url_for('support') if not session.get('user_id') else url_for('contact_admin') }}" class="btn">Customer Care</a>
+      <a href="{{ url_for('dashboard') if session.get('user_id') else url_for('login') }}" class="btn btn-secondary">Rudi</a>
+    </div>
+    <p class="legal-updated">Imeboreshwa: Oktoba 2026 · {{ app_name|default('NEKEZA') }}</p>
+  </div>
 </div>
 {% endblock %}
