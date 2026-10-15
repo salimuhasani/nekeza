@@ -262,6 +262,67 @@
       padding: 10px;
     }
 
+    
+    /* Fully custom select widget */
+    .cs-wrap { position: relative; width: 100%; }
+    .cs-wrap select.cs-native {
+      position: absolute !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      width: 1px !important; height: 1px !important;
+      margin: 0 !important; padding: 0 !important;
+      border: 0 !important;
+    }
+    .cs-btn {
+      width: 100%; min-height: 44px;
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      padding: 11px 14px;
+      background: #f8fafc;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      font-weight: 600; font-size: 13px; color: var(--text);
+      cursor: pointer; text-align: left;
+    }
+    .cs-btn:hover { border-color: #93c5fd; background: #fff; }
+    .cs-btn.open {
+      border-color: var(--primary-2);
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(59,130,246,.15);
+    }
+    .cs-btn .cs-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cs-btn .cs-chevron {
+      flex-shrink: 0; width: 18px; height: 18px;
+      transition: transform .2s;
+      color: var(--primary);
+    }
+    .cs-btn.open .cs-chevron { transform: rotate(180deg); }
+    .cs-list {
+      display: none;
+      position: absolute; left: 0; right: 0; top: calc(100% + 6px);
+      z-index: 5000;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: 0 16px 40px rgba(15,23,42,.14);
+      max-height: 240px;
+      overflow-y: auto;
+      padding: 6px;
+    }
+    .cs-list.open { display: block; animation: toastIn .2s ease; }
+    .cs-option {
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 13px; font-weight: 600;
+      color: var(--text);
+      cursor: pointer;
+    }
+    .cs-option:hover { background: var(--primary-soft); color: var(--primary); }
+    .cs-option.selected {
+      background: linear-gradient(135deg, #1e3a8a, #2563eb);
+      color: #fff;
+    }
+    .cs-option.disabled { opacity: .45; pointer-events: none; }
+
     @media (max-width: 900px) {
       .nav-desktop { display: none; }
       .grid-2, .grid-3 { grid-template-columns: 1fr; }
@@ -430,6 +491,88 @@
       setTimeout(function(){ el.remove(); }, 300);
     }, 2000);
   });
+})();
+</script>
+
+
+<script>
+/* Fully custom select — replaces native browser dropdown UI */
+(function(){
+  function build(sel){
+    if(sel.dataset.csDone) return;
+    sel.dataset.csDone = '1';
+    sel.classList.add('cs-native');
+    var wrap = document.createElement('div');
+    wrap.className = 'cs-wrap';
+    sel.parentNode.insertBefore(wrap, sel);
+    wrap.appendChild(sel);
+
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'cs-btn';
+    btn.setAttribute('aria-haspopup', 'listbox');
+    var label = document.createElement('span');
+    label.className = 'cs-label';
+    var chev = document.createElement('span');
+    chev.className = 'cs-chevron';
+    chev.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>';
+    btn.appendChild(label);
+    btn.appendChild(chev);
+
+    var list = document.createElement('div');
+    list.className = 'cs-list';
+    list.setAttribute('role', 'listbox');
+
+    function syncLabel(){
+      var opt = sel.options[sel.selectedIndex];
+      label.textContent = opt ? opt.textContent : '';
+    }
+    function rebuild(){
+      list.innerHTML = '';
+      Array.prototype.forEach.call(sel.options, function(opt, i){
+        var item = document.createElement('div');
+        item.className = 'cs-option' + (opt.selected ? ' selected' : '') + (opt.disabled ? ' disabled' : '');
+        item.textContent = opt.textContent;
+        item.dataset.index = i;
+        item.addEventListener('click', function(){
+          if(opt.disabled) return;
+          sel.selectedIndex = i;
+          sel.dispatchEvent(new Event('change', { bubbles: true }));
+          syncLabel();
+          close();
+          rebuild();
+        });
+        list.appendChild(item);
+      });
+      syncLabel();
+    }
+    function open(){
+      btn.classList.add('open');
+      list.classList.add('open');
+    }
+    function close(){
+      btn.classList.remove('open');
+      list.classList.remove('open');
+    }
+    btn.addEventListener('click', function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      if(list.classList.contains('open')) close(); else { rebuild(); open(); }
+    });
+    document.addEventListener('click', function(e){
+      if(!wrap.contains(e.target)) close();
+    });
+    wrap.appendChild(btn);
+    wrap.appendChild(list);
+    rebuild();
+    sel.addEventListener('change', function(){ syncLabel(); rebuild(); });
+  }
+  function initAll(){
+    document.querySelectorAll('select').forEach(build);
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initAll);
+  else initAll();
+  window.nekezaCustomSelects = initAll;
 })();
 </script>
 

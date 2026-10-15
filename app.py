@@ -711,6 +711,22 @@ def add_product():
 
             conn.commit()
             flash("Bidhaa imeongezwa kwa mafanikio.", "success")
+            # Taarifa kwa wafanyakazi wa boss huyu
+            try:
+                emps = conn.execute(
+                    "SELECT id FROM users WHERE boss_id=? AND role=?",
+                    (session["user_id"], "employee"),
+                ).fetchall()
+                ids = [e["id"] for e in emps]
+                if ids:
+                    _send_web_push(
+                        ids,
+                        "Bidhaa mpya",
+                        f"{request.form.get('name', 'Bidhaa')} imeongezwa kwenye stock.",
+                        "/products",
+                    )
+            except Exception as _e:
+                print("push product:", _e)
         except IntegrityErrors:
             flash("❌ Bidhaa yenye jina hilo tayari ipo.", "danger")
         except Exception as e:
@@ -793,6 +809,16 @@ def sales():
 
                 conn.commit()
                 flash("Mauzo yamekamilika.", "success")
+                # Taarifa kwa boss
+                try:
+                    _send_web_push(
+                        [boss_id],
+                        "Mauzo mapya",
+                        f"{session.get('username')}: {qty_sold} x {prod['name']} = TSh {total:,.0f}",
+                        "/sales",
+                    )
+                except Exception as _e:
+                    print("push sale:", _e)
 
         except ValueError:
             flash("Tafadhali ingiza idadi sahihi.", "danger")
