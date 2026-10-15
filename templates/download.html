@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Pakua App · {{ app_name }}{% endblock %}
+{% block head %}
+<meta name="description" content="Pakua {{ app_name }} App ya Android. Simamia mauzo, stock na wafanyakazi.">
+<meta property="og:title" content="Pakua {{ app_name }} App">
+<meta property="og:description" content="Pakua na usakinishe app kwenye Android.">
+<meta property="og:image" content="/static/android-chrome-512x512.png">
+<style>
+  .dl-hero { text-align:center; padding: 12px 0 20px; }
+  .dl-logo {
+    width: 96px; height: 96px; border-radius: 22px; object-fit: cover;
+    box-shadow: 0 12px 32px rgba(30,58,138,.28); margin-bottom: 14px;
+  }
+  .dl-card {
+    background:#fff; border:1px solid var(--border); border-radius:18px;
+    padding:20px 18px; box-shadow: var(--shadow); max-width:480px; margin:0 auto 16px;
+  }
+  .dl-steps { list-style:none; padding:0; margin:14px 0 0; }
+  .dl-steps li {
+    display:flex; gap:12px; align-items:flex-start; margin-bottom:12px;
+    font-size:13.5px; line-height:1.45;
+  }
+  .dl-num {
+    width:28px; height:28px; border-radius:50%; background:var(--primary-soft);
+    color:var(--primary); font-weight:800; font-size:13px;
+    display:grid; place-items:center; flex-shrink:0;
+  }
+  .dl-badge {
+    display:inline-flex; align-items:center; gap:6px;
+    background:#ecfdf5; color:#065f46; font-size:11px; font-weight:700;
+    padding:5px 10px; border-radius:999px; margin-bottom:10px;
+  }
+</style>
+{% endblock %}
+{% block content %}
+<div class="dl-hero">
+  <img class="dl-logo" src="/static/android-chrome-512x512.png" alt="{{ app_name }}">
+  <div class="muted small" style="font-weight:700;text-transform:uppercase;letter-spacing:.5px">Android App</div>
+  <h1 style="margin:6px 0 8px">Pakua {{ app_name }}</h1>
+  <p class="muted" style="max-width:420px;margin:0 auto">
+    Sakinisha app kwenye simu yako. Simamia mauzo, stock na team yako kwa urahisi.
+  </p>
+</div>
+
+<div class="dl-card">
+  <div class="dl-badge">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+    APK · Android
+  </div>
+  <h2 style="margin:0 0 8px;font-size:16px">Pakua sasa</h2>
+  <p class="muted small" style="margin-bottom:14px">Bofya kitufe kupakua faili ya app (.apk).</p>
+  <a href="/static/downloads/nekeza-app.apk" class="btn btn-block" download="NEKEZA-App.apk" style="min-height:48px;font-size:15px">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Pakua APK (Android)
+  </a>
+  <p class="muted small" style="margin-top:12px;line-height:1.5">
+    Baada ya kupakua → fungua faili → <strong>Install</strong>.<br>
+    Ikiwa imezuiwa: Settings → Security → Install unknown apps → ruhusu browser.
+  </p>
+</div>
+
+<div class="dl-card">
+  <h3 style="margin:0 0 10px">Jinsi ya kusakinisha</h3>
+  <ol class="dl-steps">
+    <li><span class="dl-num">1</span><span>Bofya <strong>Pakua APK</strong>.</span></li>
+    <li><span class="dl-num">2</span><span>Fungua faili iliyopakuliwa (Notifications au Files).</span></li>
+    <li><span class="dl-num">3</span><span>Bofya <strong>Install</strong>.</span></li>
+    <li><span class="dl-num">4</span><span>Fungua <strong>{{ app_name }}</strong> kwenye Home Screen.</span></li>
+  </ol>
+</div>
+
+<div class="dl-card">
+  <h3 style="margin:0 0 10px">iPhone / iPad</h3>
+  <p class="muted small" style="margin-bottom:10px">APK haifanyi kazi kwenye iPhone. Tumia Safari:</p>
+  <ol class="dl-steps">
+    <li><span class="dl-num">1</span><span>Fungua app hii kwa <strong>Safari</strong>.</span></li>
+    <li><span class="dl-num">2</span><span>Bofya Share.</span></li>
+    <li><span class="dl-num">3</span><span>Chagua <strong>Add to Home Screen</strong>.</span></li>
+  </ol>
+</div>
+
+<div style="text-align:center;margin-top:8px">
+  <a href="{{ url_for('index') }}" class="btn btn-secondary">Rudi Mwanzo</a>
+</div>
+{% endblock %}

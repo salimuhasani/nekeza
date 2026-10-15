@@ -1524,6 +1524,20 @@ def inject_globals():
 
 
 # ====================== LEGAL & ACCOUNT ======================
+
+@app.route("/download")
+@app.route("/download-app")
+def download_app():
+    return render_template("download.html")
+
+
+@app.route("/static/downloads/<path:filename>")
+def download_file(filename):
+    """Serve APK/files from static/downloads."""
+    from flask import send_from_directory
+    folder = os.path.join(app.root_path, "static", "downloads")
+    return send_from_directory(folder, filename, as_attachment=True)
+
 @app.route("/privacy")
 def privacy():
     return render_template("legal.html", page="privacy")
@@ -1840,6 +1854,8 @@ def pwa_manifest():
         "background_color": "#1e3a8a",
         "theme_color": "#1e3a8a",
         "icons": [
+            {"src": "/static/android-chrome-192x192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+            {"src": "/static/android-chrome-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"},
             {"src": "/static/icon-192.png", "sizes": "192x192", "type": "image/png"},
             {"src": "/static/icon-512.png", "sizes": "512x512", "type": "image/png"},
         ],
