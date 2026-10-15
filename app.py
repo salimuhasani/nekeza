@@ -543,6 +543,21 @@ def login():
             if not user['initial_pin_used']:
                 return redirect(url_for('change_pin'))
 
+            # Ukumbusho wa malipo: mara 1 kwa siku ikiwa siku <= 5 (boss)
+            if user['role'] == 'boss':
+                left = days_until_expiry(user['pin_expiry'])
+                if left is not None and left <= 5:
+                    today_key = date.today().isoformat()
+                    last_key = session.get('pay_remind_day')
+                    if last_key != today_key:
+                        session['pay_remind_day'] = today_key
+                        if left < 0:
+                            flash("Akaunti yako imeisha muda. Fanya malipo ili uendelee kutumia huduma.", "warning")
+                        elif left == 0:
+                            flash("Akaunti inaisha leo. Fanya malipo au wasiliana na admin.", "warning")
+                        else:
+                            flash(f"Siku {left} zimebaki. Tafadhali fanya malipo ili kuongeza muda wa akaunti.", "warning")
+
             return redirect(url_for('dashboard'))
         else:
             flash("Username au Password si sahihi.", "danger")

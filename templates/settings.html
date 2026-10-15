@@ -4,6 +4,32 @@
 <h1>Settings</h1>
 <p class="muted" style="margin-bottom:16px">Akaunti, usalama na msaada.</p>
 
+{% if session.get('role') == 'boss' and days_left is not none %}
+<div class="expiry-card {% if days_left <= 5 %}critical{% endif %}" style="margin-bottom:16px">
+  <div class="exp-icon">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{% if days_left <= 5 %}#dc2626{% else %}#ea580c{% endif %}" stroke-width="2">
+      <path d="M5 2h14M5 22h14M8 2v4l4 4 4-4V2M8 22v-4l4-4 4 4v4"/>
+    </svg>
+  </div>
+  <div style="flex:1">
+    <div style="font-weight:800;font-size:15px;margin-bottom:4px">
+      {% if days_left < 0 %}Akaunti imeisha muda
+      {% elif days_left == 0 %}Inaisha leo
+      {% else %}Siku {{ days_left }} zimebaki{% endif %}
+    </div>
+    <p class="muted small" style="margin:0 0 10px;line-height:1.45">
+      {% if days_left <= 5 %}
+      Tafadhali fanya malipo ili kuongeza muda wa akaunti yako. Wasiliana na admin.
+      {% else %}
+      Akaunti yako ina muda maalum. Admin anaweza kuongeza siku ukihitaji.
+      {% endif %}
+    </p>
+    <a href="{{ url_for('contact_admin') }}" class="btn" style="min-height:38px;padding:8px 14px;font-size:12px">Wasiliana na Admin</a>
+  </div>
+</div>
+{% endif %}
+
+
 <div class="grid-2">
   <div class="card">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
