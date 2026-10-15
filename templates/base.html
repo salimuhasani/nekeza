@@ -1,383 +1,316 @@
 <!DOCTYPE html>
 <html lang="sw">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-     <meta name="google-site-verification" content="mgQGzlVr3yr7O8MbaQfa5BuzB3851Vp0tZIcULGj7Iw" />
-
-    <!-- SEO Meta Tags - SALAM HUB -->
-    <title>NEKEZA - Mfumo wa Mauzo, Stock na Wafanyakazi</title>
-    <meta name="description" content="NEKEZA ni mfumo rahisi na wa kisasa wa kurekodi mauzo, kusimamia stock na wafanyakazi kwa maduka na biashara ndogo Tanzania.">
-    <meta name="keywords" content="NEKEZA, mauzo, stock management, pos system, biashara ndogo, sales system, tanzania, ramkey">
-    <meta name="author" content="NEKEZA">
-    <meta name="robots" content="index, follow">
-
-    <!-- Open Graph Meta Tags (WhatsApp, Facebook, Telegram) -->
-    <meta property="og:title" content="NEKEZA - Mfumo wa Mauzo na Stock">
-    <meta property="og:description" content="Rekodi mauzo, simamia stock na wafanyakazi kwa urahisi na usalama.">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://ramkey1.pythonanywhere.com">
-    <meta property="og:image" content="https://ramkey1.pythonanywhere.com/static/logo.png">
-
-
-        <!-- FAVICON - Logo yako -->
-    <link rel="icon" href="{{ url_for('static', filename='logo.png') }}" type="image/png">
-    <link rel="shortcut icon" href="{{ url_for('static', filename='logo.png') }}" type="image/png">
-
-    <!-- Kwa simu (Android na iPhone) -->
-    <link rel="apple-touch-icon" href="{{ url_for('static', filename='logo.png') }}">
-
-    <title> NEKEZA- {{ title|default('Biashara Yako') }}</title>
-
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            background: #f4f7fc;
-            color: #1e2937;
-        }
-
-        /* Top Bar */
-        .topbar {
-            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
-            color: white;
-            height: 70px;
-            display: flex;
-            align-items: center;
-            padding: 0 20px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
-
-        .topbar .logo {
-            font-size: 1.65rem;
-            font-weight: 700;
-            letter-spacing: 1.5px;
-        }
-
-        .topbar .hamburger {
-            font-size: 1.9rem;
-            cursor: pointer;
-            margin-right: 18px;
-            padding: 8px 12px;
-            border-radius: 8px;
-            transition: 0.3s;
-        }
-
-        .topbar .hamburger:hover {
-            background: rgba(255,255,255,0.2);
-        }
-
-        .topbar .user-info {
-            margin-left: auto;
-            background: rgba(255,255,255,0.15);
-            padding: 8px 16px;
-            border-radius: 30px;
-            font-size: 0.95rem;
-            font-weight: 500;
-        }
-
-        /* Sidebar */
-        .sidebar {
-            position: fixed;
-            top: 0;
-            left: -300px;
-            width: 300px;
-            height: 100vh;
-            background: white;
-            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.18);
-            transition: all 0.4s ease;
-            z-index: 1100;
-            overflow-y: auto;
-        }
-
-        .sidebar.active {
-            left: 0;
-        }
-
-        .sidebar-header {
-            padding: 25px 20px;
-            background: #1e3a8a;
-            color: white;
-            font-size: 1.3rem;
-            font-weight: 600;
-        }
-
-        .sidebar a {
-            display: block;
-            padding: 16px 25px;
-            color: #334155;
-            text-decoration: none;
-            font-size: 1.02rem;
-            border-bottom: 1px solid #f1f5f9;
-            transition: all 0.3s;
-        }
-
-        .sidebar a:hover {
-            background: #f0f9ff;
-            color: #1e40af;
-            padding-left: 35px;
-        }
-
-        .sidebar .logout {
-            color: #ef4444;
-            margin-top: 30px;
-        }
-
-        .sidebar .close-btn {
-            position: absolute;
-            top: 18px;
-            right: 20px;
-            font-size: 2rem;
-            cursor: pointer;
-            color: white;
-        }
-
-        /* Overlay */
-        .overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.6);
-            z-index: 1050;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s;
-        }
-
-        .overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        /* Main Content */
-        .container {
-            max-width: 1350px;
-            margin: 35px auto;
-            padding: 0 25px 90px; /* nafasi ya bottom nav */
-        }
-
-        h1 {
-            color: #1e3a8a;
-            margin-bottom: 30px;
-            font-size: 1.8rem;
-        }
-
-        .flash {
-            padding: 16px 22px;
-            margin: 15px 0;
-            border-radius: 10px;
-            font-weight: 500;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
-        .success { background: #ecfdf5; color: #166534; border-left: 5px solid #10b981; }
-        .danger  { background: #fef2f2; color: #991b1b; border-left: 5px solid #ef4444; }
-        .info    { background: #eff6ff; color: #1e40af; border-left: 5px solid #3b82f6; }
-
-        /* Bottom Navigation */
-        .bottom-nav {
-            position: fixed;
-            bottom: 15px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: white;
-            border-radius: 40px;
-            padding: 8px 12px;
-            display: flex;
-            gap: 10px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
-            z-index: 1200;
-        }
-
-        .bottom-nav a {
-            text-decoration: none;
-            color: #475569;
-            font-size: 0.75rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 8px 10px;
-            border-radius: 12px;
-            transition: 0.2s;
-        }
-
-        .bottom-nav a:hover {
-            background: #f1f5f9;
-        }
-
-        .bottom-nav a.active {
-            background: #1e3a8a;
-            color: white;
-        }
-
-        .bottom-nav span {
-            font-size: 1.2rem;
-        }
-
-        @media (max-width: 768px) {
-            .topbar .logo { font-size: 1.4rem; }
-            .container { padding: 0 15px 90px; margin: 20px auto; }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1e3a8a">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>{% block title %}{{ app_name|default('NEKEZA') }}{% endblock %}</title>
+  <link rel="icon" href="/static/logo.png" type="image/png">
+  <link rel="apple-touch-icon" href="/static/icon-192.png">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #1e3a8a;
+      --primary-2: #3b82f6;
+      --primary-soft: #eff6ff;
+      --bg: #f1f5f9;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --green: #059669;
+      --red: #dc2626;
+      --orange: #ea580c;
+      --radius: 16px;
+      --shadow: 0 8px 30px rgba(15,23,42,.06);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; text-decoration: none; }
+    button, input, select, textarea { font: inherit; }
+    .topbar {
+      position: sticky; top: 0; z-index: 100;
+      background: linear-gradient(135deg, #1e3a8a, #2563eb);
+      color: #fff;
+      padding: 12px 4%;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      box-shadow: 0 4px 20px rgba(30,58,138,.25);
+    }
+    .brand { font-weight: 800; font-size: 17px; letter-spacing: .3px; }
+    .brand small { display: block; font-size: 10px; opacity: .85; font-weight: 500; }
+    .hamburger {
+      width: 40px; height: 40px; border: 0; border-radius: 12px;
+      background: rgba(255,255,255,.18); color: #fff; font-size: 16px;
+      display: none; place-items: center; cursor: pointer;
+    }
+    .nav-desktop { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+    .nav-desktop a {
+      padding: 8px 12px; border-radius: 10px; font-size: 12px; font-weight: 700;
+      color: #fff; opacity: .95;
+    }
+    .nav-desktop a:hover { background: rgba(255,255,255,.15); }
+    .badge-pill {
+      background: #fbbf24; color: #1e3a8a; font-size: 10px; font-weight: 800;
+      padding: 2px 7px; border-radius: 999px; margin-left: 4px;
+    }
+    .page { width: min(1100px, 94%); margin: 18px auto 40px; min-height: 60vh; }
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow);
+    }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .stat {
+      background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+      padding: 16px; box-shadow: var(--shadow);
+    }
+    .stat .label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; }
+    .stat .value { font-size: 22px; font-weight: 800; margin-top: 6px; letter-spacing: -.3px; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      border: 0; border-radius: 12px; padding: 11px 16px; font-weight: 700; font-size: 13px;
+      background: var(--primary); color: #fff; cursor: pointer; min-height: 42px;
+    }
+    .btn:hover { filter: brightness(1.05); }
+    .btn-secondary { background: #fff; color: var(--text); border: 1px solid var(--border); }
+    .btn-success { background: var(--green); }
+    .btn-danger { background: var(--red); }
+    .btn-block { width: 100%; }
+    .field { margin-bottom: 14px; }
+    .field label { display: block; font-size: 12px; font-weight: 700; margin-bottom: 6px; color: #334155; }
+    .field input, .field select, .field textarea {
+      width: 100%; border: 1.5px solid var(--border); border-radius: 12px;
+      padding: 11px 13px; background: #f8fafc; outline: none;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus {
+      border-color: var(--primary-2); background: #fff;
+      box-shadow: 0 0 0 3px rgba(59,130,246,.15);
+    }
+    .flash-wrap { width: min(1100px, 94%); margin: 12px auto 0; }
+    .flash {
+      padding: 12px 14px; border-radius: 12px; font-weight: 600; font-size: 13px; margin-bottom: 8px;
+    }
+    .flash.success { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+    .flash.danger, .flash.error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+    .flash.info { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+    .drawer {
+      display: none; position: fixed; inset: 0; z-index: 200;
+    }
+    .drawer.open { display: block; }
+    .drawer-bg { position: absolute; inset: 0; background: rgba(15,23,42,.45); }
+    .drawer-panel {
+      position: absolute; top: 0; left: 0; bottom: 0; width: min(280px, 86vw);
+      background: #fff; padding: 16px 12px; overflow-y: auto;
+      box-shadow: 8px 0 30px rgba(0,0,0,.15);
+    }
+    .drawer-panel a, .drawer-panel .d-btn {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px; border-radius: 12px; font-weight: 700; font-size: 13px;
+      color: var(--text); margin-bottom: 4px;
+    }
+    .drawer-panel a:hover { background: var(--primary-soft); color: var(--primary); }
+    .drawer-panel .ico {
+      width: 32px; height: 32px; border-radius: 10px; background: var(--primary-soft);
+      color: var(--primary); display: grid; place-items: center; font-size: 13px;
+    }
+    .expiry-banner {
+      background: linear-gradient(135deg, #fff7ed, #ffedd5);
+      border: 1px solid #fed7aa; border-radius: 14px; padding: 12px 14px;
+      margin-bottom: 14px; display: flex; gap: 10px; align-items: center;
+    }
+    .expiry-banner.warn { background: #fef2f2; border-color: #fecaca; }
+    .expiry-banner strong { color: var(--orange); }
+    .footer {
+      text-align: center; padding: 20px 16px 28px; color: var(--muted); font-size: 12px;
+    }
+    .footer a { color: var(--primary); font-weight: 700; margin: 0 6px; }
+    .bottom-nav {
+      display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 90;
+      background: #fff; border-top: 1px solid var(--border);
+      padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+      justify-content: space-around;
+    }
+    .bottom-nav a {
+      flex: 1; max-width: 80px; display: flex; flex-direction: column; align-items: center;
+      gap: 2px; padding: 6px; font-size: 10px; font-weight: 700; color: var(--muted); border-radius: 10px;
+    }
+    .bottom-nav a i { font-size: 17px; }
+    .bottom-nav a.active, .bottom-nav a:hover { color: var(--primary); background: var(--primary-soft); }
+    body.has-bnav .page { padding-bottom: 72px; }
+    body.has-bnav .footer { padding-bottom: 80px; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 520px; }
+    th, td { padding: 10px; text-align: left; border-bottom: 1px solid var(--border); font-size: 13px; }
+    th { font-size: 11px; text-transform: uppercase; color: var(--muted); background: #f8fafc; }
+    .muted { color: var(--muted); }
+    .small { font-size: 12px; }
+    h1 { font-size: clamp(20px, 4vw, 28px); letter-spacing: -.4px; margin: 0 0 8px; }
+    h2 { font-size: 17px; margin: 0 0 10px; }
+    @media (max-width: 900px) {
+      .nav-desktop { display: none; }
+      .hamburger { display: grid; }
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      .page { width: 95%; margin-top: 12px; }
+      .bottom-nav { display: flex; }
+    }
+  </style>
+  {% block head %}{% endblock %}
 </head>
-
 <body>
-
-    <!-- Top Navigation -->
-    <div class="topbar">
-        <span class="hamburger" onclick="toggleSidebar()">☰</span>
-
-	<div class="logo" style="display:flex; align-items:center; gap:4px; margin-left:-5px;">
-    NEKEZA
-    <img src="{{ url_for('static', filename='logo.png') }}"
-         style="height:28px; width:28px; object-fit:contain; margin-left:2px;">
-	</div>
-
-	<div class="user-info">
-    {% if session.username %}
-        {{ session.username }} • {{ session.role|capitalize }}
+<header class="topbar">
+  <div style="display:flex;align-items:center;gap:10px">
+    <button type="button" class="hamburger" id="menuBtn" aria-label="Menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+    <a href="{{ url_for('dashboard') if session.get('user_id') else url_for('login') }}" class="brand">
+      {{ app_name|default('NEKEZA') }}
+      <small>Mauzo · Stock · Team</small>
+    </a>
+  </div>
+  <nav class="nav-desktop">
+    {% if session.get('user_id') %}
+      <a href="{{ url_for('dashboard') }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10.5L12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1v-10.5z"/></svg> Home</a>
+      <a href="{{ url_for('products') }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8l-9-5-9 5v8l9 5 9-5V8z"/><path d="M3.5 8.5L12 13l8.5-4.5M12 13v9"/></svg> Stock</a>
+      <a href="{{ url_for('sales') }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/><path d="M3 4h2l2.5 11h10l2-7H7"/></svg> Mauzo</a>
+      <a href="{{ url_for('chat') }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Chat{% if unread_chat %}<span class="badge-pill">{{ unread_chat }}</span>{% endif %}</a>
+      {% if session.get('role') == 'admin' %}
+      <a href="{{ url_for('manage_employees') }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Users</a>
+      <a href="{{ url_for('admin_chats') }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg> Care</a>
+      {% endif %}
+      <a href="{{ url_for('logout') }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> Toka</a>
     {% else %}
-        Guest
+      <a href="{{ url_for('support') }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg> Customer Care</a>
+      <a href="{{ url_for('login') }}">Ingia</a>
     {% endif %}
-	</div>
+  </nav>
+</header>
 
-    </div>
-
-    <!-- Overlay -->
-    <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
-
-<div class="sidebar" id="sidebar">
-
-    <div class="sidebar-header" style="display:flex; align-items:center; gap:10px;">
-        NEKEZA
-        <img src="{{ url_for('static', filename='logo.png') }}"
-             style="height:28px; width:28px; object-fit:contain;">
-        <span class="close-btn" onclick="toggleSidebar()">×</span>
-    </div>
-
-    {% if session.username %}
-        <!-- USER AMELOGIN -->
-
-        <a href="{{ url_for('dashboard') }}">🏠 Dashboard</a>
-
-        {% if session.role == 'admin' %}
-            <a href="{{ url_for('setup_initial') }}">➕ Sajiri Boss Mpya</a>
-            <a href="{{ url_for('manage_employees') }}">👥 Manage Maboss</a>
-
-        {% elif session.role == 'boss' %}
-            <a href="{{ url_for('products') }}">📦 Bidhaa</a>
-            <a href="{{ url_for('sales') }}">💰 Mauzo</a>
-            <a href="{{ url_for('manage_employees') }}">👥 Wafanyakazi Wangu</a>
-            <a href="{{ url_for('export_pdf') }}">📄 Export PDF</a>
-
-        {% else %}
-            <a href="{{ url_for('products') }}">📦 Bidhaa</a>
-            <a href="{{ url_for('sales') }}">💰 Rekodi Mauzo</a>
-        {% endif %}
-
-        <a href="{{ url_for('settings') }}">⚙️ Settings</a>
-        <a href="{{ url_for('about') }}">ℹ️ Kuhusu App</a>
-
-        {% if session.role != 'employee' %}
-            <a href="{{ url_for('contact_admin') }}">📞 Contact Admin</a>
-        {% endif %}
-
-        <a href="{{ url_for('logout') }}" class="logout">🚪 Logout</a>
-
+<div class="drawer" id="drawer">
+  <div class="drawer-bg" id="drawerBg"></div>
+  <div class="drawer-panel">
+    <div style="font-weight:800;margin-bottom:12px;padding:4px 8px">{{ app_name|default('NEKEZA') }}</div>
+    {% if session.get('user_id') %}
+      <a href="{{ url_for('dashboard') }}"><span class="ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10.5L12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1v-10.5z"/></svg></span> Dashboard</a>
+      <a href="{{ url_for('products') }}"><span class="ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8l-9-5-9 5v8l9 5 9-5V8z"/><path d="M3.5 8.5L12 13l8.5-4.5M12 13v9"/></svg></span> Bidhaa / Stock</a>
+      <a href="{{ url_for('sales') }}"><span class="ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/><path d="M3 4h2l2.5 11h10l2-7H7"/></svg></span> Mauzo</a>
+      <a href="{{ url_for('contact_admin') }}"><span class="ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg></span> Contact Admin</a>
+      <a href="{{ url_for('chat') }}"><span class="ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span> Live Chat{% if unread_chat %} ({{ unread_chat }}){% endif %}</a>
+      {% if session.get('role') in ['admin','boss'] %}
+      <a href="{{ url_for('manage_employees') }}"><span class="ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span> Watumiaji</a>
+      {% endif %}
+      {% if session.get('role') == 'admin' %}
+      <a href="{{ url_for('admin_chats') }}"><span class="ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg></span> Customer Care</a>
+      {% endif %}
+      {% if session.get('role') == 'employee' %}
+      <a href="{{ url_for('record_defect') }}"><span class="ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span> Rekodi Kasoro</a>
+      <a href="{{ url_for('my_defects') }}"><span class="ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 12h6M9 16h6"/></svg></span> Kasoro Zangu</a>
+      {% endif %}
+      <a href="{{ url_for('profile') }}"><span class="ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span> Profile</a>
+      <a href="{{ url_for('settings') }}"><span class="ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg></span> Settings</a>
+      <a href="{{ url_for('delete_account') }}"><span class="ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="17" y1="8" x2="22" y2="13"/><line x1="22" y1="8" x2="17" y2="13"/></svg></span> Futa Akaunti</a>
+      <a href="{{ url_for('logout') }}" style="color:var(--red)"><span class="ico" style="background:#fef2f2;color:var(--red)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span> Toka</a>
     {% else %}
-        <!-- HAKUNA USER (LOGIN PAGE MODE) -->
-
-        <a href="{{ url_for('login') }}">🔐 Login</a>
-        <a href="{{ url_for('about') }}">ℹ️ About</a>
-        <a href="{{ url_for('contact_admin') }}">📞 Contact</a>
-
+      <a href="{{ url_for('login') }}"><span class="ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg></span> Ingia</a>
+      <a href="{{ url_for('support') }}"><span class="ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg></span> Customer Care</a>
     {% endif %}
+    <hr style="border:0;border-top:1px solid var(--border);margin:12px 0">
+    <a href="{{ url_for('privacy') }}"><span class="ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span> Privacy</a>
+    <a href="{{ url_for('terms') }}"><span class="ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15h6M9 11h6"/></svg></span> Terms</a>
+    <a href="{{ url_for('about') }}"><span class="ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span> Kuhusu</a>
+  </div>
+</div>
 
-	</div>
-    <!-- Main Content -->
-    <div class="container">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="flash {{ category }}">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-
-        {% block content %}{% endblock %}
-    </div>
-
-
-	{% if session.username %}
-<!-- Bottom Navigation -->
-<div class="bottom-nav">
-
-    {% if session.role == 'admin' %}
-        <a href="{{ url_for('dashboard') }}">
-            <span>🏠</span> Home
-        </a>
-        <a href="{{ url_for('manage_employees') }}">
-            <span>👥</span> Watu
-        </a>
-
-    {% elif session.role == 'boss' %}
-        <a href="{{ url_for('dashboard') }}">
-            <span>🏠</span> Home
-        </a>
-        <a href="{{ url_for('products') }}">
-            <span>📦</span> Bidhaa
-        </a>
-        <a href="{{ url_for('sales') }}">
-            <span>💰</span> Mauzo
-        </a>
-        <a href="{{ url_for('manage_employees') }}">
-            <span>👥</span> Watu
-        </a>
-
-    {% else %}
-        <a href="{{ url_for('dashboard') }}">
-            <span>🏠</span> Home
-        </a>
-        <a href="{{ url_for('products') }}">
-            <span>📦</span> Bidhaa
-        </a>
-        <a href="{{ url_for('sales') }}">
-            <span>💰</span> Mauzo
-        </a>
-    {% endif %}
-
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div class="flash-wrap">
+  {% for cat, msg in messages %}
+  <div class="flash {{ cat }}">{{ msg }}</div>
+  {% endfor %}
 </div>
 {% endif %}
+{% endwith %}
 
+<main class="page">
+  {% if session.get('role') == 'boss' and days_left is not none %}
+  <div class="expiry-banner {% if days_left <= 7 %}warn{% endif %}">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 2h14M5 22h14M8 2v4l4 4 4-4V2M8 22v-4l4-4 4 4v4"/></svg>
+    <div>
+      {% if days_left < 0 %}
+      <strong>Akaunti imeisha muda.</strong> Wasiliana na admin kuongeza siku.
+      {% elif days_left == 0 %}
+      <strong>Akaunti inaisha leo.</strong>
+      {% else %}
+      Siku zilizobaki: <strong>{{ days_left }}</strong>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+  {% block content %}{% endblock %}
+</main>
 
-    <script>
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('overlay');
+{% if session.get('user_id') %}
+<nav class="bottom-nav">
+  <a href="{{ url_for('dashboard') }}" class="{% if request.endpoint == 'dashboard' %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10.5L12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1v-10.5z"/></svg><span>Home</span></a>
+  <a href="{{ url_for('products') }}" class="{% if request.endpoint == 'products' %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8l-9-5-9 5v8l9 5 9-5V8z"/><path d="M3.5 8.5L12 13l8.5-4.5M12 13v9"/></svg><span>Stock</span></a>
+  <a href="{{ url_for('sales') }}" class="{% if request.endpoint == 'sales' %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/><path d="M3 4h2l2.5 11h10l2-7H7"/></svg><span>Mauzo</span></a>
+  <a href="{{ url_for('chat') }}" class="{% if 'chat' in (request.endpoint or '') %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>Chat</span></a>
+  <a href="{{ url_for('settings') }}" class="{% if request.endpoint == 'settings' %}active{% endif %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg><span>More</span></a>
+</nav>
+<script>document.body.classList.add('has-bnav');</script>
+{% endif %}
 
-            sidebar.classList.toggle('active');
-            overlay.classList.toggle('active');
-        }
+<footer class="footer">
+  © 2026 {{ app_name|default('NEKEZA') }} · Mfumo wa mauzo na stock
+  <div style="margin-top:8px">
+    <a href="{{ url_for('privacy') }}">Privacy</a>
+    <a href="{{ url_for('terms') }}">Terms</a>
+    <a href="{{ url_for('support') if not session.get('user_id') else url_for('chat') }}">Customer Care</a>
+  </div>
+</footer>
 
-        document.addEventListener('keydown', function(e) {
-            if (e.key === "Escape") {
-                const sidebar = document.getElementById('sidebar');
-                const overlay = document.getElementById('overlay');
-                sidebar.classList.remove('active');
-                overlay.classList.remove('active');
-            }
-        });
-    </script>
-
+{% block scripts %}{% endblock %}
+<script>
+(function(){
+  var btn=document.getElementById('menuBtn'), drawer=document.getElementById('drawer'), bg=document.getElementById('drawerBg');
+  function open(){ if(drawer) drawer.classList.add('open'); document.body.style.overflow='hidden'; }
+  function close(){ if(drawer) drawer.classList.remove('open'); document.body.style.overflow=''; }
+  if(btn) btn.addEventListener('click', open);
+  if(bg) bg.addEventListener('click', close);
+})();
+/* PWA + Push */
+(function(){
+  if(!('serviceWorker' in navigator)) return;
+  navigator.serviceWorker.register('/sw.js').catch(function(){});
+  {% if session.get('user_id') %}
+  function b64(s){var p='='.repeat((4-s.length%4)%4);var b=(s+p).replace(/-/g,'+').replace(/_/g,'/');var r=atob(b);var o=new Uint8Array(r.length);for(var i=0;i<r.length;i++)o[i]=r.charCodeAt(i);return o;}
+  function sub(reg){
+    fetch('/api/push/vapid-public').then(function(r){return r.json();}).then(function(d){
+      if(!d.publicKey) return;
+      return reg.pushManager.getSubscription().then(function(ex){
+        if(ex) return ex;
+        return reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64(d.publicKey)});
+      });
+    }).then(function(s){
+      if(!s) return;
+      var j=s.toJSON();
+      return fetch('/api/push/subscribe',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({endpoint:j.endpoint,keys:j.keys||{}})});
+    }).catch(function(){});
+  }
+  navigator.serviceWorker.ready.then(function(reg){
+    if(Notification.permission==='granted') sub(reg);
+    else if(Notification.permission==='default') Notification.requestPermission().then(function(p){ if(p==='granted') sub(reg); });
+  });
+  {% endif %}
+})();
+</script>
 </body>
 </html>

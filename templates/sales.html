@@ -166,7 +166,7 @@
 <div class="action-buttons">
     {% if session['role'] == 'employee' %}
         <a href="{{ url_for('record_defect') }}" class="action-btn record-btn">
-            ⚠️ Rekodi Kasoro / Expired
+             Rekodi Kasoro / Expired
         </a>
     {% endif %}
 
@@ -196,16 +196,16 @@
         <label>Idadi</label>
         <input type="number" name="quantity" min="1" required>
 
-        <button type="submit" class="btn">✅ Rekodi Mauzo</button>
+        <button type="submit" class="btn"> Rekodi Mauzo</button>
     </form>
 </div>
-{% endif %}  <!-- ✅ HII NDIO FIX -->
+{% endif %}  <!--  HII NDIO FIX -->
 
 <!-- HEADER -->
 {% if session['role'] == 'employee' %}
 
 <h2 style="text-align:center; color:#1e3a8a; margin:15px 0; font-size:18px; white-space:nowrap;">
-    📅 Mauzo Yangu Leo
+     Mauzo Yangu Leo
     <span style="background:#e0e7ff; padding:2px 8px; border-radius:12px; font-size:12px;">
         {{ today }}
     </span>
@@ -213,7 +213,7 @@
 
 {% else %}
 <h2 style="text-align:center; color:#1e3a8a; margin:20px 0;">
-    📋 Mauzo Yote
+     Mauzo Yote
     <span style="background:#f1f5f9; padding:4px 10px; border-radius:20px;">
         History
     </span>

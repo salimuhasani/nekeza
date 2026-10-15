@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Chat · {{ chat_user.username }}{% endblock %}
+{% block head %}
+<style>
+.chat-box { display:flex; flex-direction:column; height: min(70vh, 560px); }
+.chat-msgs { flex:1; overflow-y:auto; padding:12px; background:#f8fafc; border-radius:14px; border:1px solid var(--border); margin-bottom:12px; }
+.bubble { max-width:85%; padding:10px 12px; border-radius:14px; margin-bottom:8px; font-size:13px; }
+.bubble.me { background:#1e3a8a; color:#fff; margin-left:auto; }
+.bubble.them { background:#fff; border:1px solid var(--border); margin-right:auto; }
+.chat-form { display:flex; gap:8px; }
+.chat-form input { flex:1; border:1.5px solid var(--border); border-radius:12px; padding:12px; }
+</style>
+{% endblock %}
+{% block content %}
+<a href="{{ url_for('admin_chats') }}" class="muted small" style="font-weight:700">← Rudi</a>
+<h1 style="margin-top:8px">Chat · {{ chat_user.username }}</h1>
+<div class="card chat-box">
+  <div class="chat-msgs" id="chatMsgs">
+    {% for m in messages %}
+    <div class="bubble {{ 'me' if m.sender == 'admin' else 'them' }}" data-id="{{ m.id }}">{{ m.body }}</div>
+    {% endfor %}
+  </div>
+  <form method="post" class="chat-form">
+    <input type="text" name="body" placeholder="Jibu..." required autocomplete="off">
+    <button class="btn" type="submit"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg></button>
+  </form>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function(){
+  var box=document.getElementById('chatMsgs'); if(box) box.scrollTop=box.scrollHeight;
+  var last=0, uid={{ chat_user.id }};
+  document.querySelectorAll('#chatMsgs [data-id]').forEach(function(el){ var id=parseInt(el.getAttribute('data-id'),10); if(id>last) last=id; });
+  setInterval(function(){
+    fetch('/api/chat/poll?after='+last+'&user_id='+uid,{credentials:'same-origin'}).then(function(r){return r.json();}).then(function(d){
+      (d.items||[]).forEach(function(m){
+        if(m.id<=last) return; last=m.id;
+        var div=document.createElement('div');
+        div.className='bubble '+(m.sender==='admin'?'me':'them');
+        div.textContent=m.body;
+        box.appendChild(div);
+      });
+      box.scrollTop=box.scrollHeight;
+    }).catch(function(){});
+  }, 4000);
+})();
+</script>
+{% endblock %}

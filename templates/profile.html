@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Profile{% endblock %}
+{% block content %}
+<div style="max-width:480px;margin:0 auto">
+  <h1>Profile</h1>
+  <p class="muted" style="margin-bottom:16px">Hariri jina la mtumiaji na taarifa zako.</p>
+  <div class="card">
+    <form method="post">
+      <div class="field">
+        <label for="username">Username</label>
+        <input id="username" name="username" value="{{ user.username }}" required minlength="3" maxlength="80">
+      </div>
+      <div class="field">
+        <label for="full_name">Jina kamili (si lazima)</label>
+        <input id="full_name" name="full_name" value="{{ user.mother_name or '' }}" maxlength="120" placeholder="Jina lako">
+      </div>
+      <div class="field">
+        <label>Role</label>
+        <input value="{{ user.role }}" disabled style="opacity:.7">
+      </div>
+      {% if user.pin_expiry %}
+      <div class="field">
+        <label>Akaunti inaisha</label>
+        <input value="{{ user.pin_expiry }}" disabled style="opacity:.7">
+      </div>
+      {% endif %}
+      <button class="btn btn-block" type="submit">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Hifadhi mabadiliko
+      </button>
+    </form>
+    <div style="margin-top:14px;display:flex;flex-direction:column;gap:8px">
+      <a href="{{ url_for('change_pin') }}" class="btn btn-secondary btn-block">Badilisha password / PIN</a>
+      <a href="{{ url_for('settings') }}" class="btn btn-secondary btn-block">Rudi Settings</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

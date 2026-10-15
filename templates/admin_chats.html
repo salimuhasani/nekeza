@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Customer Care Admin{% endblock %}
+{% block content %}
+<h1>Customer Care</h1>
+<p class="muted" style="margin-bottom:14px">Chat za watumiaji na tiketi za wageni.</p>
+
+<div class="card" style="margin-bottom:16px">
+  <h2>Chat (waliyo login)</h2>
+  {% for t in threads %}
+  <a href="{{ url_for('admin_chat_user', user_id=t.user.id) }}" style="display:flex;justify-content:space-between;padding:12px;border-bottom:1px solid var(--border)">
+    <div>
+      <strong>{{ t.user.username }}</strong> <span class="muted small">({{ t.user.role }})</span>
+      <div class="muted small">{{ t.last.body if t.last else '' }}</div>
+    </div>
+    {% if t.unread %}<span class="badge-pill">{{ t.unread }}</span>{% endif %}
+  </a>
+  {% else %}
+  <p class="muted">Hakuna chat bado.</p>
+  {% endfor %}
+</div>
+
+<div class="card">
+  <h2>Tiketi (wageni)</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Jina</th><th>Simu</th><th>Ujumbe</th><th>Status</th></tr></thead>
+      <tbody>
+      {% for tk in tickets %}
+        <tr>
+          <td>{{ tk.name }}</td>
+          <td>{{ tk.phone }}</td>
+          <td>{{ tk.message[:80] }}{% if tk.message|length > 80 %}…{% endif %}</td>
+          <td>{{ tk.status }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="4" class="muted">Hakuna tiketi.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

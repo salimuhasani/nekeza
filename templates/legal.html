@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}{% if page == 'privacy' %}Privacy{% else %}Terms{% endif %} · {{ app_name }}{% endblock %}
+{% block content %}
+<div class="card" style="max-width:720px;margin:0 auto">
+{% if page == 'privacy' %}
+  <h1>Sera ya Faragha (Privacy Policy)</h1>
+  <p class="muted">Imeboreshwa: Oktoba 2026</p>
+  <h2>1. Data tunayokusanya</h2>
+  <p>Jina la mtumiaji, namba ya simu (support), rekodi za mauzo, stock, na ujumbe wa customer care.</p>
+  <h2>2. Matumizi</h2>
+  <p>Data inatumika kuendesha huduma za mauzo, stock, usimamizi wa wafanyakazi, na msaada kwa wateja.</p>
+  <h2>3. Uhifadhi</h2>
+  <p>Data inahifadhiwa kwenye database salama (Supabase/Postgres). Ufikiaji ni kwa watumiaji wenye ruhusa tu.</p>
+  <h2>4. Push notifications</h2>
+  <p>Ukikubali, tunaweza kutuma taarifa kwenye kifaa chako kuhusu chat, akaunti, au matukio muhimu.</p>
+  <h2>5. Haki zako</h2>
+  <p>Unaweza kuomba kufuta akaunti yako kupitia sehemu ya <strong>Futa Akaunti</strong> ndani ya app.</p>
+  <h2>6. Mawasiliano</h2>
+  <p>Maswali kuhusu faragha: tumia Customer Care ndani ya app.</p>
+{% else %}
+  <h1>Vigezo na Masharti (Terms of Service)</h1>
+  <p class="muted">Imeboreshwa: Oktoba 2026</p>
+  <h2>1. Huduma</h2>
+  <p>{{ app_name }} ni mfumo wa kurekodi mauzo, stock, na usimamizi wa wafanyakazi.</p>
+  <h2>2. Akaunti</h2>
+  <p>Una wajibu wa kulinda password yako. Admin anaweza kuweka muda wa kuisha kwa akaunti za boss.</p>
+  <h2>3. Matumizi sahihi</h2>
+  <p>Usitumie mfumo kwa udanganyifu, spam, au uvunjaji wa sheria za Tanzania.</p>
+  <h2>4. Data ya biashara</h2>
+  <p>Rekodi za mauzo na stock ni za mmiliki wa akaunti (boss/admin). Mfanyakazi anaona data aliyoidhinishwa tu.</p>
+  <h2>5. Muda wa huduma</h2>
+  <p>Akaunti inaweza kuwa na tarehe ya kuisha. Ongeza muda kupitia admin.</p>
+  <h2>6. Mabadiliko</h2>
+  <p>Tunaweza kusasisha masharti haya; toleo jipya litaonekana kwenye ukurasa huu.</p>
+{% endif %}
+</div>
+{% endblock %}

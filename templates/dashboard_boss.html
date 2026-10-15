@@ -113,7 +113,7 @@
 
 <div class="container">
 
-    <h1 class="welcome">Karibu, {{ username }} 👋</h1>
+    <h1 class="welcome">Karibu, {{ username }} </h1>
     <p class="subtitle">Muhtasari wa biashara yako leo</p>
 
     <!-- Total Balance -->
@@ -138,7 +138,7 @@
     <!-- Button -->
     <div class="main-action">
         <a href="{{ url_for('sales') }}" class="btn-large">
-            📊 TAZAMA MAUZO YOTE
+             TAZAMA MAUZO YOTE
         </a>
     </div>
 
@@ -147,7 +147,7 @@
 <div style="margin: 40px 0; text-align: center;">
     <button onclick="toggleExportForm()"
             style="padding: 14px 32px; background: linear-gradient(135deg, #1e3a8a, #3b82f6); color: white; border: none; border-radius: 12px; font-size: 1.1rem; font-weight: 600; cursor: pointer;">
-        📥 Pakua Ripoti ya PDF
+         Pakua Ripoti ya PDF
     </button>
 </div>
 
@@ -184,7 +184,7 @@
 
         <button type="submit"
                 style="width: 100%; padding: 14px; background: linear-gradient(135deg, #16a34a, #22c55e); color: white; border: none; border-radius: 12px; font-size: 1.1rem; font-weight: 600;">
-            📄 Pakua Ripoti ya PDF
+             Pakua Ripoti ya PDF
         </button>
     </form>
 </div>
@@ -205,7 +205,7 @@ document.getElementById('filter_type').addEventListener('change', function() {
     <!-- Export -->
     <div class="export-section">
         <a href="{{ url_for('export_pdf') }}" style="color: #64748b; text-decoration: none; font-size: 0.95rem;">
-            📄 Pakua Ripoti ya Mauzo (PDF)
+             Pakua Ripoti ya Mauzo (PDF)
         </a>
     </div>
 

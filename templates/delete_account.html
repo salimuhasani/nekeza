@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Futa Akaunti{% endblock %}
+{% block content %}
+<div style="max-width:420px;margin:0 auto">
+  <h1>Futa Akaunti</h1>
+  <p class="muted" style="margin-bottom:14px">Hatua hii ni ya kudumu. Data yako itafutwa.</p>
+  <div class="card">
+    <form method="post">
+      <div class="field">
+        <label>Password yako</label>
+        <input type="password" name="password" required autocomplete="current-password">
+      </div>
+      <div class="field">
+        <label>Andika <strong>FUTA</strong> kuthibitisha</label>
+        <input name="confirm_text" required placeholder="FUTA" autocomplete="off">
+      </div>
+      <button class="btn btn-danger btn-block" type="submit"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg> Futa akaunti kabisa</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

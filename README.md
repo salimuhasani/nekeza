@@ -1,59 +1,23 @@
-# Masai / Ramkey — Vercel + Supabase
+# NEKEZA — Vercel + Supabase
 
-App ya Flask (sales, products, employees, defects) tayari kwa **GitHub → Vercel** na database **Supabase (Postgres)**.
+## Features
+- Mauzo, stock, wafanyakazi (logic ya asili)
+- **Thamani ya duka** (cost / retail / profit) kwenye Stock
+- **PWA + Web Push**
+- **Live Chat** (logged-in) + **Customer Care** (guest)
+- **Muda wa akaunti** (admin ongeza siku / set date; boss anaona siku zilizobaki)
+- Privacy, Terms, Futa akaunti
+- UI ya kisasa (simu + PC)
 
-Logic na templates zimebaki vile vile. Imeongezwa tu support ya Postgres + env vars.
-
-## 1. Supabase
-
-1. Fungua https://supabase.com → New Project
-2. **Project Settings → Database → Connection string → URI**
-3. Copy URL (mfano `postgresql://postgres:...@db.xxx.supabase.co:5432/postgres`)
-
-## 2. Environment Variables (Vercel)
-
-| Variable | Mfano | Lazima |
-|----------|--------|--------|
-| `DATABASE_URL` | `postgresql://postgres:PASSWORD@db.xxx.supabase.co:5432/postgres` | Ndiyo |
-| `SECRET_KEY` | random string ≥ 32 chars | Ndiyo |
-| `ADMIN_USERNAME` | `admin` | Hapana (default admin) |
-| `ADMIN_PASSWORD` | password yako | Hapana (default admin123) |
-| `COOKIE_SECURE` | `true` | Ndiyo kwenye production |
-
-## 3. GitHub
-
-```bash
-cd masai_vercel
-git init
-git add .
-git commit -m "Masai app ready for Vercel + Supabase"
-git branch -M main
-git remote add origin https://github.com/USERNAME/REPO.git
-git push -u origin main
+## Env (Vercel)
 ```
-
-## 4. Vercel
-
-1. https://vercel.com → Add New Project → Import GitHub repo
-2. Framework: Other
-3. Root directory: (repo root)
-4. Ongeza Environment Variables hapo juu
-5. Deploy
-
-Baada ya deploy, fungua site → login `admin` / password uliyoweka.
-
-## 5. Local (SQLite)
-
-Bila `DATABASE_URL`, app inatumia `database.db` (SQLite) automatically:
-
-```bash
-pip install -r requirements.txt
-python app.py
+DATABASE_URL
+SECRET_KEY
+ADMIN_PASSWORD
+COOKIE_SECURE=true
 ```
+Optional: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `APP_NAME`
 
-## Muhimu
-
-- Usichange templates / routes — zimebaki kama zilivyokuwa
-- Tables zinaundwa automatic (init_db) kwenye request ya kwanza
-- Default admin inaundwa kama haipo
-- Badilisha `ADMIN_PASSWORD` mara moja baada ya deploy
+## Deploy
+GitHub → Vercel import → env vars → Deploy
+Login: admin / ADMIN_PASSWORD

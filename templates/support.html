@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Customer Care · {{ app_name }}{% endblock %}
+{% block content %}
+<div style="max-width:480px;margin:0 auto">
+  <h1>Customer Care</h1>
+  <p class="muted" style="margin-bottom:16px">Tuma ujumbe — tutakujibu haraka iwezekanavyo.</p>
+  <div class="card">
+    <form method="post">
+      <div class="field">
+        <label>Jina lako</label>
+        <input name="name" required minlength="2" maxlength="120" placeholder="Jina">
+      </div>
+      <div class="field">
+        <label>Namba ya simu</label>
+        <input name="phone" type="tel" required placeholder="07XXXXXXXX">
+      </div>
+      <div class="field">
+        <label>Ujumbe</label>
+        <textarea name="message" required minlength="3" maxlength="2000" placeholder="Eleza tatizo au swali lako..."></textarea>
+      </div>
+      <button class="btn btn-block" type="submit"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg> Tuma</button>
+    </form>
+  </div>
+  <p class="muted small" style="text-align:center;margin-top:14px">Una akaunti? <a href="{{ url_for('login') }}" style="color:var(--primary);font-weight:700">Ingia</a> kwa live chat.</p>
+</div>
+{% endblock %}

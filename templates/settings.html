@@ -1,113 +1,64 @@
 {% extends "base.html" %}
-
+{% block title %}Settings{% endblock %}
 {% block content %}
+<h1>Settings</h1>
+<p class="muted" style="margin-bottom:16px">Akaunti, usalama na msaada.</p>
 
-<style>
-    body {
-        background: #f1f5f9;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-
-    .container {
-        max-width: 900px;
-        margin: auto;
-        padding: 20px;
-    }
-
-    h1 {
-        text-align: center;
-        margin-bottom: 30px;
-        color: #0f172a;
-    }
-
-    .grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 20px;
-    }
-
-    .card {
-        background: white;
-        padding: 25px;
-        border-radius: 15px;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.08);
-        transition: 0.3s;
-    }
-
-    .card:hover {
-        transform: translateY(-5px);
-    }
-
-    .card h2 {
-        margin-bottom: 10px;
-        color: #0f172a;
-    }
-
-    .card p {
-        color: #475569;
-        margin-bottom: 20px;
-        line-height: 1.5;
-    }
-
-    .btn {
-        display: inline-block;
-        width: 100%;
-        padding: 12px;
-        background: #0f172a;
-        color: white;
-        border: none;
-        border-radius: 10px;
-        text-align: center;
-        text-decoration: none;
-        font-weight: bold;
-        transition: 0.3s;
-    }
-
-    .btn:hover {
-        background: #1e293b;
-    }
-
-    .about {
-        font-size: 0.95rem;
-        line-height: 1.6;
-    }
-
-    .highlight {
-        color: #0f172a;
-        font-weight: bold;
-    }
-</style>
-
-<div class="container">
-
-    <h1>⚙️ Settings</h1>
-
-    <div class="grid">
-
-        <!-- Change PIN -->
-        <div class="card">
-            <h2>🔐 Badilisha PIN</h2>
-            <p>
-                Unaweza kubadilisha PIN yako kwa usalama zaidi.
-                Inashauriwa kutumia PIN ngumu ili kulinda akaunti yako.
-            </p>
-
-            <a href="{{ url_for('change_pin') }}" class="btn">
-                Badilisha PIN Yangu
-            </a>
-        </div>
-
-        <!-- About -->
-        <div class="card">
-            <h2>ℹ️ Kuhusu KENEZA</h2>
-            <p class="about">
-                <span class="highlight">KENEZA</span> ni mfumo unaomsaidia Boss kusimamia biashara kwa urahisi,
-                kufuatilia wafanyakazi, na kupunguza hatari ya wizi au matumizi mabaya ya mfumo.
-            </p>
-        </div>
-
+<div class="grid-2">
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+      <span class="ico" style="width:40px;height:40px;border-radius:12px;background:var(--primary-soft);color:var(--primary);display:grid;place-items:center">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </span>
+      <div>
+        <h2 style="margin:0">Profile</h2>
+        <p class="muted small" style="margin:0">{{ user.username if user else session.get('username') }}</p>
+      </div>
     </div>
+    <p class="muted small">Hariri username na jina lako.</p>
+    <a href="{{ url_for('profile') }}" class="btn btn-block">Hariri Profile</a>
+  </div>
 
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+      <span class="ico" style="width:40px;height:40px;border-radius:12px;background:var(--primary-soft);color:var(--primary);display:grid;place-items:center">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </span>
+      <h2 style="margin:0">Usalama</h2>
+    </div>
+    <p class="muted small">Badilisha PIN / password yako.</p>
+    <a href="{{ url_for('change_pin') }}" class="btn btn-block">Badilisha PIN</a>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+      <span class="ico" style="width:40px;height:40px;border-radius:12px;background:var(--primary-soft);color:var(--primary);display:grid;place-items:center">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      </span>
+      <h2 style="margin:0">Customer Care</h2>
+    </div>
+    <p class="muted small">Chagua njia ya kuwasiliana na admin.</p>
+    <a href="{{ url_for('contact_admin') }}" class="btn btn-block">Wasiliana na Admin</a>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+      <span class="ico" style="width:40px;height:40px;border-radius:12px;background:#fef2f2;color:var(--red);display:grid;place-items:center">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>
+      </span>
+      <h2 style="margin:0">Futa Akaunti</h2>
+    </div>
+    <p class="muted small">Futa akaunti na data zako kabisa.</p>
+    <a href="{{ url_for('delete_account') }}" class="btn btn-danger btn-block">Futa Akaunti</a>
+  </div>
 </div>
 
+<div class="card" style="margin-top:14px">
+  <h2>Sheria</h2>
+  <div style="display:flex;gap:12px;flex-wrap:wrap">
+    <a href="{{ url_for('privacy') }}" class="btn btn-secondary">Privacy</a>
+    <a href="{{ url_for('terms') }}" class="btn btn-secondary">Terms</a>
+    <a href="{{ url_for('about') }}" class="btn btn-secondary">Kuhusu</a>
+  </div>
+</div>
 {% endblock %}
