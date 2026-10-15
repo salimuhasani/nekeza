@@ -21,6 +21,7 @@
 
 <div class="card">
   <h2>Tickets</h2>
+  <input type="search" class="page-search" placeholder="Tafuta ticket (jina/simu)..." autocomplete="off">
   <div class="table-wrap">
     <table>
       <thead>
@@ -35,7 +36,7 @@
       </thead>
       <tbody>
       {% for tk in tickets %}
-        <tr>
+        <tr data-search-row data-search-text="{{ tk.name }} {{ tk.phone }} {{ tk.message }}">
           <td>{{ tk.id }}</td>
           <td>{{ tk.name }}</td>
           <td>{{ tk.phone }}</td>

@@ -31,6 +31,7 @@
 
 <div class="card">
   <h2>Orodha</h2>
+  <input type="search" class="page-search" placeholder="Tafuta mtumiaji..." autocomplete="off">
   <div class="table-wrap">
     <table>
       <thead>
@@ -46,7 +47,7 @@
       <tbody>
       {% for item in users_info|default([]) %}
         {% set u = item.user %}
-        <tr>
+        <tr data-search-row data-search-text="{{ u.username }} {{ u.role }}">
           <td><strong>{{ u.username }}</strong></td>
           <td>{{ u.role }}</td>
           <td>

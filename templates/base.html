@@ -323,6 +323,28 @@
     }
     .cs-option.disabled { opacity: .45; pointer-events: none; }
 
+    
+    .cs-search-wrap {
+      position: sticky; top: 0; background: #fff; padding: 6px 6px 8px; z-index: 1;
+      border-bottom: 1px solid var(--border); margin-bottom: 4px;
+    }
+    .cs-search {
+      width: 100%; border: 1.5px solid var(--border); border-radius: 10px;
+      padding: 9px 12px 9px 34px; font-size: 12.5px; font-weight: 600;
+      background: #f8fafc url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M21 21l-4.3-4.3'/%3E%3C/svg%3E") no-repeat 10px center;
+      outline: none; color: var(--text);
+    }
+    .cs-search:focus { border-color: var(--primary-2); background-color: #fff; }
+    .cs-empty { padding: 12px; text-align: center; color: var(--muted); font-size: 12px; font-weight: 600; }
+    .page-search {
+      width: 100%; max-width: 360px; margin-bottom: 12px;
+      border: 1.5px solid var(--border); border-radius: 12px;
+      padding: 11px 14px 11px 40px; font-size: 13px; font-weight: 600;
+      background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M21 21l-4.3-4.3'/%3E%3C/svg%3E") no-repeat 12px center;
+      outline: none;
+    }
+    .page-search:focus { border-color: var(--primary-2); box-shadow: 0 0 0 3px rgba(59,130,246,.12); }
+
     @media (max-width: 900px) {
       .nav-desktop { display: none; }
       .grid-2, .grid-3 { grid-template-columns: 1fr; }
@@ -496,7 +518,7 @@
 
 
 <script>
-/* Fully custom select — replaces native browser dropdown UI */
+/* Fully custom select + search */
 (function(){
   function build(sel){
     if(sel.dataset.csDone) return;
@@ -510,7 +532,6 @@
     var btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'cs-btn';
-    btn.setAttribute('aria-haspopup', 'listbox');
     var label = document.createElement('span');
     label.className = 'cs-label';
     var chev = document.createElement('span');
@@ -521,34 +542,59 @@
 
     var list = document.createElement('div');
     list.className = 'cs-list';
-    list.setAttribute('role', 'listbox');
+
+    var searchWrap = document.createElement('div');
+    searchWrap.className = 'cs-search-wrap';
+    var search = document.createElement('input');
+    search.type = 'search';
+    search.className = 'cs-search';
+    search.placeholder = 'Tafuta...';
+    search.setAttribute('autocomplete', 'off');
+    searchWrap.appendChild(search);
+    list.appendChild(searchWrap);
+
+    var optsBox = document.createElement('div');
+    optsBox.className = 'cs-opts';
+    list.appendChild(optsBox);
 
     function syncLabel(){
       var opt = sel.options[sel.selectedIndex];
       label.textContent = opt ? opt.textContent : '';
     }
-    function rebuild(){
-      list.innerHTML = '';
+    function rebuild(filter){
+      filter = (filter || '').toLowerCase().trim();
+      optsBox.innerHTML = '';
+      var shown = 0;
       Array.prototype.forEach.call(sel.options, function(opt, i){
+        var text = opt.textContent || '';
+        if(filter && text.toLowerCase().indexOf(filter) === -1) return;
+        shown++;
         var item = document.createElement('div');
         item.className = 'cs-option' + (opt.selected ? ' selected' : '') + (opt.disabled ? ' disabled' : '');
-        item.textContent = opt.textContent;
-        item.dataset.index = i;
+        item.textContent = text;
         item.addEventListener('click', function(){
           if(opt.disabled) return;
           sel.selectedIndex = i;
           sel.dispatchEvent(new Event('change', { bubbles: true }));
           syncLabel();
           close();
-          rebuild();
         });
-        list.appendChild(item);
+        optsBox.appendChild(item);
       });
+      if(!shown){
+        var empty = document.createElement('div');
+        empty.className = 'cs-empty';
+        empty.textContent = 'Hakuna matokeo';
+        optsBox.appendChild(empty);
+      }
       syncLabel();
     }
     function open(){
       btn.classList.add('open');
       list.classList.add('open');
+      search.value = '';
+      rebuild('');
+      setTimeout(function(){ try{ search.focus(); }catch(e){} }, 30);
     }
     function close(){
       btn.classList.remove('open');
@@ -557,15 +603,20 @@
     btn.addEventListener('click', function(e){
       e.preventDefault();
       e.stopPropagation();
-      if(list.classList.contains('open')) close(); else { rebuild(); open(); }
+      if(list.classList.contains('open')) close(); else open();
+    });
+    search.addEventListener('input', function(){ rebuild(search.value); });
+    search.addEventListener('click', function(e){ e.stopPropagation(); });
+    search.addEventListener('keydown', function(e){
+      if(e.key === 'Escape'){ close(); btn.focus(); }
     });
     document.addEventListener('click', function(e){
       if(!wrap.contains(e.target)) close();
     });
     wrap.appendChild(btn);
     wrap.appendChild(list);
-    rebuild();
-    sel.addEventListener('change', function(){ syncLabel(); rebuild(); });
+    rebuild('');
+    sel.addEventListener('change', function(){ syncLabel(); });
   }
   function initAll(){
     document.querySelectorAll('select').forEach(build);
@@ -574,7 +625,23 @@
   else initAll();
   window.nekezaCustomSelects = initAll;
 })();
+
+/* Page table/list search helper: input.page-search filters [data-search-row] */
+(function(){
+  document.querySelectorAll('input.page-search').forEach(function(inp){
+    inp.addEventListener('input', function(){
+      var q = (inp.value || '').toLowerCase().trim();
+      var root = document.querySelector(inp.dataset.target || 'table') || document;
+      var rows = document.querySelectorAll('[data-search-row]');
+      rows.forEach(function(row){
+        var text = (row.getAttribute('data-search-text') || row.textContent || '').toLowerCase();
+        row.style.display = (!q || text.indexOf(q) !== -1) ? '' : 'none';
+      });
+    });
+  });
+})();
 </script>
+
 
 </body>
 </html>
