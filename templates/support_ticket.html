@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Ticket #{{ ticket.id }}{% endblock %}
+{% block head %}
+<style>
+.tk-head { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+.status-pill {
+  display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:999px;
+  font-size:11px; font-weight:800; text-transform:uppercase;
+}
+.status-open { background:#ecfdf5; color:#065f46; }
+.status-closed { background:#f1f5f9; color:#64748b; }
+.chat-box { display:flex; flex-direction:column; height:min(62vh,520px); }
+.chat-msgs { flex:1; overflow-y:auto; padding:12px; background:#f8fafc; border-radius:14px; border:1px solid var(--border); margin-bottom:12px; }
+.bubble { max-width:85%; padding:10px 12px; border-radius:14px; margin-bottom:8px; font-size:13px; line-height:1.45; position:relative; }
+.bubble.me { background:#1e3a8a; color:#fff; margin-left:auto; border-bottom-right-radius:4px; }
+.bubble.them { background:#fff; border:1px solid var(--border); margin-right:auto; border-bottom-left-radius:4px; }
+.bubble .meta { font-size:10px; opacity:.75; margin-top:4px; }
+.unread-dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:#fbbf24; margin-left:4px; }
+.chat-form { display:flex; gap:8px; }
+.chat-form input { flex:1; border:1.5px solid var(--border); border-radius:12px; padding:12px; }
+</style>
+{% endblock %}
+{% block content %}
+<div style="max-width:560px;margin:0 auto">
+  <div class="tk-head">
+    <div>
+      <a href="{{ url_for('admin_chats') if is_admin else url_for('support', tab='lookup') }}" class="muted small" style="font-weight:700">Rudi</a>
+      <h1 style="margin:6px 0 4px;font-size:20px">Ticket #{{ ticket.id }}</h1>
+      <div class="muted small">{{ ticket.name }} · {{ ticket.phone }}</div>
+    </div>
+    <span class="status-pill status-{{ ticket.status }}">{{ ticket.status }}</span>
+  </div>
+
+  {% if is_admin %}
+  <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+    <form method="post" action="{{ url_for('admin_ticket_status', ticket_id=ticket.id) }}">
+      <input type="hidden" name="status" value="open">
+      <button class="btn btn-success" type="submit" style="min-height:36px;font-size:12px;padding:8px 12px">Open</button>
+    </form>
+    <form method="post" action="{{ url_for('admin_ticket_status', ticket_id=ticket.id) }}">
+      <input type="hidden" name="status" value="closed">
+      <button class="btn btn-secondary" type="submit" style="min-height:36px;font-size:12px;padding:8px 12px">Close</button>
+    </form>
+  </div>
+  {% endif %}
+
+  <div class="card chat-box">
+    <div class="chat-msgs" id="chatMsgs">
+      {% for m in messages %}
+      {% set mine = (is_admin and m.sender == 'admin') or ((not is_admin) and m.sender == 'user') %}
+      <div class="bubble {{ 'me' if mine else 'them' }}" data-id="{{ m.id }}">
+        {{ m.body }}
+        <div class="meta">
+          {{ m.sender }}
+          {% if not m.is_read and not mine %}<span class="unread-dot" title="Haijasomwa"></span>{% endif %}
+        </div>
+      </div>
+      {% else %}
+      <p class="muted small">Hakuna ujumbe bado.</p>
+      {% endfor %}
+    </div>
+    {% if ticket.status != 'closed' or is_admin %}
+    <form method="post" class="chat-form">
+      <input type="text" name="body" placeholder="Andika ujumbe..." required autocomplete="off" {% if ticket.status == 'closed' and not is_admin %}disabled{% endif %}>
+      <button class="btn" type="submit" {% if ticket.status == 'closed' and not is_admin %}disabled{% endif %}>Tuma</button>
+    </form>
+    {% else %}
+    <p class="muted small" style="text-align:center;margin:0">Ticket imefungwa. Fungua ticket mpya kama bado unahitaji msaada.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function(){ var b=document.getElementById('chatMsgs'); if(b) b.scrollTop=b.scrollHeight; })();
+</script>
+{% endblock %}

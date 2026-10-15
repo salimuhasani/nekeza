@@ -1,11 +1,32 @@
 {% extends "base.html" %}
-{% block title %}Customer Care · {{ app_name }}{% endblock %}
+{% block title %}Customer Care{% endblock %}
 {% block content %}
-<div style="max-width:480px;margin:0 auto">
+<div style="max-width:520px;margin:0 auto">
   <h1>Customer Care</h1>
-  <p class="muted" style="margin-bottom:16px">Tuma ujumbe — tutakujibu haraka iwezekanavyo.</p>
+  <p class="muted" style="margin-bottom:14px">Fungua ticket mpya au tafuta ticket yako kwa namba ya simu.</p>
+
+  <div style="display:flex;gap:8px;margin-bottom:14px">
+    <a href="{{ url_for('support', tab='new') }}" class="btn {% if tab != 'lookup' %}{% else %}btn-secondary{% endif %}" style="flex:1">Ticket mpya</a>
+    <a href="{{ url_for('support', tab='lookup') }}" class="btn {% if tab == 'lookup' %}{% else %}btn-secondary{% endif %}" style="flex:1">Tafuta ticket</a>
+  </div>
+
+  {% if tab == 'lookup' %}
   <div class="card">
+    <h2 style="margin-top:0">Tafuta kwa namba ya simu</h2>
     <form method="post">
+      <input type="hidden" name="action" value="lookup">
+      <div class="field">
+        <label>Namba ya simu uliyotumia</label>
+        <input name="phone" type="tel" required placeholder="07XXXXXXXX" inputmode="numeric">
+      </div>
+      <button class="btn btn-block" type="submit">Tafuta & fungua chat</button>
+    </form>
+  </div>
+  {% else %}
+  <div class="card">
+    <h2 style="margin-top:0">Fungua ticket</h2>
+    <form method="post">
+      <input type="hidden" name="action" value="create">
       <div class="field">
         <label>Jina lako</label>
         <input name="name" required minlength="2" maxlength="120" placeholder="Jina">
@@ -16,11 +37,17 @@
       </div>
       <div class="field">
         <label>Ujumbe</label>
-        <textarea name="message" required minlength="3" maxlength="2000" placeholder="Eleza tatizo au swali lako..."></textarea>
+        <textarea name="message" required minlength="3" maxlength="2000" placeholder="Eleza tatizo au swali..."></textarea>
       </div>
-      <button class="btn btn-block" type="submit"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg> Tuma</button>
+      <button class="btn btn-block" type="submit">Tuma ticket</button>
     </form>
   </div>
-  <p class="muted small" style="text-align:center;margin-top:14px">Una akaunti? <a href="{{ url_for('login') }}" style="color:var(--primary);font-weight:700">Ingia</a> kwa live chat.</p>
+  {% endif %}
+
+  {% if session.get('user_id') and session.get('role') != 'admin' %}
+  <p class="muted small" style="text-align:center;margin-top:14px">
+    Au tumia <a href="{{ url_for('chat') }}" style="color:var(--primary);font-weight:700">Live Chat</a> (umeingia).
+  </p>
+  {% endif %}
 </div>
 {% endblock %}

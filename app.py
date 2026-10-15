@@ -543,7 +543,7 @@ def login():
             if not user['initial_pin_used']:
                 return redirect(url_for('change_pin'))
 
-            # Ukumbusho wa malipo: mara 1 kwa siku ikiwa siku <= 5 (boss)
+            # Ukumbusho malipo: flash + push, mara 1 kwa siku ikiwa siku <= 5
             if user['role'] == 'boss':
                 left = days_until_expiry(user['pin_expiry'])
                 if left is not None and left <= 5:
@@ -552,11 +552,16 @@ def login():
                     if last_key != today_key:
                         session['pay_remind_day'] = today_key
                         if left < 0:
-                            flash("Akaunti yako imeisha muda. Fanya malipo ili uendelee kutumia huduma.", "warning")
+                            msg = "Akaunti yako imeisha muda. Fanya malipo ili uendelee kutumia huduma."
                         elif left == 0:
-                            flash("Akaunti inaisha leo. Fanya malipo au wasiliana na admin.", "warning")
+                            msg = "Akaunti inaisha leo. Fanya malipo au wasiliana na admin."
                         else:
-                            flash(f"Siku {left} zimebaki. Tafadhali fanya malipo ili kuongeza muda wa akaunti.", "warning")
+                            msg = f"Siku {left} zimebaki. Tafadhali fanya malipo ili kuongeza muda wa akaunti."
+                        flash(msg, "warning")
+                        try:
+                            _send_web_push([user['id']], APP_NAME, msg, "/settings")
+                        except Exception:
+                            pass
 
             return redirect(url_for('dashboard'))
         else:
@@ -1670,39 +1675,214 @@ def admin_set_expiry(user_id):
 # ====================== CUSTOMER CARE / LIVE CHAT ======================
 @app.route("/support", methods=["GET", "POST"])
 def support():
-    """Guest customer care — ticket + simple thread by phone."""
-    if session.get("user_id"):
-        return redirect(url_for("chat"))
+    """Guest + anyone: open ticket OR lookup existing ticket by phone."""
+    if session.get("user_id") and session.get("role") != "admin":
+        # logged-in non-admin can use live chat OR tickets
+        pass
+
+    tab = request.args.get("tab", "new")
+    found = None
+    messages = []
+    ticket = None
+
     if request.method == "POST":
-        name = request.form.get("name", "").strip()[:120]
-        phone = request.form.get("phone", "").strip()[:20]
-        message = request.form.get("message", "").strip()[:2000]
-        if len(name) < 2 or len(phone) < 9 or len(message) < 3:
-            flash("Jaza jina, namba na ujumbe.", "danger")
-            return render_template("support.html")
-        conn = get_db()
+        action = request.form.get("action", "create")
+        if action == "lookup":
+            phone = "".join(c for c in request.form.get("phone", "") if c.isdigit())
+            if len(phone) < 9:
+                flash("Weka namba sahihi ya simu.", "danger")
+                return redirect(url_for("support", tab="lookup"))
+            conn = get_db()
+            ticket = conn.execute(
+                "SELECT * FROM support_tickets WHERE phone=? ORDER BY id DESC LIMIT 1",
+                (phone,),
+            ).fetchone()
+            if not ticket:
+                # also try last 9 digits match
+                tickets = conn.execute(
+                    "SELECT * FROM support_tickets ORDER BY id DESC LIMIT 100"
+                ).fetchall()
+                for tk in tickets:
+                    p = "".join(c for c in str(tk["phone"] or "") if c.isdigit())
+                    if p.endswith(phone[-9:]) or phone.endswith(p[-9:]):
+                        ticket = tk
+                        break
+            if not ticket:
+                conn.close()
+                flash("Hakuna ticket kwa namba hiyo.", "warning")
+                return redirect(url_for("support", tab="lookup"))
+            # store phone in session for guest thread access
+            session["support_phone"] = str(ticket["phone"])
+            session["support_ticket_id"] = ticket["id"]
+            conn.close()
+            return redirect(url_for("support_ticket", ticket_id=ticket["id"]))
+
+        if action == "create":
+            name = request.form.get("name", "").strip()[:120]
+            phone = request.form.get("phone", "").strip()[:20]
+            message = request.form.get("message", "").strip()[:2000]
+            if len(name) < 2 or len(phone) < 9 or len(message) < 3:
+                flash("Jaza jina, namba na ujumbe.", "danger")
+                return render_template("support.html", tab="new")
+            phone_digits = "".join(c for c in phone if c.isdigit())
+            conn = get_db()
+            conn.execute(
+                "INSERT INTO support_tickets (name, phone, message, status) VALUES (?, ?, ?, ?)",
+                (name, phone_digits or phone, message, "open"),
+            )
+            conn.commit()
+            # get id
+            if USE_PG:
+                row = conn.execute(
+                    "SELECT id FROM support_tickets WHERE phone=? ORDER BY id DESC LIMIT 1",
+                    (phone_digits or phone,),
+                ).fetchone()
+            else:
+                row = conn.execute("SELECT last_insert_rowid() AS id").fetchone()
+            tid = row["id"] if row else None
+            thread = f"ticket:{tid}"
+            uid = session.get("user_id")
+            conn.execute(
+                "INSERT INTO chat_messages (user_id, guest_name, guest_phone, sender, body, thread_key, is_read) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (uid, name, phone_digits or phone, "user", message, thread, False if USE_PG else 0),
+            )
+            conn.commit()
+            session["support_phone"] = phone_digits or phone
+            session["support_ticket_id"] = tid
+            try:
+                admins = conn.execute("SELECT id FROM users WHERE role=?", ("admin",)).fetchall()
+                _send_web_push(
+                    [a["id"] for a in admins],
+                    "Ticket mpya",
+                    f"{name}: {message[:80]}",
+                    "/admin/chats",
+                )
+            except Exception:
+                pass
+            conn.close()
+            flash("Ticket imetumwa. Unaweza kuendelea kuchati hapa.", "success")
+            if tid:
+                return redirect(url_for("support_ticket", ticket_id=tid))
+            return redirect(url_for("support", tab="lookup"))
+
+    return render_template("support.html", tab=tab)
+
+
+@app.route("/support/ticket/<int:ticket_id>", methods=["GET", "POST"])
+def support_ticket(ticket_id):
+    """User/guest chats on a ticket thread (lookup by phone session or logged-in)."""
+    conn = get_db()
+    ticket = conn.execute("SELECT * FROM support_tickets WHERE id=?", (ticket_id,)).fetchone()
+    if not ticket:
+        conn.close()
+        flash("Ticket haipatikani.", "danger")
+        return redirect(url_for("support", tab="lookup"))
+
+    # access control: admin always; phone match session; or logged-in owner-ish
+    is_admin = session.get("role") == "admin"
+    phone_ok = str(session.get("support_phone") or "") == str(ticket["phone"] or "")
+    if not is_admin and not phone_ok and not session.get("user_id"):
+        conn.close()
+        flash("Tafuta ticket yako kwa namba ya simu kwanza.", "warning")
+        return redirect(url_for("support", tab="lookup"))
+
+    thread = f"ticket:{ticket_id}"
+
+    if request.method == "POST":
+        if ticket["status"] == "closed" and not is_admin:
+            flash("Ticket imefungwa. Fungua mpya au wasiliana na admin.", "warning")
+            conn.close()
+            return redirect(url_for("support_ticket", ticket_id=ticket_id))
+        body = request.form.get("body", "").strip()[:2000]
+        if body:
+            sender = "admin" if is_admin else "user"
+            uid = session.get("user_id")
+            conn.execute(
+                "INSERT INTO chat_messages (user_id, guest_name, guest_phone, sender, body, thread_key, is_read) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (
+                    uid if sender == "user" else None,
+                    ticket["name"],
+                    ticket["phone"],
+                    sender,
+                    body,
+                    thread,
+                    False if USE_PG else 0,
+                ),
+            )
+            if is_admin and ticket["status"] == "open":
+                pass  # stay open until closed
+            conn.commit()
+            # notify other side
+            try:
+                if is_admin:
+                    # notify user if has user_id on thread messages
+                    rows = conn.execute(
+                        "SELECT DISTINCT user_id FROM chat_messages WHERE thread_key=? AND user_id IS NOT NULL",
+                        (thread,),
+                    ).fetchall()
+                    ids = [r["user_id"] for r in rows if r["user_id"]]
+                    if ids:
+                        _send_web_push(ids, "Jibu la Admin", body[:100], f"/support/ticket/{ticket_id}")
+                else:
+                    admins = conn.execute("SELECT id FROM users WHERE role=?", ("admin",)).fetchall()
+                    _send_web_push(
+                        [a["id"] for a in admins],
+                        "Ujumbe wa ticket",
+                        body[:100],
+                        f"/admin/ticket/{ticket_id}",
+                    )
+            except Exception:
+                pass
+        conn.close()
+        if is_admin:
+            return redirect(url_for("admin_ticket", ticket_id=ticket_id))
+        return redirect(url_for("support_ticket", ticket_id=ticket_id))
+
+    messages = conn.execute(
+        "SELECT * FROM chat_messages WHERE thread_key=? ORDER BY id ASC",
+        (thread,),
+    ).fetchall()
+    # mark read for current viewer
+    try:
+        other = "admin" if not is_admin else "user"
         conn.execute(
-            "INSERT INTO support_tickets (name, phone, message, status) VALUES (?, ?, ?, ?)",
-            (name, phone, message, "open"),
-        )
-        thread = f"guest:{phone}"
-        conn.execute(
-            "INSERT INTO chat_messages (user_id, guest_name, guest_phone, sender, body, thread_key, is_read) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (None, name, phone, "user", message, thread, False if USE_PG else 0),
+            "UPDATE chat_messages SET is_read=? WHERE thread_key=? AND sender=?",
+            (True if USE_PG else 1, thread, other),
         )
         conn.commit()
-        conn.close()
-        # notify admins
-        try:
-            conn = get_db()
-            admins = conn.execute("SELECT id FROM users WHERE role=?", ("admin",)).fetchall()
-            conn.close()
-            _send_web_push([a["id"] for a in admins], "Ujumbe mpya (Guest)", f"{name}: {message[:80]}", "/admin/chats")
-        except Exception:
-            pass
-        flash("Ujumbe umetumwa. Tutawasiliana nawe.", "success")
-        return redirect(url_for("support"))
-    return render_template("support.html")
+    except Exception:
+        pass
+    conn.close()
+    return render_template(
+        "support_ticket.html",
+        ticket=ticket,
+        messages=messages,
+        is_admin=is_admin,
+    )
+
+
+@app.route("/admin/ticket/<int:ticket_id>", methods=["GET", "POST"])
+@login_required
+@role_required(["admin"])
+def admin_ticket(ticket_id):
+    return support_ticket(ticket_id)
+
+
+@app.route("/admin/ticket/<int:ticket_id>/status", methods=["POST"])
+@login_required
+@role_required(["admin"])
+def admin_ticket_status(ticket_id):
+    status = request.form.get("status", "open").strip().lower()
+    if status not in ("open", "closed"):
+        flash("Status si sahihi.", "danger")
+        return redirect(url_for("admin_chats"))
+    conn = get_db()
+    conn.execute("UPDATE support_tickets SET status=? WHERE id=?", (status, ticket_id))
+    conn.commit()
+    conn.close()
+    flash(f"Ticket imewekwa: {status}.", "success")
+    return redirect(url_for("admin_ticket", ticket_id=ticket_id))
+
 
 
 @app.route("/chat", methods=["GET", "POST"])
