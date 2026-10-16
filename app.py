@@ -1560,13 +1560,20 @@ def _send_fcm(user_ids, title, body="", link="/"):
         if not tokens:
             print("fcm: no tokens for user_ids", user_ids)
             return
+
+        base = (APP_PUBLIC_URL or "https://nekeza.dutoza.com").rstrip("/")
+        full_link = link if (link or "").startswith("http") else (base + (link or "/"))
+
         dead = []
         for row in tokens:
             try:
                 msg = messaging.Message(
-                    notification=messaging.Notification(title=title or APP_NAME, body=body or ""),
+                    notification=messaging.Notification(
+                        title=title or APP_NAME,
+                        body=body or "",
+                    ),
                     data={
-                        "url": link or "/",
+                        "url": full_link,
                         "title": title or APP_NAME,
                         "body": body or "",
                     },
@@ -1585,16 +1592,16 @@ def _send_fcm(user_ids, title, body="", link="/"):
                         ),
                     ),
                     webpush=messaging.WebpushConfig(
-                        fcm_options=messaging.WebpushFCMOptions(link=link or "/"),
+                        fcm_options=messaging.WebpushFCMOptions(link=full_link),
                         notification=messaging.WebpushNotification(
                             title=title or APP_NAME,
                             body=body or "",
-                            icon="/static/icon-192.png",
+                            icon=base + "/static/icon-192.png",
                         ),
                     ),
                 )
                 messaging.send(msg)
-                print("fcm: sent ok to token", row["token"][:20], "...")
+                print("fcm: sent ok to token", str(row["token"])[:20], "...")
             except Exception as exc:
                 err = str(exc).lower()
                 print("fcm send error:", exc)
