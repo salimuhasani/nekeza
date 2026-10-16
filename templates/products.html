@@ -1,65 +1,281 @@
 {% extends "base.html" %}
 {% block title %}Stock · {{ app_name }}{% endblock %}
 {% block content %}
-<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px">
-  <div>
-    <div class="muted small" style="font-weight:700;text-transform:uppercase;letter-spacing:.5px">Inventory</div>
-    <h1 style="margin:0">Bidhaa & Stock</h1>
+<style>
+    .products-page {
+        max-width: 1250px;
+        margin: 0 auto;
+        padding: 0 4px 20px;
+    }
+    .products-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 16px;
+    }
+    .products-header h1 {
+        margin: 0;
+        font-size: 1.55rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+    .products-header .muted.small {
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        font-size: 0.72rem;
+    }
+    .products-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+    .page-search {
+        padding: 9px 12px;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        width: min(240px, 100%);
+        font-size: 0.9rem;
+        background: #fff;
+    }
+    .page-search:focus {
+        outline: 2px solid #3b82f6;
+        border-color: #3b82f6;
+    }
+    /* Inventory value cards — boss only */
+    .inv-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+    @media (max-width: 720px) {
+        .inv-grid { grid-template-columns: 1fr; }
+    }
+    .inv-stat {
+        background: #fff;
+        border-radius: 14px;
+        padding: 14px 16px;
+        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+        border: 1px solid #e2e8f0;
+    }
+    .inv-stat .label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .4px;
+        color: #64748b;
+        margin-bottom: 6px;
+    }
+    .inv-stat .value {
+        font-size: 1.25rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        line-height: 1.2;
+    }
+    .inv-stat .hint {
+        font-size: 0.72rem;
+        color: #94a3b8;
+        margin-top: 4px;
+    }
+    .inv-cost .value { color: var(--primary, #1e3a8a); }
+    .inv-retail .value { color: var(--green, #16a34a); }
+    .inv-profit .value { color: var(--orange, #ea580c); }
+
+    .table-card {
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.07);
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+    }
+    .table-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .table-wrap::-webkit-scrollbar { height: 6px; }
+    .table-wrap::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+    }
+    table.products-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.84rem;
+        table-layout: auto;
+    }
+    {% if session.get('role') == 'boss' %}
+    table.products-table { min-width: 920px; }
+    {% else %}
+    table.products-table { min-width: 100%; }
+    {% endif %}
+    .products-table th,
+    .products-table td {
+        padding: 8px 10px;
+        border-bottom: 1px solid #e2e8f0;
+        white-space: nowrap;
+    }
+    .products-table th {
+        background: #1e3a8a;
+        color: #fff;
+        font-weight: 600;
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: .3px;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+    }
+    .products-table tbody tr:hover { background: #f8fafc; }
+    .products-table tbody tr:last-child td { border-bottom: none; }
+
+    /* Column alignment */
+    .products-table th:nth-child(1),
+    .products-table td:nth-child(1) { text-align: left; }
+    .products-table th:nth-child(n+2),
+    .products-table td:nth-child(n+2) { text-align: center; }
+    {% if session.get('role') == 'boss' %}
+    .products-table th:nth-child(n+5),
+    .products-table td:nth-child(n+5) { text-align: right; }
+    {% endif %}
+
+    .col-name {
+        font-weight: 700;
+        color: #1e3a8a;
+        max-width: 160px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .low-stock {
+        color: #ef4444;
+        font-weight: 800;
+    }
+    .profit-cell { color: #16a34a; font-weight: 700; }
+    .profit-total-cell { color: #15803d; font-weight: 700; }
+    .cost-cell { color: #475569; font-weight: 600; }
+    .empty-row td {
+        text-align: center !important;
+        padding: 40px 16px;
+        color: #94a3b8;
+        font-weight: 500;
+    }
+
+    @media (max-width: 600px) {
+        .products-header h1 { font-size: 1.3rem; }
+        .products-table th,
+        .products-table td { padding: 7px 8px; font-size: 0.78rem; }
+        .inv-stat .value { font-size: 1.1rem; }
+        {% if session.get('role') == 'boss' %}
+        table.products-table { min-width: 780px; }
+        {% endif %}
+    }
+</style>
+
+<div class="products-page">
+  <div class="products-header">
+    <div>
+      <div class="muted small">Inventory</div>
+      <h1>📦 Bidhaa &amp; Stock</h1>
+    </div>
+    <div class="products-actions">
+      <input type="search" class="page-search" id="productSearch" placeholder="🔍 Tafuta bidhaa..." autocomplete="off">
+      {% if session.get('role') == 'boss' %}
+      <a href="{{ url_for('add_product') }}" class="btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Ongeza Bidhaa
+      </a>
+      {% endif %}
+    </div>
   </div>
-  {% if session.get('role') == 'boss' %}
-  <a href="{{ url_for('add_product') }}" class="btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Ongeza Bidhaa</a>
+
+  {# ——— Thamani ya duka / mauzo / faida — BOSS PEKEE ——— #}
+  {% if session.get('role') == 'boss' and inventory %}
+  <div class="inv-grid">
+    <div class="inv-stat inv-cost">
+      <div class="label">Thamani ya duka (gharama)</div>
+      <div class="value">TSh {{ "{:,.0f}".format(inventory.cost_value) }}</div>
+      <div class="hint">buy_price × stock iliyopo</div>
+    </div>
+    <div class="inv-stat inv-retail">
+      <div class="label">Thamani ya mauzo (bei)</div>
+      <div class="value">TSh {{ "{:,.0f}".format(inventory.retail_value) }}</div>
+      <div class="hint">price × stock iliyopo</div>
+    </div>
+    <div class="inv-stat inv-profit">
+      <div class="label">Faida inayotarajiwa</div>
+      <div class="value">TSh {{ "{:,.0f}".format(inventory.potential_profit) }}</div>
+      <div class="hint">kabla ya mauzo</div>
+    </div>
+  </div>
   {% endif %}
+
+  <div class="table-card">
+    <div class="table-wrap">
+      <table class="products-table" id="productTable">
+        <thead>
+          <tr>
+            <th>Bidhaa</th>
+            <th>Start</th>
+            <th>Sold</th>
+            <th>Left</th>
+            {% if session.get('role') == 'boss' %}
+            <th>Buy</th>
+            <th>Sell</th>
+            <th>Profit</th>
+            <th>Profit T</th>
+            <th>Thamani</th>
+            {% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in products %}
+          <tr data-search-row data-search-text="{{ p.name }}">
+            <td class="col-name" title="{{ p.name }}">{{ p.name }}</td>
+            <td>{{ p.start_quantity or 0 }}</td>
+            <td>{{ p.sold_quantity or 0 }}</td>
+            <td class="{% if (p.quantity or 0) <= 5 %}low-stock{% endif %}">
+              <strong>{{ p.quantity or 0 }}</strong>
+            </td>
+            {% if session.get('role') == 'boss' %}
+            <td>{{ "{:,.0f}".format(p.buy_price or 0) }}</td>
+            <td>{{ "{:,.0f}".format(p.price or 0) }}</td>
+            <td class="profit-cell">{{ "{:,.0f}".format(p.profit_per_unit or 0) }}</td>
+            <td class="profit-total-cell">
+              {{ "{:,.0f}".format((p.profit_per_unit or 0) * (p.sold_quantity or 0)) }}
+            </td>
+            <td class="cost-cell">
+              TSh {{ "{:,.0f}".format((p.buy_price or 0) * (p.quantity or 0)) }}
+            </td>
+            {% endif %}
+          </tr>
+          {% else %}
+          <tr class="empty-row">
+            <td colspan="{% if session.get('role') == 'boss' %}9{% else %}4{% endif %}">
+              Hakuna bidhaa bado.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
-{% if inventory %}
-<div class="grid-3" style="margin-bottom:16px">
-  <div class="stat">
-    <div class="label">Thamani ya duka (gharama)</div>
-    <div class="value" style="color:var(--primary)">TSh {{ "{:,.0f}".format(inventory.cost_value) }}</div>
-    <div class="muted small">buy_price × stock iliyopo</div>
-  </div>
-  <div class="stat">
-    <div class="label">Thamani ya mauzo (bei)</div>
-    <div class="value" style="color:var(--green)">TSh {{ "{:,.0f}".format(inventory.retail_value) }}</div>
-    <div class="muted small">price × stock iliyopo</div>
-  </div>
-  <div class="stat">
-    <div class="label">Faida inayotarajiwa</div>
-    <div class="value" style="color:var(--orange)">TSh {{ "{:,.0f}".format(inventory.potential_profit) }}</div>
-    <div class="muted small">kabla ya mauzo</div>
-  </div>
-</div>
-{% endif %}
-
-<div class="card">
-  <input type="search" class="page-search" placeholder="Tafuta bidhaa..." autocomplete="off">
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Bidhaa</th>
-          <th>Bei kununua</th>
-          <th>Bei kuuza</th>
-          <th>Stock</th>
-          <th>Thamani (gharama)</th>
-          <th>Zilizouzwa</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for p in products %}
-        <tr data-search-row data-search-text="{{ p.name }}">
-          <td><strong>{{ p.name }}</strong></td>
-          <td>{{ "{:,.0f}".format(p.buy_price or 0) }}</td>
-          <td>{{ "{:,.0f}".format(p.price or 0) }}</td>
-          <td><strong>{{ p.quantity }}</strong></td>
-          <td>TSh {{ "{:,.0f}".format((p.buy_price or 0) * (p.quantity or 0)) }}</td>
-          <td>{{ p.sold_quantity or 0 }}</td>
-        </tr>
-        {% else %}
-        <tr><td colspan="6" class="muted">Hakuna bidhaa bado.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
+<script>
+(function () {
+  var input = document.getElementById('productSearch');
+  if (!input) return;
+  input.addEventListener('input', function () {
+    var q = (this.value || '').toLowerCase().trim();
+    var rows = document.querySelectorAll('#productTable tbody tr[data-search-row]');
+    rows.forEach(function (row) {
+      var text = (row.getAttribute('data-search-text') || row.textContent || '').toLowerCase();
+      row.style.display = !q || text.indexOf(q) !== -1 ? '' : 'none';
+    });
+  });
+})();
+</script>
 {% endblock %}
