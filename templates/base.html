@@ -677,6 +677,16 @@
   // MUHIMU: APK → native only. Chrome/browser → web push.
   if (isCapacitor()) {
     console.log('NEKEZA: using native push');
+    // Ondoa web-push subscription ili Chrome isipokee tena
+    if ('serviceWorker' in navigator && navigator.serviceWorker.ready) {
+      navigator.serviceWorker.ready.then(function(reg){
+        if (reg.pushManager) {
+          reg.pushManager.getSubscription().then(function(sub){
+            if (sub) sub.unsubscribe().catch(function(){});
+          });
+        }
+      }).catch(function(){});
+    }
     if (!setupNativePush()) setupWebPush();
   } else {
     console.log('NEKEZA: using web push');

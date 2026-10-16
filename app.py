@@ -1610,16 +1610,30 @@ def _send_fcm(user_ids, title, body="", link="/"):
         conn.close()
 
 
+def _user_has_android_token(conn, user_id):
+    """True ikiwa user amesajili token ya Capacitor/Android FCM."""
+    try:
+        row = conn.execute(
+            "SELECT id FROM fcm_tokens WHERE user_id=? AND (platform=? OR platform=? OR platform=?) LIMIT 1",
+            (user_id, "android", "Android", "capacitor"),
+        ).fetchone()
+        return row is not None
+    except Exception:
+        return False
+
+
 def _send_web_push(user_ids, title, body="", link="/"):
-    """Web Push (VAPID) + Firebase FCM. FCM kwanza ikiwa imesanidiwa."""
+    """FCM native kwanza. Web Push (Chrome) tu kwa wasio na APK token."""
     if not user_ids:
         return
-    # 1) Firebase FCM (haraka, app imefungwa)
+    # 1) Firebase FCM (native APK + web FCM tokens)
     try:
         _send_fcm(user_ids, title, body, link)
     except Exception as exc:
         print("fcm:", exc)
-    # 2) Classic Web Push (VAPID) — backup
+
+    # 2) Web Push (VAPID) — SKIP users who already have Android/Capacitor token
+    #    (hao wanapata notification kama NEKEZA, si Chrome)
     if not VAPID_PRIVATE_KEY:
         return
     try:
@@ -1631,6 +1645,9 @@ def _send_web_push(user_ids, title, body="", link="/"):
     try:
         subs = []
         for uid in user_ids:
+            if _user_has_android_token(conn, uid):
+                print(f"skip chrome web-push for user {uid} (has android token)")
+                continue
             rows = conn.execute(
                 "SELECT id, endpoint, p256dh, auth FROM push_subscriptions WHERE user_id=?",
                 (uid,),
