@@ -417,6 +417,22 @@ def init_db():
                 """)
             except Exception:
                 pass
+            try:
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS notifications (
+                        id SERIAL PRIMARY KEY,
+                        user_id INTEGER NOT NULL,
+                        title TEXT NOT NULL,
+                        body TEXT NOT NULL,
+                        link TEXT DEFAULT '/',
+                        is_read BOOLEAN DEFAULT FALSE,
+                        sender_id INTEGER,
+                        kind TEXT DEFAULT 'manual',
+                        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+                    )
+                """)
+            except Exception:
+                pass
             conn.commit()
         else:
             conn.executescript(ddl)
@@ -442,6 +458,19 @@ def init_db():
                     CREATE TABLE IF NOT EXISTS admin_hidden_chats (
                         user_id INTEGER PRIMARY KEY,
                         hidden_at TEXT DEFAULT CURRENT_TIMESTAMP
+                    )
+                """)
+                raw.execute("""
+                    CREATE TABLE IF NOT EXISTS notifications (
+                        id INTEGER PRIMARY KEY,
+                        user_id INTEGER NOT NULL,
+                        title TEXT NOT NULL,
+                        body TEXT NOT NULL,
+                        link TEXT DEFAULT '/',
+                        is_read INTEGER DEFAULT 0,
+                        sender_id INTEGER,
+                        kind TEXT DEFAULT 'manual',
+                        created_at TEXT DEFAULT CURRENT_TIMESTAMP
                     )
                 """)
                 raw.commit()
@@ -527,6 +556,58 @@ def format_money(value):
     except:
         return "0"
 
+
+
+
+def _notify_users(user_ids, title, body="", link="/", sender_id=None, kind="manual"):
+    """Hifadhi notification in-app + tuma push/FCM."""
+    if not user_ids:
+        return 0
+    ids = []
+    seen = set()
+    for u in user_ids:
+        try:
+            uid = int(u)
+        except Exception:
+            continue
+        if uid in seen:
+            continue
+        seen.add(uid)
+        ids.append(uid)
+    if not ids:
+        return 0
+    title = (title or APP_NAME)[:120]
+    body = (body or "")[:500]
+    link = link or "/"
+    conn = get_db()
+    try:
+        for uid in ids:
+            try:
+                conn.execute(
+                    """
+                    INSERT INTO notifications (user_id, title, body, link, is_read, sender_id, kind)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        uid,
+                        title,
+                        body,
+                        link,
+                        False if USE_PG else 0,
+                        sender_id,
+                        kind or "manual",
+                    ),
+                )
+            except Exception as e:
+                print("notify insert:", e)
+        conn.commit()
+    finally:
+        conn.close()
+    try:
+        _send_web_push(ids, title, body, link)
+    except Exception as e:
+        print("notify push:", e)
+    return len(ids)
 
 
 # ====================== DECORATORS ======================
@@ -765,7 +846,7 @@ def add_product():
 
             conn.commit()
             flash("Bidhaa imeongezwa kwa mafanikio.", "success")
-            # Taarifa kwa wafanyakazi wa boss huyu
+            # Taarifa kwa wafanyakazi wa boss huyu (in-app + push)
             try:
                 emps = conn.execute(
                     "SELECT id FROM users WHERE boss_id=? AND role=?",
@@ -773,11 +854,13 @@ def add_product():
                 ).fetchall()
                 ids = [e["id"] for e in emps]
                 if ids:
-                    _send_web_push(
+                    _notify_users(
                         ids,
                         "Bidhaa mpya",
-                        f"{request.form.get('name', 'Bidhaa')} imeongezwa kwenye stock.",
+                        f"{name} imeongezwa kwenye stock (idadi: {quantity}).",
                         "/products",
+                        sender_id=session.get("user_id"),
+                        kind="product",
                     )
             except Exception as _e:
                 print("push product:", _e)
@@ -865,12 +948,15 @@ def sales():
                 flash("Mauzo yamekamilika.", "success")
                 # Taarifa kwa boss
                 try:
-                    _send_web_push(
-                        [boss_id],
-                        "Mauzo mapya",
-                        f"{session.get('username')}: {qty_sold} x {prod['name']} = TSh {total:,.0f}",
-                        "/sales",
-                    )
+                    if boss_id:
+                        _notify_users(
+                            [boss_id],
+                            "Mauzo mapya",
+                            f"{session.get('username')}: {qty_sold} x {prod['name']} = TSh {total:,.0f}",
+                            "/sales",
+                            sender_id=session.get("user_id"),
+                            kind="sale",
+                        )
                 except Exception as _e:
                     print("push sale:", _e)
 
@@ -1797,11 +1883,25 @@ def inject_globals():
             conn.close()
         except Exception as exc:
             print("context:", exc)
+    unread_notifications = 0
+    if session.get("user_id"):
+        try:
+            conn2 = get_db()
+            rown = conn2.execute(
+                "SELECT COUNT(*) AS c FROM notifications WHERE user_id=? AND (is_read = FALSE OR is_read = 0 OR is_read IS NULL)",
+                (session["user_id"],),
+            ).fetchone()
+            unread_notifications = int(rown[0] if rown else 0)
+            conn2.close()
+        except Exception:
+            unread_notifications = 0
+
     return {
         "app_name": APP_NAME,
         "app_version": APP_VERSION,
         "days_left": days_left,
         "unread_chat": unread_chat,
+        "unread_notifications": unread_notifications,
         "vapid_public": VAPID_PUBLIC_KEY,
         "firebase_config": {
             "apiKey": FIREBASE_API_KEY,
@@ -1812,6 +1912,119 @@ def inject_globals():
         } if FIREBASE_API_KEY and FIREBASE_PROJECT_ID else None,
         "firebase_vapid_key": FIREBASE_VAPID_KEY,
     }
+
+
+
+# ====================== NOTIFICATIONS ======================
+@app.route("/notifications")
+@login_required
+def notifications_list():
+    conn = get_db()
+    rows = conn.execute(
+        """
+        SELECT * FROM notifications
+        WHERE user_id=?
+        ORDER BY id DESC
+        LIMIT 100
+        """,
+        (session["user_id"],),
+    ).fetchall()
+    try:
+        conn.execute(
+            "UPDATE notifications SET is_read=? WHERE user_id=? AND (is_read = FALSE OR is_read = 0 OR is_read IS NULL)",
+            (True if USE_PG else 1, session["user_id"]),
+        )
+        conn.commit()
+    except Exception:
+        pass
+    conn.close()
+    return render_template("notifications.html", items=rows)
+
+
+@app.route("/notifications/send", methods=["GET", "POST"])
+@login_required
+@role_required(["admin", "boss"])
+def notifications_send():
+    """Admin → bosses; Boss → employees wake."""
+    role = session["role"]
+    conn = get_db()
+    if role == "admin":
+        targets = conn.execute(
+            "SELECT id, username, role FROM users WHERE role=? ORDER BY username",
+            ("boss",),
+        ).fetchall()
+        audience_label = "Boss"
+    else:
+        targets = conn.execute(
+            "SELECT id, username, role FROM users WHERE role=? AND boss_id=? ORDER BY username",
+            ("employee", session["user_id"]),
+        ).fetchall()
+        audience_label = "Mfanyakazi"
+
+    if request.method == "POST":
+        title = (request.form.get("title") or "").strip()[:120]
+        body = (request.form.get("body") or "").strip()[:500]
+        mode = request.form.get("mode") or "all"  # one | many | all
+        link = (request.form.get("link") or "/notifications").strip() or "/notifications"
+        if len(title) < 2 or len(body) < 1:
+            conn.close()
+            flash("Andika kichwa na ujumbe.", "danger")
+            return redirect(url_for("notifications_send"))
+
+        selected = request.form.getlist("user_ids")
+        ids = []
+        if mode == "all":
+            ids = [t["id"] for t in targets]
+        elif mode in ("one", "many"):
+            for s in selected:
+                try:
+                    ids.append(int(s))
+                except Exception:
+                    pass
+            # security: only allowed targets
+            allowed = {t["id"] for t in targets}
+            ids = [i for i in ids if i in allowed]
+        else:
+            ids = []
+
+        if not ids:
+            conn.close()
+            flash("Chagua angalau mpokeaji mmoja.", "danger")
+            return redirect(url_for("notifications_send"))
+
+        n = _notify_users(
+            ids,
+            title,
+            body,
+            link,
+            sender_id=session.get("user_id"),
+            kind="manual",
+        )
+        conn.close()
+        flash(f"Notification imetumwa kwa watu {n}.", "success")
+        return redirect(url_for("notifications_list"))
+
+    conn.close()
+    return render_template(
+        "notifications_send.html",
+        targets=targets,
+        audience_label=audience_label,
+        role=role,
+    )
+
+
+@app.route("/notifications/<int:nid>/read", methods=["POST"])
+@login_required
+def notification_read(nid):
+    conn = get_db()
+    conn.execute(
+        "UPDATE notifications SET is_read=? WHERE id=? AND user_id=?",
+        (True if USE_PG else 1, nid, session["user_id"]),
+    )
+    conn.commit()
+    conn.close()
+    return redirect(url_for("notifications_list"))
+
 
 
 # ====================== LEGAL & ACCOUNT ======================

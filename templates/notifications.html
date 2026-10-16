@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Notifications · {{ app_name }}{% endblock %}
+{% block head %}
+<style>
+.n-wrap { max-width: 560px; margin: 0 auto; }
+.n-head { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:14px; }
+.n-head h1 { margin:0; font-size:1.25rem; }
+.n-item {
+  background:#fff; border:1px solid var(--border); border-radius:14px;
+  padding:14px; margin-bottom:10px; box-shadow:0 2px 8px rgba(15,23,42,.04);
+}
+.n-item.unread { border-color:#93c5fd; background:#f8fbff; }
+.n-item .title { font-weight:800; font-size:14px; color:#0f172a; margin-bottom:4px; }
+.n-item .body { font-size:13px; color:#334155; line-height:1.45; }
+.n-item .meta { margin-top:8px; font-size:11px; color:#94a3b8; display:flex; justify-content:space-between; gap:8px; }
+.n-empty { text-align:center; padding:32px 12px; color:#64748b; }
+.kind {
+  display:inline-block; font-size:10px; font-weight:800; text-transform:uppercase;
+  padding:2px 8px; border-radius:999px; background:#e2e8f0; color:#475569;
+}
+.kind.sale { background:#ecfdf5; color:#065f46; }
+.kind.product { background:#eff6ff; color:#1e40af; }
+.kind.manual { background:#fef3c7; color:#92400e; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="n-wrap">
+  <div class="n-head">
+    <div>
+      <h1>Notifications</h1>
+      <p class="muted small" style="margin:4px 0 0">Ujumbe na taarifa za mfumo</p>
+    </div>
+    {% if session.get('role') in ['admin','boss'] %}
+    <a class="btn" href="{{ url_for('notifications_send') }}" style="min-height:40px;font-size:13px">Tuma ujumbe</a>
+    {% endif %}
+  </div>
+
+  {% for n in items %}
+  <a href="{{ n.link or url_for('notifications_list') }}" class="n-item {% if not n.is_read %}unread{% endif %}" style="display:block;text-decoration:none;color:inherit">
+    <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
+      <div class="title">{{ n.title }}</div>
+      <span class="kind {{ n.kind or 'manual' }}">{{ n.kind or 'manual' }}</span>
+    </div>
+    <div class="body">{{ n.body }}</div>
+    <div class="meta">
+      <span>{{ n.created_at }}</span>
+      {% if not n.is_read %}<span style="color:#2563eb;font-weight:700">Mpya</span>{% endif %}
+    </div>
+  </a>
+  {% else %}
+  <div class="n-empty">
+    <p>Hakuna notification bado.</p>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}
