@@ -1706,12 +1706,38 @@ def download_app():
     return render_template("download.html")
 
 
+@app.route("/api/download/apk")
+def download_apk():
+    """Pakua APK — headers sahihi (Vercel + browser)."""
+    from flask import send_from_directory
+    folder = os.path.join(app.root_path, "static", "downloads")
+    path = os.path.join(folder, "nekeza-app.apk")
+    if not os.path.isfile(path):
+        flash("APK bado haijawekwa. Wasiliana na admin.", "error")
+        return redirect(url_for("download_app"))
+    return send_from_directory(
+        folder,
+        "nekeza-app.apk",
+        as_attachment=True,
+        download_name="NEKEZA-App.apk",
+        mimetype="application/vnd.android.package-archive",
+    )
+
+
 @app.route("/static/downloads/<path:filename>")
 def download_file(filename):
     """Serve APK/files from static/downloads."""
     from flask import send_from_directory
     folder = os.path.join(app.root_path, "static", "downloads")
-    return send_from_directory(folder, filename, as_attachment=True)
+    # Security: only allow files inside folder
+    safe = os.path.basename(filename)
+    return send_from_directory(
+        folder,
+        safe,
+        as_attachment=True,
+        download_name=safe,
+        mimetype="application/vnd.android.package-archive" if safe.endswith(".apk") else None,
+    )
 
 @app.route("/privacy")
 def privacy():
@@ -2195,20 +2221,21 @@ def api_chat_poll():
 
 @app.route("/.well-known/assetlinks.json")
 def assetlinks():
-    """Digital Asset Links kwa Android TWA (APK)."""
-    # Weka SHA256 fingerprint ya keystore kwenye env TWA_SHA256_CERT_FINGERPRINTS (comma-separated)
-    fps = [x.strip() for x in os.environ.get("TWA_SHA256_CERT_FINGERPRINTS", "").split(",") if x.strip()]
+    """Digital Asset Links kwa Android TWA — ficha URL bar juu."""
+    # SHA256 ya signing cert (debug APK kutoka GitHub Actions)
+    default_fp = "76:D6:23:21:97:F5:C3:43:2E:53:52:38:12:43:55:D2:E4:C1:1F:A0:88:B9:F8:F2:82:F3:D2:F2:93:29:D1:2D"
+    raw = os.environ.get("TWA_SHA256_CERT_FINGERPRINTS", default_fp).strip()
+    fps = [x.strip() for x in raw.split(",") if x.strip()]
     package = os.environ.get("TWA_PACKAGE_ID", "app.nekeza.twa").strip()
-    if not fps:
-        return [], 200, {"Content-Type": "application/json"}
-    return [{
+    data = [{
         "relation": ["delegate_permission/common.handle_all_urls"],
         "target": {
             "namespace": "android_app",
             "package_name": package,
             "sha256_cert_fingerprints": fps,
         },
-    }], 200, {"Content-Type": "application/json"}
+    }]
+    return data, 200, {"Content-Type": "application/json", "Cache-Control": "no-cache"}
 
 
 
