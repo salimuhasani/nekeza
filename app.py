@@ -404,6 +404,19 @@ def init_db():
                     cur.execute(f"ALTER TABLE sales ADD COLUMN IF NOT EXISTS {col} {typ}")
                 except Exception:
                     pass
+            try:
+                cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS is_blocked BOOLEAN DEFAULT FALSE")
+            except Exception:
+                pass
+            try:
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS admin_hidden_chats (
+                        user_id INTEGER PRIMARY KEY,
+                        hidden_at TEXT DEFAULT CURRENT_TIMESTAMP
+                    )
+                """)
+            except Exception:
+                pass
             conn.commit()
         else:
             conn.executescript(ddl)
@@ -421,6 +434,16 @@ def init_db():
                     raw.execute("ALTER TABLE sales ADD COLUMN status TEXT")
                 if "reason" not in colnames:
                     raw.execute("ALTER TABLE sales ADD COLUMN reason TEXT")
+                uinfo = raw.execute("PRAGMA table_info(users)").fetchall()
+                ucols = {row[1] for row in uinfo}
+                if "is_blocked" not in ucols:
+                    raw.execute("ALTER TABLE users ADD COLUMN is_blocked INTEGER DEFAULT 0")
+                raw.execute("""
+                    CREATE TABLE IF NOT EXISTS admin_hidden_chats (
+                        user_id INTEGER PRIMARY KEY,
+                        hidden_at TEXT DEFAULT CURRENT_TIMESTAMP
+                    )
+                """)
                 raw.commit()
                 raw.close()
             except Exception:
@@ -543,6 +566,14 @@ def login():
         conn.close()
 
         if user and check_password_hash(user['password'], password):
+            # Zuiwa kama ameblockiwa
+            try:
+                blocked = user["is_blocked"]
+            except Exception:
+                blocked = False
+            if blocked in (True, 1, "1", "t", "true"):
+                flash("Akaunti yako imezuiwa. Wasiliana na Admin.", "danger")
+                return redirect(url_for("login"))
             # Check expiry kwa Boss
             if user['role'] == 'boss' and user['pin_expiry']:
                 try:
@@ -1283,6 +1314,72 @@ def delete_user(user_id):
 # ==================== REKODI KASORO (MFANYAKAZI) ====================
 
 
+
+
+
+
+@app.route("/admin/block_user/<int:user_id>", methods=["POST"])
+@login_required
+@role_required(["admin"])
+def admin_block_user(user_id):
+    conn = get_db()
+    target = conn.execute("SELECT * FROM users WHERE id=?", (user_id,)).fetchone()
+    if not target or target["role"] == "admin":
+        flash("Huwezi kuzuia user huyu.", "danger")
+        conn.close()
+        return redirect(url_for("manage_employees"))
+    conn.execute(
+        "UPDATE users SET is_blocked=? WHERE id=?",
+        (True if USE_PG else 1, user_id),
+    )
+    conn.commit()
+    conn.close()
+    flash(f"Akaunti ya {target['username']} imezuiwa.", "success")
+    return redirect(url_for("manage_employees"))
+
+
+@app.route("/admin/unblock_user/<int:user_id>", methods=["POST"])
+@login_required
+@role_required(["admin"])
+def admin_unblock_user(user_id):
+    conn = get_db()
+    target = conn.execute("SELECT * FROM users WHERE id=?", (user_id,)).fetchone()
+    if not target:
+        flash("User haipo.", "danger")
+        conn.close()
+        return redirect(url_for("manage_employees"))
+    conn.execute(
+        "UPDATE users SET is_blocked=? WHERE id=?",
+        (False if USE_PG else 0, user_id),
+    )
+    conn.commit()
+    conn.close()
+    flash(f"Akaunti ya {target['username']} imefunguliwa.", "success")
+    return redirect(url_for("manage_employees"))
+
+
+@app.route("/admin/chat/<int:user_id>/hide", methods=["POST"])
+@login_required
+@role_required(["admin"])
+def admin_hide_chat(user_id):
+    """Futa chat kwa admin pekee — user bado anaona messages zake."""
+    conn = get_db()
+    try:
+        existing = conn.execute(
+            "SELECT user_id FROM admin_hidden_chats WHERE user_id=?", (user_id,)
+        ).fetchone()
+        if not existing:
+            conn.execute(
+                "INSERT INTO admin_hidden_chats (user_id, hidden_at) VALUES (?, ?)",
+                (user_id, datetime.now(ZoneInfo("Africa/Dar_es_Salaam")).isoformat()),
+            )
+            conn.commit()
+    except Exception as e:
+        print("hide chat:", e)
+    finally:
+        conn.close()
+    flash("Chat imefutwa kwenye orodha yako (user bado anaona).", "success")
+    return redirect(url_for("admin_chats"))
 
 
 
@@ -2128,6 +2225,12 @@ def chat():
 @role_required(["admin"])
 def admin_chats():
     conn = get_db()
+    hidden_ids = set()
+    try:
+        for h in conn.execute("SELECT user_id FROM admin_hidden_chats").fetchall():
+            hidden_ids.add(h["user_id"])
+    except Exception:
+        pass
     # users with messages
     rows = conn.execute(
         """
@@ -2138,7 +2241,9 @@ def admin_chats():
     ).fetchall()
     threads = []
     for r in rows:
-        u = conn.execute("SELECT id, username, role FROM users WHERE id=?", (r["user_id"],)).fetchone()
+        if r["user_id"] in hidden_ids:
+            continue
+        u = conn.execute("SELECT id, username, role, is_blocked FROM users WHERE id=?", (r["user_id"],)).fetchone()
         if not u:
             continue
         last = conn.execute(
@@ -2186,8 +2291,8 @@ def admin_chat_user(user_id):
             conn.commit()
             try:
                 _send_web_push([user_id], "Ujumbe kutoka Admin", body[:100], "/chat")
-            except Exception:
-                pass
+            except Exception as e:
+                print("push chat error:", e)
         return redirect(url_for("admin_chat_user", user_id=user_id))
     messages = conn.execute(
         "SELECT * FROM chat_messages WHERE user_id=? ORDER BY id ASC",

@@ -2,28 +2,93 @@
 {% block title %}Chat · {{ chat_user.username }}{% endblock %}
 {% block head %}
 <style>
-.chat-box { display:flex; flex-direction:column; height: min(70vh, 560px); }
-.chat-msgs { flex:1; overflow-y:auto; padding:12px; background:#f8fafc; border-radius:14px; border:1px solid var(--border); margin-bottom:12px; }
-.bubble { max-width:85%; padding:10px 12px; border-radius:14px; margin-bottom:8px; font-size:13px; }
-.bubble.me { background:#1e3a8a; color:#fff; margin-left:auto; }
-.bubble.them { background:#fff; border:1px solid var(--border); margin-right:auto; }
-.chat-form { display:flex; gap:8px; }
-.chat-form input { flex:1; border:1.5px solid var(--border); border-radius:12px; padding:12px; }
+.chat-wrap { max-width:640px; margin:0 auto; }
+.chat-head {
+  display:flex; justify-content:space-between; align-items:center;
+  gap:10px; flex-wrap:wrap; margin-bottom:12px;
+}
+.chat-head h1 { margin:0; font-size:18px; }
+.chat-box {
+  display:flex; flex-direction:column;
+  height:min(72vh, 620px);
+  border-radius:16px; overflow:hidden;
+  border:1px solid var(--border); background:#fff;
+  box-shadow:0 4px 20px rgba(15,23,42,.06);
+}
+.chat-msgs {
+  flex:1; overflow-y:auto; padding:14px;
+  background:linear-gradient(180deg,#f1f5f9 0%,#f8fafc 100%);
+}
+.bubble {
+  max-width:82%; padding:10px 14px; border-radius:16px;
+  margin-bottom:10px; font-size:13.5px; line-height:1.45;
+  word-break:break-word;
+}
+.bubble.me {
+  background:#1e3a8a; color:#fff;
+  margin-left:auto; border-bottom-right-radius:4px;
+}
+.bubble.them {
+  background:#fff; border:1px solid var(--border);
+  margin-right:auto; border-bottom-left-radius:4px;
+  box-shadow:0 1px 2px rgba(0,0,0,.04);
+}
+.bubble .meta { font-size:10px; opacity:.7; margin-top:4px; }
+.chat-form {
+  display:flex; gap:8px; padding:12px;
+  border-top:1px solid var(--border); background:#fff;
+}
+.chat-form input {
+  flex:1; border:1.5px solid var(--border); border-radius:12px;
+  padding:12px 14px; font-size:14px;
+}
+.chat-form input:focus { outline:none; border-color:#1e3a8a; }
+.btn-icon {
+  width:44px; height:44px; border-radius:12px; border:0;
+  background:#1e3a8a; color:#fff; display:flex;
+  align-items:center; justify-content:center; cursor:pointer;
+}
+.btn-icon:active { transform:scale(.96); }
+.actions-row { display:flex; gap:8px; flex-wrap:wrap; }
 </style>
 {% endblock %}
 {% block content %}
-<a href="{{ url_for('admin_chats') }}" class="muted small" style="font-weight:700">← Rudi</a>
-<h1 style="margin-top:8px">Chat · {{ chat_user.username }}</h1>
-<div class="card chat-box">
-  <div class="chat-msgs" id="chatMsgs">
-    {% for m in messages %}
-    <div class="bubble {{ 'me' if m.sender == 'admin' else 'them' }}" data-id="{{ m.id }}">{{ m.body }}</div>
-    {% endfor %}
+<div class="chat-wrap">
+  <div class="chat-head">
+    <div>
+      <a href="{{ url_for('admin_chats') }}" class="muted small" style="font-weight:700">← Rudi</a>
+      <h1 style="margin-top:6px">{{ chat_user.username }}</h1>
+      <div class="muted small">
+        {{ chat_user.role }}
+        {% if chat_user.is_blocked %} · <span style="color:var(--red);font-weight:800">BLOCKED</span>{% endif %}
+      </div>
+    </div>
+    <div class="actions-row">
+      <form method="post" action="{{ url_for('admin_hide_chat', user_id=chat_user.id) }}"
+            onsubmit="return confirm('Futa chat hii kwenye orodha yako? User bado ataona messages.')">
+        <button class="btn btn-secondary" type="submit" style="min-height:36px;font-size:12px">Futa chat</button>
+      </form>
+    </div>
   </div>
-  <form method="post" class="chat-form">
-    <input type="text" name="body" placeholder="Jibu..." required autocomplete="off">
-    <button class="btn" type="submit"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg></button>
-  </form>
+
+  <div class="chat-box">
+    <div class="chat-msgs" id="chatMsgs">
+      {% for m in messages %}
+      <div class="bubble {{ 'me' if m.sender == 'admin' else 'them' }}" data-id="{{ m.id }}">
+        {{ m.body }}
+        <div class="meta">{{ m.sender }}</div>
+      </div>
+      {% else %}
+      <p class="muted small" style="text-align:center;margin-top:24px">Hakuna ujumbe bado.</p>
+      {% endfor %}
+    </div>
+    <form method="post" class="chat-form">
+      <input type="text" name="body" placeholder="Andika jibu..." required autocomplete="off">
+      <button class="btn-icon" type="submit" aria-label="Tuma">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+      </button>
+    </form>
+  </div>
 </div>
 {% endblock %}
 {% block scripts %}
@@ -31,18 +96,21 @@
 (function(){
   var box=document.getElementById('chatMsgs'); if(box) box.scrollTop=box.scrollHeight;
   var last=0, uid={{ chat_user.id }};
-  document.querySelectorAll('#chatMsgs [data-id]').forEach(function(el){ var id=parseInt(el.getAttribute('data-id'),10); if(id>last) last=id; });
+  document.querySelectorAll('#chatMsgs [data-id]').forEach(function(el){
+    var id=parseInt(el.getAttribute('data-id'),10); if(id>last) last=id;
+  });
   setInterval(function(){
-    fetch('/api/chat/poll?after='+last+'&user_id='+uid,{credentials:'same-origin'}).then(function(r){return r.json();}).then(function(d){
-      (d.items||[]).forEach(function(m){
-        if(m.id<=last) return; last=m.id;
-        var div=document.createElement('div');
-        div.className='bubble '+(m.sender==='admin'?'me':'them');
-        div.textContent=m.body;
-        box.appendChild(div);
-      });
-      box.scrollTop=box.scrollHeight;
-    }).catch(function(){});
+    fetch('/api/chat/poll?after='+last+'&user_id='+uid,{credentials:'same-origin'})
+      .then(function(r){return r.json();}).then(function(d){
+        (d.items||[]).forEach(function(m){
+          if(m.id<=last) return; last=m.id;
+          var div=document.createElement('div');
+          div.className='bubble '+(m.sender==='admin'?'me':'them');
+          div.innerHTML = (m.body||'') + '<div class="meta">'+(m.sender||'')+'</div>';
+          box.appendChild(div);
+        });
+        box.scrollTop=box.scrollHeight;
+      }).catch(function(){});
   }, 4000);
 })();
 </script>

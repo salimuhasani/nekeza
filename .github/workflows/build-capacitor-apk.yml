@@ -45,8 +45,6 @@ jobs:
 
       - name: Set app URL in capacitor config
         run: |
-          APP_URL="${{ github.event.inputs.app_url }}"
-          APP_URL="${APP_URL%/}"
           python3 - << PY
           import json
           from pathlib import Path
@@ -71,8 +69,7 @@ jobs:
             echo "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
             echo "google-services.json written"
           else
-            echo "WARNING: secret GOOGLE_SERVICES_JSON missing — push ya native inaweza kushindwa"
-            # Minimal placeholder so Gradle can still build UI shell
+            echo "WARNING: secret GOOGLE_SERVICES_JSON missing"
             cat > android/app/google-services.json << 'JSON'
           {
             "project_info": {
@@ -95,14 +92,12 @@ jobs:
 
       - name: Enable Google Services plugin
         run: |
-          # Root build.gradle — add google-services classpath if missing
           if ! grep -q "google-services" android/build.gradle; then
             sed -i '/dependencies/a\        classpath "com.google.gms:google-services:4.4.2"' android/build.gradle || true
           fi
           if ! grep -q "com.google.gms.google-services" android/app/build.gradle; then
             echo 'apply plugin: "com.google.gms.google-services"' >> android/app/build.gradle
           fi
-          # Ensure Firebase messaging dependency
           if ! grep -q "firebase-messaging" android/app/build.gradle; then
             sed -i '/dependencies {/a\    implementation "com.google.firebase:firebase-messaging:24.0.0"' android/app/build.gradle || true
           fi
@@ -118,10 +113,7 @@ jobs:
           if [ ! -f "$SRC_512" ]; then echo "ICON MISSING"; exit 1; fi
           sudo apt-get update -qq && sudo apt-get install -y -qq imagemagick >/dev/null
           RES=android/app/src/main/res
-
-          # Futa folder za -v4 kwanza ili kuepuka duplicate
           rm -rf "$RES"/mipmap-*-v4
-
           for dens in mdpi:48 hdpi:72 xhdpi:96 xxhdpi:144 xxxhdpi:192; do
             name=${dens%%:*}
             size=${dens##*:}
@@ -131,7 +123,6 @@ jobs:
             convert "$SRC_512" -resize ${size}x${size} "$dir/ic_launcher_round.png"
             convert "$SRC_512" -resize ${size}x${size} "$dir/ic_launcher_foreground.png"
           done
-
           echo "Launcher icons replaced successfully"
           find "$RES" -name 'ic_launcher*.png' | head -20
 

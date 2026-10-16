@@ -1,60 +1,102 @@
 {% extends "base.html" %}
 {% block title %}Customer Care Admin{% endblock %}
+{% block head %}
+<style>
+.cc-grid { display:grid; gap:16px; }
+@media (min-width:900px) {
+  .cc-grid { grid-template-columns: 1fr 1fr; align-items:start; }
+}
+.thread-item {
+  display:flex; justify-content:space-between; align-items:center;
+  gap:12px; padding:14px; border-bottom:1px solid var(--border);
+  text-decoration:none; color:inherit; transition:background .15s;
+}
+.thread-item:hover { background:#f8fafc; }
+.thread-item:last-child { border-bottom:0; }
+.thread-meta { flex:1; min-width:0; }
+.thread-meta strong { display:block; font-size:14px; }
+.thread-preview {
+  color:#64748b; font-size:12px; white-space:nowrap;
+  overflow:hidden; text-overflow:ellipsis; margin-top:3px;
+}
+.status-open { color:#059669; font-weight:800; font-size:11px; text-transform:uppercase; }
+.status-closed { color:#64748b; font-weight:800; font-size:11px; text-transform:uppercase; }
+.tk-actions { display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
+</style>
+{% endblock %}
 {% block content %}
 <h1>Customer Care</h1>
 <p class="muted" style="margin-bottom:14px">Chat za watumiaji + tickets za wageni.</p>
 
-<div class="card" style="margin-bottom:16px">
-  <h2>Live Chat (waliyo login)</h2>
-  {% for t in threads %}
-  <a href="{{ url_for('admin_chat_user', user_id=t.user.id) }}" style="display:flex;justify-content:space-between;padding:12px;border-bottom:1px solid var(--border)">
-    <div>
-      <strong>{{ t.user.username }}</strong> <span class="muted small">({{ t.user.role }})</span>
-      <div class="muted small">{{ t.last.body if t.last else '' }}</div>
+<div class="cc-grid">
+  <div class="card" style="margin-bottom:0;padding:0;overflow:hidden">
+    <div style="padding:14px 16px;border-bottom:1px solid var(--border)">
+      <h2 style="margin:0;font-size:16px">Live Chat (waliyo login)</h2>
     </div>
-    {% if t.unread %}<span class="badge-pill">{{ t.unread }}</span>{% endif %}
-  </a>
-  {% else %}
-  <p class="muted">Hakuna chat bado.</p>
-  {% endfor %}
-</div>
+    {% for t in threads %}
+    <a href="{{ url_for('admin_chat_user', user_id=t.user.id) }}" class="thread-item">
+      <div class="thread-meta">
+        <strong>{{ t.user.username }}
+          {% if t.user.is_blocked %}<span style="color:var(--red);font-size:10px">BLOCKED</span>{% endif %}
+        </strong>
+        <span class="muted small">{{ t.user.role }}</span>
+        <div class="thread-preview">{{ t.last.body if t.last else '—' }}</div>
+      </div>
+      {% if t.unread %}<span class="badge-pill">{{ t.unread }}</span>{% endif %}
+    </a>
+    {% else %}
+    <p class="muted" style="padding:16px">Hakuna chat bado.</p>
+    {% endfor %}
+  </div>
 
-<div class="card">
-  <h2>Tickets</h2>
-  <input type="search" class="page-search" placeholder="Tafuta ticket (jina/simu)..." autocomplete="off">
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Jina</th>
-          <th>Simu</th>
-          <th>Ujumbe</th>
-          <th>Status</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-      {% for tk in tickets %}
-        <tr data-search-row data-search-text="{{ tk.name }} {{ tk.phone }} {{ tk.message }}">
-          <td>{{ tk.id }}</td>
-          <td>{{ tk.name }}</td>
-          <td>{{ tk.phone }}</td>
-          <td class="small">{{ tk.message[:60] }}{% if tk.message|length > 60 %}…{% endif %}</td>
-          <td>
-            <span style="font-size:11px;font-weight:800;text-transform:uppercase;color:{% if tk.status == 'open' %}#059669{% else %}#64748b{% endif %}">
-              {{ tk.status }}
-            </span>
-          </td>
-          <td>
-            <a class="btn" style="min-height:32px;padding:6px 10px;font-size:11px" href="{{ url_for('admin_ticket', ticket_id=tk.id) }}">Chat</a>
-          </td>
-        </tr>
-      {% else %}
-        <tr><td colspan="6" class="muted">Hakuna tickets.</td></tr>
-      {% endfor %}
-      </tbody>
-    </table>
+  <div class="card" style="margin-bottom:0">
+    <h2 style="margin-top:0;font-size:16px">Tickets</h2>
+    <input type="search" class="page-search" placeholder="Tafuta ticket (jina/simu)..." autocomplete="off">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Jina</th>
+            <th>Simu</th>
+            <th>Ujumbe</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for tk in tickets %}
+          <tr data-search-row data-search-text="{{ tk.name }} {{ tk.phone }} {{ tk.message }}">
+            <td>{{ tk.id }}</td>
+            <td>{{ tk.name }}</td>
+            <td>{{ tk.phone }}</td>
+            <td class="small">{{ tk.message[:50] }}{% if tk.message|length > 50 %}…{% endif %}</td>
+            <td>
+              <span class="status-{{ tk.status }}">{{ tk.status }}</span>
+            </td>
+            <td>
+              <div class="tk-actions">
+                <a class="btn" style="min-height:32px;padding:6px 10px;font-size:11px" href="{{ url_for('admin_ticket', ticket_id=tk.id) }}">Chat</a>
+                {% if tk.status != 'closed' %}
+                <form method="post" action="{{ url_for('admin_ticket_status', ticket_id=tk.id) }}">
+                  <input type="hidden" name="status" value="closed">
+                  <button class="btn btn-secondary" type="submit" style="min-height:32px;padding:6px 10px;font-size:11px">Close</button>
+                </form>
+                {% else %}
+                <form method="post" action="{{ url_for('admin_ticket_status', ticket_id=tk.id) }}">
+                  <input type="hidden" name="status" value="open">
+                  <button class="btn btn-success" type="submit" style="min-height:32px;padding:6px 10px;font-size:11px">Open</button>
+                </form>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+        {% else %}
+          <tr><td colspan="6" class="muted">Hakuna tickets.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
 {% endblock %}

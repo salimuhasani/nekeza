@@ -2,7 +2,7 @@
 {% block title %}Watumiaji · {{ app_name }}{% endblock %}
 {% block content %}
 <h1>Watumiaji</h1>
-<p class="muted" style="margin-bottom:14px">Simamia boss / wafanyakazi na muda wa akaunti.</p>
+<p class="muted" style="margin-bottom:14px">Simamia boss / wafanyakazi, block, futa na muda wa akaunti.</p>
 
 <div class="card" style="margin-bottom:16px">
   <h2>Ongeza mtumiaji</h2>
@@ -38,18 +38,27 @@
         <tr>
           <th>Username</th>
           <th>Role</th>
+          <th>Status</th>
           <th>Siku zilizobaki</th>
           <th>Expiry</th>
           {% if session.get('role') == 'admin' %}<th>Ongeza muda</th>{% endif %}
-          <th></th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody>
       {% for item in users_info|default([]) %}
         {% set u = item.user %}
+        {% set blocked = u.is_blocked if u.is_blocked is defined else false %}
         <tr data-search-row data-search-text="{{ u.username }} {{ u.role }}">
           <td><strong>{{ u.username }}</strong></td>
           <td>{{ u.role }}</td>
+          <td>
+            {% if blocked %}
+              <span style="color:var(--red);font-weight:800;font-size:11px">BLOCKED</span>
+            {% else %}
+              <span style="color:#059669;font-weight:700;font-size:11px">Active</span>
+            {% endif %}
+          </td>
           <td>
             {% if item.days_left is not none %}
               {% if item.days_left < 0 %}<span style="color:var(--red);font-weight:800">Imeisha</span>
@@ -71,8 +80,24 @@
           {% elif session.get('role') == 'admin' %}
           <td>—</td>
           {% endif %}
-          <td>
-            <a class="btn btn-secondary" style="min-height:32px;padding:6px 10px;font-size:11px" href="{{ url_for('reset_pin', user_id=u.id) }}">Reset PIN</a>
+          <td style="min-width:140px">
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <a class="btn btn-secondary" style="min-height:32px;padding:6px 10px;font-size:11px;text-align:center" href="{{ url_for('reset_pin', user_id=u.id) }}">Reset PIN</a>
+              {% if session.get('role') == 'admin' %}
+                {% if blocked %}
+                <form method="post" action="{{ url_for('admin_unblock_user', user_id=u.id) }}" onsubmit="return confirm('Fungua akaunti ya {{ u.username }}?')">
+                  <button class="btn btn-success" type="submit" style="min-height:32px;padding:6px 10px;font-size:11px;width:100%">Unblock</button>
+                </form>
+                {% else %}
+                <form method="post" action="{{ url_for('admin_block_user', user_id=u.id) }}" onsubmit="return confirm('Zuia akaunti ya {{ u.username }}?')">
+                  <button class="btn btn-secondary" type="submit" style="min-height:32px;padding:6px 10px;font-size:11px;width:100%;border-color:#f59e0b;color:#b45309">Block</button>
+                </form>
+                {% endif %}
+                <form method="post" action="{{ url_for('delete_user', user_id=u.id) }}" onsubmit="return confirm('FUTA kabisa akaunti ya {{ u.username }}? Hatuwezi kurudisha.')">
+                  <button class="btn btn-danger" type="submit" style="min-height:32px;padding:6px 10px;font-size:11px;width:100%">Futa</button>
+                </form>
+              {% endif %}
+            </div>
           </td>
         </tr>
       {% else %}
@@ -80,10 +105,10 @@
         <tr>
           <td>{{ u.username }}</td>
           <td>{{ u.role }}</td>
-          <td colspan="3">—</td>
+          <td colspan="5">—</td>
         </tr>
         {% else %}
-        <tr><td colspan="6" class="muted">Hakuna watumiaji.</td></tr>
+        <tr><td colspan="7" class="muted">Hakuna watumiaji.</td></tr>
         {% endfor %}
       {% endfor %}
       </tbody>
