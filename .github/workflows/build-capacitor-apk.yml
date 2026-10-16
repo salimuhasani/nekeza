@@ -108,42 +108,31 @@ jobs:
           fi
 
 
-      - name: Set custom app icons
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      - name: Force project icons on Android launcher
         run: |
           set -e
-          # Use project icons for Android launcher
-          SRC_512="../static/android-chrome-512x512.png"
-          SRC_192="../static/android-chrome-192x192.png"
-          if [ ! -f "$SRC_512" ]; then SRC_512="../static/icon-512.png"; fi
-          if [ ! -f "$SRC_192" ]; then SRC_192="../static/icon-192.png"; fi
-          if [ ! -f "$SRC_512" ]; then echo "No icon found"; exit 0; fi
-          # Install imagemagick if needed for resize
+          SRC_512="${{ github.workspace }}/static/android-chrome-512x512.png"
+          if [ ! -f "$SRC_512" ]; then SRC_512="${{ github.workspace }}/static/icon-512.png"; fi
+          if [ ! -f "$SRC_512" ]; then echo "ICON MISSING"; exit 1; fi
           sudo apt-get update -qq && sudo apt-get install -y -qq imagemagick >/dev/null
           RES=android/app/src/main/res
           for dens in mdpi:48 hdpi:72 xhdpi:96 xxhdpi:144 xxxhdpi:192; do
             name=${dens%%:*}; size=${dens##*:}
-            mkdir -p "$RES/mipmap-$name"
-            convert "$SRC_512" -resize ${size}x${size} "$RES/mipmap-$name/ic_launcher.png"
-            convert "$SRC_512" -resize ${size}x${size} "$RES/mipmap-$name/ic_launcher_round.png"
-            convert "$SRC_512" -resize ${size}x${size} "$RES/mipmap-$name/ic_launcher_foreground.png"
+            # Capacitor may use mipmap-hdpi or mipmap-hdpi-v4
+            for dir in "$RES/mipmap-$name" "$RES/mipmap-$name-v4"; do
+              mkdir -p "$dir"
+              convert "$SRC_512" -resize ${size}x${size} "$dir/ic_launcher.png"
+              convert "$SRC_512" -resize ${size}x${size} "$dir/ic_launcher_round.png"
+              convert "$SRC_512" -resize ${size}x${size} "$dir/ic_launcher_foreground.png"
+            done
           done
-          # Adaptive icon XML (optional simple)
-          mkdir -p "$RES/mipmap-anydpi-v26"
-          cat > "$RES/mipmap-anydpi-v26/ic_launcher.xml" << 'XML'
-          <?xml version="1.0" encoding="utf-8"?>
-          <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-            <background android:drawable="@color/ic_launcher_background"/>
-            <foreground android:drawable="@mipmap/ic_launcher_foreground"/>
-          </adaptive-icon>
-          XML
-          mkdir -p "$RES/values"
-          if ! grep -q ic_launcher_background "$RES/values/ic_launcher_background.xml" 2>/dev/null; then
-            echo '<?xml version="1.0" encoding="utf-8"?><resources><color name="ic_launcher_background">#1e3a8a</color></resources>' > "$RES/values/ic_launcher_background.xml"
-          fi
-          echo "Icons set from project static assets"
+          echo "Launcher icons replaced with static/android-chrome-512x512.png"
+          find "$RES" -name 'ic_launcher*.png' | head -20
 
-      - name: Sync Capacitor
-        run: npx cap sync android
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
