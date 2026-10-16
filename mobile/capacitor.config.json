@@ -1,5 +1,5 @@
 {
-  "appId": "com.nekeza.app",
+  "appId": "com.dutoza.nekeza",
   "appName": "NEKEZA",
   "webDir": "www",
   "server": {
@@ -18,7 +18,11 @@
       "showSpinner": false
     },
     "PushNotifications": {
-      "presentationOptions": ["badge", "sound", "alert"]
+      "presentationOptions": [
+        "badge",
+        "sound",
+        "alert"
+      ]
     }
   }
 }

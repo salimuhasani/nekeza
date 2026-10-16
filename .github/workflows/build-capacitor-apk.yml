@@ -83,7 +83,7 @@ jobs:
             "client": [{
               "client_info": {
                 "mobilesdk_app_id": "1:396964067792:android:placeholder",
-                "android_client_info": { "package_name": "com.nekeza.app" }
+                "android_client_info": { "package_name": "com.dutoza.nekeza" }
               },
               "api_key": [{ "current_key": "AIzaSyD5eZLf6K3qDsdf0UA1lTPlPK4qDFcnU4Q" }],
               "services": { "appinvite_service": { "other_platform_oauth_client": [] } }
