@@ -1563,13 +1563,24 @@ def _send_fcm(user_ids, title, body="", link="/"):
             try:
                 msg = messaging.Message(
                     notification=messaging.Notification(title=title or APP_NAME, body=body or ""),
-                    data={"url": link or "/", "title": title or APP_NAME, "body": body or ""},
+                    data={
+                        "url": link or "/",
+                        "title": title or APP_NAME,
+                        "body": body or "",
+                    },
                     token=row["token"],
                     android=messaging.AndroidConfig(
                         priority="high",
                         notification=messaging.AndroidNotification(
-                            click_action="FLUTTER_NOTIFICATION_CLICK",
+                            title=title or APP_NAME,
+                            body=body or "",
                             sound="default",
+                            channel_id="nekeza_default",
+                            icon="ic_launcher",
+                            color="#1e3a8a",
+                            priority="high",
+                            default_sound=True,
+                            default_vibrate_timings=True,
                         ),
                     ),
                     webpush=messaging.WebpushConfig(

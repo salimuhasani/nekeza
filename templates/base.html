@@ -552,110 +552,136 @@
   if(btn) btn.addEventListener('click', open);
   if(bg) bg.addEventListener('click', close);
 })();
-/* Capacitor native push token (ikiwa APK ya Capacitor) */
+/* ===== PUSH: Native Capacitor (APK) AU Web (Chrome) ===== */
 (function(){
   {% if session.get('user_id') %}
-  function saveNativeToken(token){
+  function saveToken(token, platform){
     if(!token) return;
     fetch('/api/push/fcm-token', {
       method:'POST', credentials:'same-origin',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({token: token, platform: 'android'})
+      body: JSON.stringify({token: token, platform: platform || 'web'})
     }).catch(function(){});
   }
-  document.addEventListener('DOMContentLoaded', function(){
+
+  function isCapacitor(){
+    try {
+      if (!window.Capacitor) return false;
+      if (typeof window.Capacitor.isNativePlatform === 'function') {
+        return window.Capacitor.isNativePlatform();
+      }
+      return !!(window.Capacitor.Plugins && window.Capacitor.Plugins.PushNotifications);
+    } catch(e) { return false; }
+  }
+
+  /* A) APK — native FCM only (notification inaonyesha NEKEZA, si Chrome) */
+  function setupNativePush(){
     var cap = window.Capacitor;
-    if(!cap || !cap.Plugins || !cap.Plugins.PushNotifications) return;
+    if(!cap || !cap.Plugins || !cap.Plugins.PushNotifications) {
+      console.warn('PushNotifications plugin missing');
+      return false;
+    }
     var Push = cap.Plugins.PushNotifications;
-    Push.requestPermissions().then(function(res){
-      if(res.receive === 'granted') return Push.register();
-    }).catch(function(){});
-    Push.addListener('registration', function(ev){ saveNativeToken(ev.value); });
+
+    Push.addListener('registration', function(ev){
+      console.log('NEKEZA native token registered');
+      saveToken(ev.value, 'android');
+    });
+    Push.addListener('registrationError', function(err){
+      console.warn('native push error', err);
+    });
     Push.addListener('pushNotificationActionPerformed', function(ev){
       try {
-        var d = (ev.notification && ev.notification.data) || {};
+        var n = ev.notification || {};
+        var d = n.data || n.extra || {};
         if(d.url) window.location.href = d.url;
       } catch(e){}
     });
-  });
-  {% endif %}
-})();
 
-/* PWA + Push (VAPID backup + Firebase FCM) */
-(function(){
-  if(!('serviceWorker' in navigator)) return;
-  var ver = '{{ app_version|default("1") }}';
-  navigator.serviceWorker.register('/sw.js?v=' + encodeURIComponent(ver), {scope:'/'}).catch(function(){});
+    Push.requestPermissions().then(function(res){
+      if(res.receive === 'granted' || res.receive === 'prompt') {
+        return Push.register();
+      }
+    }).catch(function(e){ console.warn(e); });
 
-  {% if session.get('user_id') %}
-  function b64(s){var p='='.repeat((4-s.length%4)%4);var b=(s+p).replace(/-/g,'+').replace(/_/g,'/');var r=atob(b);var o=new Uint8Array(r.length);for(var i=0;i<r.length;i++)o[i]=r.charCodeAt(i);return o;}
-  function webPushSub(reg){
-    fetch('/api/push/vapid-public').then(function(r){return r.json();}).then(function(d){
-      if(!d.publicKey) return;
-      return reg.pushManager.getSubscription().then(function(ex){
-        if(ex) return ex;
-        return reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64(d.publicKey)});
-      });
-    }).then(function(s){
-      if(!s) return;
-      var j=s.toJSON();
-      return fetch('/api/push/subscribe',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({endpoint:j.endpoint,keys:j.keys||{}})});
-    }).catch(function(){});
+    return true;
   }
 
-  function startWhenAllowed(fn){
-    if(!('Notification' in window)) return;
-    if(Notification.permission==='granted') fn();
-    else if(Notification.permission==='default'){
-      Notification.requestPermission().then(function(p){ if(p==='granted') fn(); });
+  /* B) Browser / PWA — Web Push + FCM web (inaonyesha Chrome) */
+  function setupWebPush(){
+    if(!('serviceWorker' in navigator)) return;
+    var ver = '{{ app_version|default("1") }}';
+    navigator.serviceWorker.register('/sw.js?v=' + encodeURIComponent(ver), {scope:'/'}).catch(function(){});
+
+    function b64(s){var p='='.repeat((4-s.length%4)%4);var b=(s+p).replace(/-/g,'+').replace(/_/g,'/');var r=atob(b);var o=new Uint8Array(r.length);for(var i=0;i<r.length;i++)o[i]=r.charCodeAt(i);return o;}
+    function webPushSub(reg){
+      fetch('/api/push/vapid-public').then(function(r){return r.json();}).then(function(d){
+        if(!d.publicKey) return;
+        return reg.pushManager.getSubscription().then(function(ex){
+          if(ex) return ex;
+          return reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64(d.publicKey)});
+        });
+      }).then(function(s){
+        if(!s) return;
+        var j=s.toJSON();
+        return fetch('/api/push/subscribe',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({endpoint:j.endpoint,keys:j.keys||{}})});
+      }).catch(function(){});
     }
-  }
-
-  navigator.serviceWorker.ready.then(function(reg){
-    startWhenAllowed(function(){ webPushSub(reg); });
-  });
-
-  /* Firebase Cloud Messaging — token + foreground */
-  {% if firebase_config and firebase_vapid_key %}
-  var fbCfg = {{ firebase_config|tojson }};
-  var fbVapid = {{ firebase_vapid_key|tojson }};
-  function loadScript(src){
-    return new Promise(function(res,rej){
-      var s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s);
+    function startWhenAllowed(fn){
+      if(!('Notification' in window)) return;
+      if(Notification.permission==='granted') fn();
+      else if(Notification.permission==='default'){
+        Notification.requestPermission().then(function(p){ if(p==='granted') fn(); });
+      }
+    }
+    navigator.serviceWorker.ready.then(function(reg){
+      startWhenAllowed(function(){ webPushSub(reg); });
     });
-  }
-  function setupFcm(){
-    Promise.all([
-      loadScript('https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js'),
-      loadScript('https://www.gstatic.com/firebasejs/10.14.0/firebase-messaging-compat.js')
-    ]).then(function(){
-      if(!window.firebase) return;
-      if(!firebase.apps.length) firebase.initializeApp(fbCfg);
-      var messaging = firebase.messaging();
-      return navigator.serviceWorker.register('/firebase-messaging-sw.js?v=' + encodeURIComponent(ver), {scope:'/'}).then(function(reg){
-        return messaging.getToken({ vapidKey: fbVapid, serviceWorkerRegistration: reg });
-      }).then(function(token){
-        if(!token) return;
-        return fetch('/api/push/fcm-token', {
-          method:'POST', credentials:'same-origin',
-          headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({token: token, platform: 'web'})
-        });
-      }).then(function(){
-        messaging.onMessage(function(payload){
-          var n = (payload && payload.notification) || {};
-          var d = (payload && payload.data) || {};
-          var title = n.title || d.title || '{{ app_name }}';
-          var body = n.body || d.body || '';
-          if(Notification.permission==='granted'){
-            try { new Notification(title, { body: body, icon: '/static/icon-192.png' }); } catch(e){}
-          }
-        });
+
+    {% if firebase_config and firebase_vapid_key %}
+    var fbCfg = {{ firebase_config|tojson }};
+    var fbVapid = {{ firebase_vapid_key|tojson }};
+    function loadScript(src){
+      return new Promise(function(res,rej){
+        var s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s);
       });
-    }).catch(function(err){ console.warn('fcm', err); });
+    }
+    function setupFcmWeb(){
+      Promise.all([
+        loadScript('https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js'),
+        loadScript('https://www.gstatic.com/firebasejs/10.14.0/firebase-messaging-compat.js')
+      ]).then(function(){
+        if(!window.firebase) return;
+        if(!firebase.apps.length) firebase.initializeApp(fbCfg);
+        var messaging = firebase.messaging();
+        return navigator.serviceWorker.register('/firebase-messaging-sw.js?v=' + encodeURIComponent(ver), {scope:'/'}).then(function(reg){
+          return messaging.getToken({ vapidKey: fbVapid, serviceWorkerRegistration: reg });
+        }).then(function(token){
+          if(token) saveToken(token, 'web');
+          messaging.onMessage(function(payload){
+            var n = (payload && payload.notification) || {};
+            var d = (payload && payload.data) || {};
+            var title = n.title || d.title || '{{ app_name }}';
+            var body = n.body || d.body || '';
+            if(Notification.permission==='granted'){
+              try { new Notification(title, { body: body, icon: '/static/icon-192.png' }); } catch(e){}
+            }
+          });
+        });
+      }).catch(function(err){ console.warn('fcm web', err); });
+    }
+    startWhenAllowed(setupFcmWeb);
+    {% endif %}
   }
-  startWhenAllowed(setupFcm);
-  {% endif %}
+
+  // MUHIMU: APK → native only. Chrome/browser → web push.
+  if (isCapacitor()) {
+    console.log('NEKEZA: using native push');
+    if (!setupNativePush()) setupWebPush();
+  } else {
+    console.log('NEKEZA: using web push');
+    setupWebPush();
+  }
   {% endif %}
 })();
 </script>
