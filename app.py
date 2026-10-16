@@ -1541,6 +1541,7 @@ def _send_fcm(user_ids, title, body="", link="/"):
     if not user_ids:
         return
     if _init_firebase() is None:
+        print("fcm: firebase not initialized (check FIREBASE_CREDENTIALS_JSON)")
         return
     try:
         from firebase_admin import messaging
@@ -1557,6 +1558,7 @@ def _send_fcm(user_ids, title, body="", link="/"):
             ).fetchall()
             tokens.extend(rows)
         if not tokens:
+            print("fcm: no tokens for user_ids", user_ids)
             return
         dead = []
         for row in tokens:
@@ -1575,8 +1577,7 @@ def _send_fcm(user_ids, title, body="", link="/"):
                             title=title or APP_NAME,
                             body=body or "",
                             sound="default",
-                            channel_id="nekeza_default",
-                            icon="ic_launcher",
+                            channel_id="default",
                             color="#1e3a8a",
                             priority="high",
                             default_sound=True,
@@ -1593,12 +1594,12 @@ def _send_fcm(user_ids, title, body="", link="/"):
                     ),
                 )
                 messaging.send(msg)
+                print("fcm: sent ok to token", row["token"][:20], "...")
             except Exception as exc:
                 err = str(exc).lower()
+                print("fcm send error:", exc)
                 if "not-found" in err or "unregistered" in err or "invalid" in err:
                     dead.append(row["id"])
-                else:
-                    print("fcm send:", exc)
         for did in dead:
             try:
                 conn.execute("DELETE FROM fcm_tokens WHERE id=?", (did,))
@@ -1837,9 +1838,9 @@ def admin_extend_account(user_id):
     conn.commit()
     conn.close()
     try:
-        _send_web_push([user_id], APP_NAME, f"Akaunti imeongezwa siku {days_i}. Inaisha {new_exp.isoformat()}.", "/dashboard")
-    except Exception:
-        pass
+         _send_web_push([user_id], "Ujumbe kutoka Admin", body[:100], "/chat")
+    except Exception as e:
+        print("push chat error:", e)
     flash(f"Muda umeongezwa siku {days_i}. Inaisha {new_exp.isoformat()}.", "success")
     return redirect(url_for("manage_employees"))
 
