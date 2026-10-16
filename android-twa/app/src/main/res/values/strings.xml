@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">NEKEZA</string>
+    <string name="host_name">__TWA_HOST__</string>
+    <string name="launch_url">__TWA_URL__/</string>
+</resources>

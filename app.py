@@ -20,7 +20,7 @@ app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 app.config["SESSION_COOKIE_SECURE"] = os.environ.get("COOKIE_SECURE", "false").lower() == "true"
 APP_NAME = os.environ.get("APP_NAME", "NEKEZA").strip()
-APP_VERSION = os.environ.get("APP_VERSION", "2026.10.15").strip()
+APP_VERSION = os.environ.get("APP_VERSION", "2026.10.16").strip()
 VAPID_PUBLIC_KEY = os.environ.get(
     "VAPID_PUBLIC_KEY",
     "BF7MORIX2kXdhD10vwKfBOIL_wyng5MaMRYc2F0heGaa0w_L1p-4hkvwiYr7poOXmrHG-m_-NiJH8YOipIoQKaw",
@@ -30,6 +30,15 @@ VAPID_PRIVATE_KEY = os.environ.get(
     "QDcBDM3i9vH70nDNHdY0V-TA8nK1sFShGKT1Lg0wR2s",
 ).strip()
 VAPID_CLAIM_EMAIL = os.environ.get("VAPID_CLAIM_EMAIL", "mailto:admin@nekeza.app").strip()
+# Firebase Cloud Messaging (push haraka hata app imefungwa)
+FIREBASE_PROJECT_ID = os.environ.get("FIREBASE_PROJECT_ID", "").strip()
+FIREBASE_API_KEY = os.environ.get("FIREBASE_API_KEY", "").strip()
+FIREBASE_AUTH_DOMAIN = os.environ.get("FIREBASE_AUTH_DOMAIN", "").strip()
+FIREBASE_MESSAGING_SENDER_ID = os.environ.get("FIREBASE_MESSAGING_SENDER_ID", "").strip()
+FIREBASE_APP_ID = os.environ.get("FIREBASE_APP_ID", "").strip()
+FIREBASE_VAPID_KEY = os.environ.get("FIREBASE_VAPID_KEY", "").strip()  # Web Push cert key from Firebase Console
+FIREBASE_CREDENTIALS_JSON = os.environ.get("FIREBASE_CREDENTIALS_JSON", "").strip()  # service account JSON string
+APP_PUBLIC_URL = os.environ.get("APP_PUBLIC_URL", "").strip()  # e.g. https://nekeza.vercel.app (for APK/TWA)
 
 
 # Database: Supabase/Postgres via DATABASE_URL, else local SQLite
@@ -270,6 +279,13 @@ def init_db():
             auth TEXT NOT NULL,
             created_at TEXT DEFAULT CURRENT_TIMESTAMP
         );
+        CREATE TABLE IF NOT EXISTS fcm_tokens (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL,
+            token TEXT UNIQUE NOT NULL,
+            platform TEXT DEFAULT 'web',
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        );
         CREATE TABLE IF NOT EXISTS support_tickets (
             id SERIAL PRIMARY KEY,
             name TEXT NOT NULL,
@@ -348,6 +364,13 @@ def init_db():
             endpoint TEXT UNIQUE NOT NULL,
             p256dh TEXT NOT NULL,
             auth TEXT NOT NULL,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE TABLE IF NOT EXISTS fcm_tokens (
+            id INTEGER PRIMARY KEY,
+            user_id INTEGER NOT NULL,
+            token TEXT UNIQUE NOT NULL,
+            platform TEXT DEFAULT 'web',
             created_at TEXT DEFAULT CURRENT_TIMESTAMP
         );
         CREATE TABLE IF NOT EXISTS support_tickets (
@@ -1488,19 +1511,113 @@ def stock_inventory_value(products_rows):
     }
 
 
-def _send_web_push(user_ids, title, body="", link="/"):
-    if not user_ids or not VAPID_PRIVATE_KEY:
+_firebase_app = None
+
+def _init_firebase():
+    """Init firebase-admin once (service account JSON from env)."""
+    global _firebase_app
+    if _firebase_app is not None:
+        return _firebase_app
+    if not FIREBASE_CREDENTIALS_JSON:
+        return None
+    try:
+        import json as _json
+        import firebase_admin
+        from firebase_admin import credentials
+        if firebase_admin._apps:
+            _firebase_app = firebase_admin.get_app()
+            return _firebase_app
+        info = _json.loads(FIREBASE_CREDENTIALS_JSON)
+        cred = credentials.Certificate(info)
+        _firebase_app = firebase_admin.initialize_app(cred)
+        return _firebase_app
+    except Exception as exc:
+        print("firebase init:", exc)
+        return None
+
+
+def _send_fcm(user_ids, title, body="", link="/"):
+    """Tuma Firebase Cloud Messaging — inafanya kazi hata app imefungwa."""
+    if not user_ids:
+        return
+    if _init_firebase() is None:
         return
     try:
-        from pywebpush import webpush, WebPushException
+        from firebase_admin import messaging
     except ImportError:
-        print("pywebpush not installed")
+        print("firebase_admin not installed")
+        return
+    conn = get_db()
+    try:
+        tokens = []
+        for uid in user_ids:
+            rows = conn.execute(
+                "SELECT id, token FROM fcm_tokens WHERE user_id=?",
+                (uid,),
+            ).fetchall()
+            tokens.extend(rows)
+        if not tokens:
+            return
+        dead = []
+        for row in tokens:
+            try:
+                msg = messaging.Message(
+                    notification=messaging.Notification(title=title or APP_NAME, body=body or ""),
+                    data={"url": link or "/", "title": title or APP_NAME, "body": body or ""},
+                    token=row["token"],
+                    android=messaging.AndroidConfig(
+                        priority="high",
+                        notification=messaging.AndroidNotification(
+                            click_action="FLUTTER_NOTIFICATION_CLICK",
+                            sound="default",
+                        ),
+                    ),
+                    webpush=messaging.WebpushConfig(
+                        fcm_options=messaging.WebpushFCMOptions(link=link or "/"),
+                        notification=messaging.WebpushNotification(
+                            title=title or APP_NAME,
+                            body=body or "",
+                            icon="/static/icon-192.png",
+                        ),
+                    ),
+                )
+                messaging.send(msg)
+            except Exception as exc:
+                err = str(exc).lower()
+                if "not-found" in err or "unregistered" in err or "invalid" in err:
+                    dead.append(row["id"])
+                else:
+                    print("fcm send:", exc)
+        for did in dead:
+            try:
+                conn.execute("DELETE FROM fcm_tokens WHERE id=?", (did,))
+            except Exception:
+                pass
+        if dead:
+            conn.commit()
+    finally:
+        conn.close()
+
+
+def _send_web_push(user_ids, title, body="", link="/"):
+    """Web Push (VAPID) + Firebase FCM. FCM kwanza ikiwa imesanidiwa."""
+    if not user_ids:
+        return
+    # 1) Firebase FCM (haraka, app imefungwa)
+    try:
+        _send_fcm(user_ids, title, body, link)
+    except Exception as exc:
+        print("fcm:", exc)
+    # 2) Classic Web Push (VAPID) — backup
+    if not VAPID_PRIVATE_KEY:
+        return
+    try:
+        from pywebpush import webpush
+    except ImportError:
         return
     import json as _json
     conn = get_db()
     try:
-        placeholders = ",".join(["?"] * len(user_ids))
-        # fetch subscriptions
         subs = []
         for uid in user_ids:
             rows = conn.execute(
@@ -1508,6 +1625,8 @@ def _send_web_push(user_ids, title, body="", link="/"):
                 (uid,),
             ).fetchall()
             subs.extend(rows)
+        if not subs:
+            return
         payload = _json.dumps({"title": title, "body": body, "url": link})
         dead = []
         for row in subs:
@@ -1568,6 +1687,14 @@ def inject_globals():
         "days_left": days_left,
         "unread_chat": unread_chat,
         "vapid_public": VAPID_PUBLIC_KEY,
+        "firebase_config": {
+            "apiKey": FIREBASE_API_KEY,
+            "authDomain": FIREBASE_AUTH_DOMAIN,
+            "projectId": FIREBASE_PROJECT_ID,
+            "messagingSenderId": FIREBASE_MESSAGING_SENDER_ID,
+            "appId": FIREBASE_APP_ID,
+        } if FIREBASE_API_KEY and FIREBASE_PROJECT_ID else None,
+        "firebase_vapid_key": FIREBASE_VAPID_KEY,
     }
 
 
@@ -2066,6 +2193,25 @@ def api_chat_poll():
     }
 
 
+@app.route("/.well-known/assetlinks.json")
+def assetlinks():
+    """Digital Asset Links kwa Android TWA (APK)."""
+    # Weka SHA256 fingerprint ya keystore kwenye env TWA_SHA256_CERT_FINGERPRINTS (comma-separated)
+    fps = [x.strip() for x in os.environ.get("TWA_SHA256_CERT_FINGERPRINTS", "").split(",") if x.strip()]
+    package = os.environ.get("TWA_PACKAGE_ID", "app.nekeza.twa").strip()
+    if not fps:
+        return [], 200, {"Content-Type": "application/json"}
+    return [{
+        "relation": ["delegate_permission/common.handle_all_urls"],
+        "target": {
+            "namespace": "android_app",
+            "package_name": package,
+            "sha256_cert_fingerprints": fps,
+        },
+    }], 200, {"Content-Type": "application/json"}
+
+
+
 # ====================== PWA + PUSH API ======================
 @app.route("/manifest.webmanifest")
 def pwa_manifest():
@@ -2153,6 +2299,81 @@ def api_push_subscribe():
     conn.commit()
     conn.close()
     return {"ok": True}
+
+
+@app.route("/api/push/fcm-token", methods=["POST"])
+@login_required
+def api_fcm_token():
+    """Hifadhi FCM device token (Firebase)."""
+    data = request.get_json(silent=True) or {}
+    token = (data.get("token") or "").strip()
+    platform = (data.get("platform") or "web").strip()[:20]
+    if not token or len(token) < 20:
+        return {"ok": False, "error": "token required"}, 400
+    conn = get_db()
+    try:
+        existing = conn.execute("SELECT id FROM fcm_tokens WHERE token=?", (token,)).fetchone()
+        if existing:
+            conn.execute(
+                "UPDATE fcm_tokens SET user_id=?, platform=? WHERE token=?",
+                (session["user_id"], platform, token),
+            )
+        else:
+            conn.execute(
+                "INSERT INTO fcm_tokens (user_id, token, platform) VALUES (?, ?, ?)",
+                (session["user_id"], token, platform),
+            )
+        conn.commit()
+    finally:
+        conn.close()
+    return {"ok": True}
+
+
+@app.route("/firebase-messaging-sw.js")
+def firebase_messaging_sw():
+    """SW ya Firebase — inahitajika kwa background push."""
+    js = f"""
+/* Firebase Messaging SW — NEKEZA */
+importScripts('https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.14.0/firebase-messaging-compat.js');
+firebase.initializeApp({{
+  apiKey: '{FIREBASE_API_KEY}',
+  authDomain: '{FIREBASE_AUTH_DOMAIN}',
+  projectId: '{FIREBASE_PROJECT_ID}',
+  messagingSenderId: '{FIREBASE_MESSAGING_SENDER_ID}',
+  appId: '{FIREBASE_APP_ID}'
+}});
+var messaging = firebase.messaging();
+messaging.onBackgroundMessage(function(payload) {{
+  var n = (payload && payload.notification) || {{}};
+  var d = (payload && payload.data) || {{}};
+  var title = n.title || d.title || '{APP_NAME}';
+  var body = n.body || d.body || '';
+  var url = d.url || '/';
+  self.registration.showNotification(title, {{
+    body: body,
+    icon: '/static/icon-192.png',
+    badge: '/static/icon-192.png',
+    data: {{ url: url }},
+    vibrate: [200, 100, 200]
+  }});
+}});
+self.addEventListener('notificationclick', function(e) {{
+  e.notification.close();
+  var url = (e.notification.data && e.notification.data.url) || '/';
+  e.waitUntil(clients.matchAll({{type:'window', includeUncontrolled:true}}).then(function(list) {{
+    for (var i = 0; i < list.length; i++) {{
+      if ('focus' in list[i]) {{ try {{ list[i].navigate(url); }} catch(x) {{}} return list[i].focus(); }}
+    }}
+    if (clients.openWindow) return clients.openWindow(url);
+  }}));
+}});
+"""
+    resp = app.response_class(js, mimetype="application/javascript")
+    resp.headers["Service-Worker-Allowed"] = "/"
+    resp.headers["Cache-Control"] = "no-cache"
+    return resp
+
 
 
 # ====================== RUN / STARTUP ======================
