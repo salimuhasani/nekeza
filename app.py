@@ -20,7 +20,7 @@ app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 app.config["SESSION_COOKIE_SECURE"] = os.environ.get("COOKIE_SECURE", "false").lower() == "true"
 APP_NAME = os.environ.get("APP_NAME", "NEKEZA").strip()
-APP_VERSION = os.environ.get("APP_VERSION", "2026.10.16").strip()
+APP_VERSION = os.environ.get("APP_VERSION", "2026.10.16.2").strip()
 VAPID_PUBLIC_KEY = os.environ.get(
     "VAPID_PUBLIC_KEY",
     "BF7MORIX2kXdhD10vwKfBOIL_wyng5MaMRYc2F0heGaa0w_L1p-4hkvwiYr7poOXmrHG-m_-NiJH8YOipIoQKaw",

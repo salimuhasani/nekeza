@@ -354,10 +354,84 @@
     @media (min-width: 901px) {
       .hamburger { display: grid; }
     }
-  </style>
+  
+    /* Pull to refresh */
+    #ptr {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 9998;
+      display: flex; align-items: center; justify-content: center;
+      height: 0; overflow: hidden;
+      transition: height .15s ease;
+      pointer-events: none;
+      background: transparent;
+    }
+    #ptr .ptr-inner {
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      padding-top: 10px;
+      color: var(--primary, #1e3a8a);
+      font-size: 12px; font-weight: 600;
+    }
+    #ptr .ptr-spinner {
+      width: 28px; height: 28px; border-radius: 50%;
+      border: 3px solid rgba(30,58,138,.2);
+      border-top-color: var(--primary, #1e3a8a);
+      animation: none;
+    }
+    #ptr.ptr-refreshing .ptr-spinner { animation: ptrSpin .7s linear infinite; }
+    @keyframes ptrSpin { to { transform: rotate(360deg); } }
+
+</style>
   {% block head %}{% endblock %}
 </head>
 <body>
+
+<div id="ptr" aria-hidden="true"><div class="ptr-inner"><div class="ptr-spinner"></div><span class="ptr-text">Pull to refresh</span></div></div>
+<script>
+(function(){
+  var ptr = document.getElementById('ptr');
+  if (!ptr) return;
+  var startY = 0, pulling = false, refreshing = false;
+  var threshold = 70;
+  var text = ptr.querySelector('.ptr-text');
+
+  function setH(h){ ptr.style.height = Math.max(0, h) + 'px'; }
+
+  document.addEventListener('touchstart', function(e){
+    if (refreshing) return;
+    if (window.scrollY > 2) return;
+    if (!e.touches || !e.touches.length) return;
+    startY = e.touches[0].clientY;
+    pulling = true;
+  }, {passive:true});
+
+  document.addEventListener('touchmove', function(e){
+    if (!pulling || refreshing) return;
+    if (window.scrollY > 2) { pulling = false; setH(0); return; }
+    var y = e.touches[0].clientY;
+    var dist = y - startY;
+    if (dist < 0) { setH(0); return; }
+    var h = Math.min(dist * 0.45, 96);
+    setH(h);
+    if (text) text.textContent = h >= threshold ? 'Release to refresh' : 'Pull to refresh';
+  }, {passive:true});
+
+  document.addEventListener('touchend', function(){
+    if (!pulling || refreshing) return;
+    pulling = false;
+    var h = parseFloat(ptr.style.height) || 0;
+    if (h >= threshold) {
+      refreshing = true;
+      ptr.classList.add('ptr-refreshing');
+      setH(64);
+      if (text) text.textContent = 'Inapakia...';
+      setTimeout(function(){ window.location.reload(); }, 450);
+    } else {
+      setH(0);
+      if (text) text.textContent = 'Pull to refresh';
+    }
+  }, {passive:true});
+})();
+</script>
+
 <header class="topbar">
   <div style="display:flex;align-items:center;gap:10px">
     <button type="button" class="hamburger" id="menuBtn" aria-label="Menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
