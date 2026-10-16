@@ -478,6 +478,35 @@
   if(btn) btn.addEventListener('click', open);
   if(bg) bg.addEventListener('click', close);
 })();
+/* Capacitor native push token (ikiwa APK ya Capacitor) */
+(function(){
+  {% if session.get('user_id') %}
+  function saveNativeToken(token){
+    if(!token) return;
+    fetch('/api/push/fcm-token', {
+      method:'POST', credentials:'same-origin',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({token: token, platform: 'android'})
+    }).catch(function(){});
+  }
+  document.addEventListener('DOMContentLoaded', function(){
+    var cap = window.Capacitor;
+    if(!cap || !cap.Plugins || !cap.Plugins.PushNotifications) return;
+    var Push = cap.Plugins.PushNotifications;
+    Push.requestPermissions().then(function(res){
+      if(res.receive === 'granted') return Push.register();
+    }).catch(function(){});
+    Push.addListener('registration', function(ev){ saveNativeToken(ev.value); });
+    Push.addListener('pushNotificationActionPerformed', function(ev){
+      try {
+        var d = (ev.notification && ev.notification.data) || {};
+        if(d.url) window.location.href = d.url;
+      } catch(e){}
+    });
+  });
+  {% endif %}
+})();
+
 /* PWA + Push (VAPID backup + Firebase FCM) */
 (function(){
   if(!('serviceWorker' in navigator)) return;

@@ -1,0 +1,24 @@
+{
+  "appId": "com.nekeza.app",
+  "appName": "NEKEZA",
+  "webDir": "www",
+  "server": {
+    "url": "https://nekeza.dutoza.com",
+    "cleartext": false,
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": false,
+    "backgroundColor": "#1e3a8a"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1500,
+      "backgroundColor": "#1e3a8a",
+      "showSpinner": false
+    },
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
+    }
+  }
+}

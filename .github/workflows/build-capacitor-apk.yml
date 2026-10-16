@@ -1,0 +1,128 @@
+name: Build Capacitor APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      app_url:
+        description: 'URL ya app (mf. https://nekeza.dutoza.com)'
+        required: true
+        default: 'https://nekeza.dutoza.com'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Configure Android SDK
+        run: |
+          export ANDROID_HOME=/usr/local/lib/android/sdk
+          echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
+          echo "ANDROID_SDK_ROOT=$ANDROID_HOME" >> $GITHUB_ENV
+          mkdir -p "$ANDROID_HOME/licenses"
+          echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" > "$ANDROID_HOME/licenses/android-sdk-license"
+          echo "84831b9409646a918e30573bab4c9c91346d8abd" > "$ANDROID_HOME/licenses/android-sdk-preview-license"
+          SM=$(find "$ANDROID_HOME" -name sdkmanager -type f 2>/dev/null | head -1)
+          if [ -n "$SM" ]; then
+            yes | "$SM" --licenses >/dev/null 2>&1 || true
+            "$SM" "platforms;android-34" "build-tools;34.0.0" "platform-tools" || true
+          fi
+        working-directory: .
+
+      - name: Set app URL in capacitor config
+        run: |
+          APP_URL="${{ github.event.inputs.app_url }}"
+          APP_URL="${APP_URL%/}"
+          python3 - << PY
+          import json
+          from pathlib import Path
+          p = Path("capacitor.config.json")
+          cfg = json.loads(p.read_text())
+          cfg.setdefault("server", {})["url"] = "${{ github.event.inputs.app_url }}".rstrip("/")
+          p.write_text(json.dumps(cfg, indent=2))
+          print(p.read_text())
+          PY
+
+      - name: Install npm deps
+        run: npm install
+
+      - name: Add Android platform
+        run: npx cap add android
+
+      - name: Write google-services.json
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ -n "$GOOGLE_SERVICES_JSON" ]; then
+            echo "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+            echo "google-services.json written"
+          else
+            echo "WARNING: secret GOOGLE_SERVICES_JSON missing — push ya native inaweza kushindwa"
+            # Minimal placeholder so Gradle can still build UI shell
+            cat > android/app/google-services.json << 'JSON'
+          {
+            "project_info": {
+              "project_number": "396964067792",
+              "project_id": "nekeza-71f4e",
+              "storage_bucket": "nekeza-71f4e.appspot.com"
+            },
+            "client": [{
+              "client_info": {
+                "mobilesdk_app_id": "1:396964067792:android:placeholder",
+                "android_client_info": { "package_name": "com.nekeza.app" }
+              },
+              "api_key": [{ "current_key": "AIzaSyD5eZLf6K3qDsdf0UA1lTPlPK4qDFcnU4Q" }],
+              "services": { "appinvite_service": { "other_platform_oauth_client": [] } }
+            }],
+            "configuration_version": "1"
+          }
+          JSON
+          fi
+
+      - name: Enable Google Services plugin
+        run: |
+          # Root build.gradle — add google-services classpath if missing
+          if ! grep -q "google-services" android/build.gradle; then
+            sed -i '/dependencies/a\        classpath "com.google.gms:google-services:4.4.2"' android/build.gradle || true
+          fi
+          if ! grep -q "com.google.gms.google-services" android/app/build.gradle; then
+            echo 'apply plugin: "com.google.gms.google-services"' >> android/app/build.gradle
+          fi
+          # Ensure Firebase messaging dependency
+          if ! grep -q "firebase-messaging" android/app/build.gradle; then
+            sed -i '/dependencies {/a\    implementation "com.google.firebase:firebase-messaging:24.0.0"' android/app/build.gradle || true
+          fi
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build APK
+        working-directory: mobile/android
+        run: |
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: nekeza-capacitor-apk
+          path: mobile/android/app/build/outputs/apk/**/*.apk
+          if-no-files-found: error
