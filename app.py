@@ -1098,10 +1098,10 @@ def export_pdf():
     boss_id = session['user_id']
     conn = get_db()
 
-    # Default ni leo
-    filter_type = request.form.get('filter_type', 'today')
-    start_date = request.form.get('start_date')
-    end_date = request.form.get('end_date')
+    # Default ni leo (form POST au query GET — muhimu kwa APK)
+    filter_type = request.values.get('filter_type', 'today')
+    start_date = request.values.get('start_date')
+    end_date = request.values.get('end_date')
 
     # Build query kulingana na filter
     query = """

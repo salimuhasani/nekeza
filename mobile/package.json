@@ -13,7 +13,10 @@
     "@capacitor/core": "^6.1.2",
     "@capacitor/push-notifications": "^6.0.2",
     "@capacitor/splash-screen": "^6.0.2",
-    "@capacitor/status-bar": "^6.0.1"
+    "@capacitor/status-bar": "^6.0.1",
+    "@capacitor/filesystem": "^6.0.2",
+    "@capacitor/share": "^6.0.2",
+    "@capacitor/browser": "^6.0.2"
   },
   "devDependencies": {
     "@capacitor/cli": "^6.1.2"

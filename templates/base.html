@@ -824,5 +824,144 @@
 </script>
 
 
+
+<script>
+/* ===== DOWNLOAD: Browser vs Capacitor APK ===== */
+(function(){
+  function isNative(){
+    try {
+      if (!window.Capacitor) return false;
+      if (typeof window.Capacitor.isNativePlatform === 'function')
+        return window.Capacitor.isNativePlatform();
+      return !!(window.Capacitor.Plugins);
+    } catch(e) { return false; }
+  }
+
+  function blobToBase64(blob){
+    return new Promise(function(resolve, reject){
+      var reader = new FileReader();
+      reader.onloadend = function(){
+        var s = reader.result || '';
+        var i = s.indexOf(',');
+        resolve(i >= 0 ? s.slice(i + 1) : s);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  function absUrl(href){
+    try { return new URL(href, window.location.href).href; }
+    catch(e){ return href; }
+  }
+
+  async function saveAndShare(blob, filename){
+    var Plugins = (window.Capacitor && window.Capacitor.Plugins) || {};
+    var Filesystem = Plugins.Filesystem;
+    var Share = Plugins.Share;
+    var Browser = Plugins.Browser;
+    if (!Filesystem || !Share) {
+      // Fallback: fungua browser ya nje
+      if (Browser) {
+        alert('Pakua litafunguka kwenye browser.');
+      }
+      throw new Error('Filesystem/Share plugin missing — rebuild APK');
+    }
+    var b64 = await blobToBase64(blob);
+    var path = filename || ('nekeza_' + Date.now());
+    var written = await Filesystem.writeFile({
+      path: path,
+      data: b64,
+      directory: 'CACHE'
+    });
+    var uri = written.uri;
+    try {
+      await Share.share({
+        title: path,
+        url: uri,
+        dialogTitle: 'Hifadhi / Share faili'
+      });
+    } catch (e) {
+      // user cancelled share — still ok
+      console.warn('share', e);
+    }
+  }
+
+  async function downloadUrl(url, filename){
+    var res = await fetch(url, { credentials: 'same-origin' });
+    if (!res.ok) throw new Error('Download failed: ' + res.status);
+    var blob = await res.blob();
+    var name = filename;
+    if (!name) {
+      var cd = res.headers.get('Content-Disposition') || '';
+      var m = cd.match(/filename\*?=(?:UTF-8'')?["']?([^\"';]+)/i);
+      name = m ? m[1] : ('download_' + Date.now());
+    }
+    await saveAndShare(blob, name);
+  }
+
+  // Intercept <a download> and known download links inside APK
+  document.addEventListener('click', function(ev){
+    if (!isNative()) return;
+    var a = ev.target.closest && ev.target.closest('a');
+    if (!a) return;
+    var href = a.getAttribute('href') || '';
+    if (!href || href === '#' || href.indexOf('javascript:') === 0) return;
+    var isDl = a.hasAttribute('download')
+      || href.indexOf('/api/download') !== -1
+      || href.indexOf('/export_pdf') !== -1
+      || href.indexOf('/static/downloads/') !== -1
+      || /\.(apk|pdf|csv|xlsx?)($|\?)/i.test(href);
+    if (!isDl) return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    var fname = a.getAttribute('download') || '';
+    var url = absUrl(href);
+    a.style.opacity = '0.6';
+    downloadUrl(url, fname).catch(function(err){
+      console.warn(err);
+      // Fallback: Browser plugin
+      var Browser = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Browser;
+      if (Browser) {
+        Browser.open({ url: url });
+      } else {
+        alert('Imeshindikana kupakua. Jaribu tena au tumia Chrome.');
+      }
+    }).finally(function(){ a.style.opacity = ''; });
+  }, true);
+
+  // Intercept PDF export forms (POST → fetch blob)
+  document.addEventListener('submit', function(ev){
+    if (!isNative()) return;
+    var form = ev.target;
+    if (!form || !form.action) return;
+    var action = form.getAttribute('action') || '';
+    if (action.indexOf('export_pdf') === -1 && !(form.action + '').includes('export_pdf')) return;
+    ev.preventDefault();
+    var fd = new FormData(form);
+    var btn = form.querySelector('[type=submit]');
+    if (btn) btn.disabled = true;
+    fetch(absUrl(form.action), {
+      method: (form.method || 'POST').toUpperCase(),
+      body: fd,
+      credentials: 'same-origin'
+    }).then(function(res){
+      if (!res.ok) throw new Error('status ' + res.status);
+      return res.blob();
+    }).then(function(blob){
+      return saveAndShare(blob, 'NEKEZA_Ripoti.pdf');
+    }).catch(function(err){
+      console.warn(err);
+      alert('Imeshindikana kupakua PDF. Hakikisha umelogin.');
+    }).finally(function(){
+      if (btn) btn.disabled = false;
+    });
+  }, true);
+
+  window.nekezaDownload = downloadUrl;
+})();
+</script>
+
 </body>
 </html>
+

@@ -1,225 +1,255 @@
 {% extends "base.html" %}
-{% block content %}
-
+{% block title %}Dashboard · {{ app_name }}{% endblock %}
+{% block head %}
 <style>
-    body {
-        background: #f8fafc;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-
-    .container {
-        max-width: 1000px;
-        margin: 0 auto;
-        padding: 15px;
-        min-height: 100vh;
-    }
-
-    .welcome {
-        font-size: 1.8rem;
-        font-weight: 700;
-        color: #0f172a;
-        margin-bottom: 6px;
-    }
-
-    .subtitle {
-        color: #64748b;
-        font-size: 1rem;
-        margin-bottom: 20px;
-    }
-
-    /* Total Balance */
-    .total-balance {
-        background: linear-gradient(135deg, #1e40af, #3b82f6);
-        color: white;
-        padding: 24px 15px;
-        border-radius: 18px;
-        text-align: center;
-        margin-bottom: 25px;
-        box-shadow: 0 8px 25px rgba(59, 130, 246, 0.25);
-    }
-
-    .total-balance h2 {
-        font-size: 0.95rem;
-        margin-bottom: 6px;
-        opacity: 0.95;
-    }
-
-    .total-amount {
-        font-size: 2.2rem;
-        font-weight: 800;
-        margin: 0;
-    }
-
-    /* Stats Grid */
-    .stats-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 14px;
-        margin-bottom: 30px;
-    }
-
-    .stat-card {
-        background: white;
-        padding: 18px 12px;
-        border-radius: 14px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.06);
-        text-align: center;
-    }
-
-    .stat-label {
-        font-size: 0.82rem;
-        color: #64748b;
-        margin-bottom: 6px;
-    }
-
-    .stat-value {
-        font-size: 1.4rem;
-        font-weight: 700;
-        color: #1e3a8a;
-    }
-
-    .green { color: #16a34a; }
-
-    /* Button - Ukubwa Uliopunguzwa */
-    .main-action {
-        text-align: center;
-        margin: 25px 0 35px 0;
-    }
-
-    .btn-large {
-        display: inline-block;
-        background: linear-gradient(135deg, #1e3a8a, #2563eb);
-        color: white;
-        padding: 12px 28px;
-        font-size: 1.05rem;
-        font-weight: 600;
-        border-radius: 12px;
-        text-decoration: none;
-        box-shadow: 0 5px 15px rgba(37, 99, 235, 0.3);
-        transition: all 0.3s ease;
-        min-width: 220px;
-    }
-
-    .btn-large:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4);
-    }
-
-    .export-section {
-        text-align: center;
-        margin-top: 15px;
-    }
-</style>
-
-<div class="container">
-
-    <h1 class="welcome">Karibu, {{ username }} </h1>
-    <p class="subtitle">Muhtasari wa biashara yako leo</p>
-
-    <!-- Total Balance -->
-    <div class="total-balance">
-        <h2>JUMLA YA MAUZO YAKO</h2>
-	<p class="total-amount">TZS {{ total_balance | format_money }}</p>
-    </div>
-
-    <!-- Stats -->
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-label">MAUZO YA LEO</div>
-	<div class="stat-value green">TZS {{ today_sales | format_money }}</div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-label">BIDHAA INAYOUZWA ZAIDI</div>
-            <div class="stat-value">{{ top_product or 'Hakuna bado' }}</div>
-        </div>
-    </div>
-
-    <!-- Button -->
-    <div class="main-action">
-        <a href="{{ url_for('sales') }}" class="btn-large">
-             TAZAMA MAUZO YOTE
-        </a>
-    </div>
-
-
-<!-- ==================== EXPORT PDF BUTTON & HIDDEN FORM ==================== -->
-<div style="margin: 40px 0; text-align: center;">
-    <button onclick="toggleExportForm()"
-            style="padding: 14px 32px; background: linear-gradient(135deg, #1e3a8a, #3b82f6); color: white; border: none; border-radius: 12px; font-size: 1.1rem; font-weight: 600; cursor: pointer;">
-         Pakua Ripoti ya PDF
-    </button>
-</div>
-
-<!-- Hidden Export Form -->
-<div id="exportForm" style="display: none; margin: 30px 0; padding: 25px; background: white; border-radius: 16px; box-shadow: 0 8px 25px rgba(0,0,0,0.08);">
-
-    <h3 style="text-align: center; color: #1e3a8a; margin-bottom: 20px;">Chagua Aina ya Ripoti</h3>
-
-    <form method="POST" action="{{ url_for('export_pdf') }}">
-
-        <label style="font-weight: 600; display: block; margin-bottom: 8px;">Aina ya Ripoti:</label>
-
-        <select name="filter_type" id="filter_type" style="width: 100%; padding: 12px; border-radius: 10px; border: 2px solid #e2e8f0; margin-bottom: 20px;" required>
-            <option value="today">Leo (Today)</option>
-            <option value="weekly">Wiki hii (Weekly)</option>
-            <option value="monthly">Mwezi huu (Monthly)</option>
-            <option value="yearly">Mwaka huu (Yearly)</option>
-            <option value="custom">Chagua Tarehe Mwenyewe</option>
-        </select>
-
-        <!-- Custom Date Range -->
-        <div id="custom_dates" style="display: none; margin-bottom: 20px;">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                <div>
-                    <label>Tarehe ya Kuanza</label>
-                    <input type="date" name="start_date" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
-                </div>
-                <div>
-                    <label>Tarehe ya Mwisho</label>
-                    <input type="date" name="end_date" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
-                </div>
-            </div>
-        </div>
-
-        <button type="submit"
-                style="width: 100%; padding: 14px; background: linear-gradient(135deg, #16a34a, #22c55e); color: white; border: none; border-radius: 12px; font-size: 1.1rem; font-weight: 600;">
-             Pakua Ripoti ya PDF
-        </button>
-    </form>
-</div>
-
-<script>
-function toggleExportForm() {
-    const form = document.getElementById('exportForm');
-    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+.db-wrap { max-width: 520px; margin: 0 auto; }
+.db-hello {
+  margin-bottom: 18px;
 }
+.db-hello h1 {
+  margin: 0 0 4px;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+.db-hello p {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+.db-hero {
+  background: linear-gradient(145deg, #1e3a8a 0%, #2563eb 55%, #3b82f6 100%);
+  color: #fff;
+  border-radius: 18px;
+  padding: 22px 18px;
+  text-align: center;
+  margin-bottom: 14px;
+  box-shadow: 0 10px 28px rgba(37, 99, 235, 0.28);
+}
+.db-hero .label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.9;
+  margin-bottom: 8px;
+}
+.db-hero .amount {
+  font-size: clamp(1.6rem, 6vw, 2.15rem);
+  font-weight: 800;
+  line-height: 1.15;
+  margin: 0;
+  word-break: break-word;
+}
+.db-hero .hint {
+  margin-top: 8px;
+  font-size: 0.78rem;
+  opacity: 0.85;
+}
+.db-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.db-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 12px;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+  min-width: 0;
+}
+.db-card .label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+}
+.db-card .value {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #1e3a8a;
+  line-height: 1.25;
+  word-break: break-word;
+}
+.db-card .value.green { color: #16a34a; }
+.db-card .value.muted { color: #64748b; font-weight: 600; font-size: 0.95rem; }
+.db-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.db-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.db-btn:active { transform: scale(0.98); }
+.db-btn-primary {
+  background: linear-gradient(135deg, #1e3a8a, #2563eb);
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.28);
+}
+.db-btn-secondary {
+  background: #fff;
+  color: #1e3a8a;
+  border: 1.5px solid #cbd5e1;
+}
+.db-export {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+}
+.db-export h3 {
+  margin: 0 0 12px;
+  font-size: 0.95rem;
+  color: #1e3a8a;
+  text-align: center;
+}
+.db-export label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #475569;
+  margin-bottom: 6px;
+}
+.db-export select,
+.db-export input[type="date"] {
+  width: 100%;
+  padding: 11px 12px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  font-size: 0.9rem;
+  margin-bottom: 12px;
+  background: #fff;
+}
+.db-export .dates {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+.db-export .dates > div { min-width: 0; }
+.db-export .submit {
+  width: 100%;
+  padding: 13px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #15803d, #22c55e);
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.db-note {
+  text-align: center;
+  margin-top: 12px;
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+</style>
+{% endblock %}
+{% block content %}
+<div class="db-wrap">
+  <div class="db-hello">
+    <h1>Karibu, {{ username }}</h1>
+    <p>Muhtasari wa biashara yako leo</p>
+  </div>
 
-// Show/Hide custom date fields
-document.getElementById('filter_type').addEventListener('change', function() {
-    const customDiv = document.getElementById('custom_dates');
-    customDiv.style.display = this.value === 'custom' ? 'block' : 'none';
-});
-</script>
+  <div class="db-hero">
+    <div class="label">Jumla ya mauzo</div>
+    <p class="amount">TZS {{ total_balance | format_money }}</p>
+    <div class="hint">Mauzo yote yaliyorekodiwa (bila void)</div>
+  </div>
 
-    <!-- Export -->
-    <div class="export-section">
-        <a href="{{ url_for('export_pdf') }}" style="color: #64748b; text-decoration: none; font-size: 0.95rem;">
-             Pakua Ripoti ya Mauzo (PDF)
-        </a>
+  <div class="db-stats">
+    <div class="db-card">
+      <div class="label">Mauzo ya leo</div>
+      <div class="value green">TZS {{ today_sales | format_money }}</div>
     </div>
+    <div class="db-card">
+      <div class="label">Inayouzwa zaidi</div>
+      <div class="value {% if not top_product or top_product == 'Hakuna bado' %}muted{% endif %}">
+        {{ top_product or 'Hakuna bado' }}
+      </div>
+    </div>
+  </div>
 
+  <div class="db-actions">
+    <a href="{{ url_for('sales') }}" class="db-btn db-btn-primary">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h18v4H3z"/><path d="M8 7v13"/><path d="M16 7v13"/><path d="M5 20h14"/></svg>
+      Tazama mauzo yote
+    </a>
+    <button type="button" class="db-btn db-btn-secondary" id="toggleExport">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Pakua ripoti (PDF)
+    </button>
+  </div>
+
+  <div class="db-export" id="exportForm" style="display:none">
+    <h3>Chagua aina ya ripoti</h3>
+    <form method="POST" action="{{ url_for('export_pdf') }}">
+      <label for="filter_type">Aina ya ripoti</label>
+      <select name="filter_type" id="filter_type" required>
+        <option value="today">Leo</option>
+        <option value="weekly">Wiki hii</option>
+        <option value="monthly">Mwezi huu</option>
+        <option value="yearly">Mwaka huu</option>
+        <option value="custom">Chagua tarehe mwenyewe</option>
+      </select>
+
+      <div id="custom_dates" class="dates" style="display:none">
+        <div>
+          <label for="start_date">Kuanzia</label>
+          <input type="date" name="start_date" id="start_date">
+        </div>
+        <div>
+          <label for="end_date">Mpaka</label>
+          <input type="date" name="end_date" id="end_date">
+        </div>
+      </div>
+
+      <button type="submit" class="submit">Pakua PDF sasa</button>
+    </form>
+  </div>
+
+  <p class="db-note">Ripoti ina mauzo yaliyo sahihi tu (siyo void).</p>
 </div>
-
+{% endblock %}
+{% block scripts %}
 <script>
-document.querySelector('select[name="filter_type"]').addEventListener('change', function() {
-    const customDiv = document.getElementById('custom_dates');
-    if (this.value === 'custom') {
-        customDiv.style.display = 'block';
-    } else {
-        customDiv.style.display = 'none';
-    }
-});
+(function(){
+  var btn = document.getElementById('toggleExport');
+  var form = document.getElementById('exportForm');
+  var sel = document.getElementById('filter_type');
+  var custom = document.getElementById('custom_dates');
+  if (btn && form) {
+    btn.addEventListener('click', function(){
+      form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    });
+  }
+  if (sel && custom) {
+    sel.addEventListener('change', function(){
+      custom.style.display = this.value === 'custom' ? 'grid' : 'none';
+    });
+  }
+})();
 </script>
-
 {% endblock %}
