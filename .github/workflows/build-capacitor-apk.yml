@@ -102,6 +102,21 @@ jobs:
             sed -i '/dependencies {/a\    implementation "com.google.firebase:firebase-messaging:24.0.0"' android/app/build.gradle || true
           fi
 
+
+      - name: Android storage permission for downloads
+        run: |
+          MAN=android/app/src/main/AndroidManifest.xml
+          if [ -f "$MAN" ]; then
+            if ! grep -q WRITE_EXTERNAL_STORAGE "$MAN"; then
+              sed -i 's|<application|<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />\n    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />\n    <application|' "$MAN" || true
+            fi
+            if ! grep -q requestLegacyExternalStorage "$MAN"; then
+              sed -i 's|<application|<application android:requestLegacyExternalStorage="true"|' "$MAN" || true
+            fi
+            echo "Manifest permissions updated"
+            head -40 "$MAN"
+          fi
+
       - name: Sync Capacitor
         run: npx cap sync android
 

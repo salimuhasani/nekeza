@@ -826,7 +826,7 @@
 
 
 <script>
-/* ===== DOWNLOAD: Browser vs Capacitor APK ===== */
+/* ===== DOWNLOAD: Chrome + Capacitor APK (direct save) ===== */
 (function(){
   function isNative(){
     try {
@@ -835,6 +835,11 @@
         return window.Capacitor.isNativePlatform();
       return !!(window.Capacitor.Plugins);
     } catch(e) { return false; }
+  }
+
+  function absUrl(href){
+    try { return new URL(href, window.location.href).href; }
+    catch(e){ return href; }
   }
 
   function blobToBase64(blob){
@@ -850,40 +855,133 @@
     });
   }
 
-  function absUrl(href){
-    try { return new URL(href, window.location.href).href; }
-    catch(e){ return href; }
+  function toast(msg){
+    try {
+      var el = document.createElement('div');
+      el.setAttribute('role','status');
+      el.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:99999;background:#0f172a;color:#fff;padding:12px 16px;border-radius:12px;font-size:13px;font-weight:600;max-width:90%;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.25)';
+      el.textContent = msg;
+      document.body.appendChild(el);
+      setTimeout(function(){ el.remove(); }, 4200);
+    } catch(e) {
+      alert(msg);
+    }
   }
 
-  async function saveAndShare(blob, filename){
+  /* Chrome / PWA: classic browser download */
+  function browserDownloadBlob(blob, filename){
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = filename || 'download';
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){
+      URL.revokeObjectURL(url);
+      a.remove();
+    }, 1500);
+  }
+
+  /* APK: save directly to device storage (Documents + try Download folder) */
+  async function nativeSaveBlob(blob, filename){
     var Plugins = (window.Capacitor && window.Capacitor.Plugins) || {};
     var Filesystem = Plugins.Filesystem;
-    var Share = Plugins.Share;
-    var Browser = Plugins.Browser;
-    if (!Filesystem || !Share) {
-      // Fallback: fungua browser ya nje
-      if (Browser) {
-        alert('Pakua litafunguka kwenye browser.');
-      }
-      throw new Error('Filesystem/Share plugin missing — rebuild APK');
+    if (!Filesystem) {
+      // Plugin bado haijajengwa kwenye APK — jaribu blob link
+      browserDownloadBlob(blob, filename);
+      toast('Pakua limetumwa. Ikiwa halijaonekana, jenga APK upya.');
+      return;
     }
+    var name = (filename || ('nekeza_' + Date.now())).replace(/[\\/:*?"<>|]/g, '_');
     var b64 = await blobToBase64(blob);
-    var path = filename || ('nekeza_' + Date.now());
-    var written = await Filesystem.writeFile({
-      path: path,
-      data: b64,
-      directory: 'CACHE'
-    });
-    var uri = written.uri;
+    var saved = null;
+    var errors = [];
+
+    // 1) App Documents (inafanya kazi kila Android)
     try {
-      await Share.share({
-        title: path,
-        url: uri,
-        dialogTitle: 'Hifadhi / Share faili'
+      saved = await Filesystem.writeFile({
+        path: 'NEKEZA/' + name,
+        data: b64,
+        directory: 'DOCUMENTS',
+        recursive: true
       });
-    } catch (e) {
-      // user cancelled share — still ok
-      console.warn('share', e);
+    } catch (e1) {
+      errors.push(String(e1));
+      try {
+        saved = await Filesystem.writeFile({
+          path: name,
+          data: b64,
+          directory: 'DOCUMENTS'
+        });
+      } catch (e2) {
+        errors.push(String(e2));
+      }
+    }
+
+    // 2) Jaribu folder ya Download (baadhi ya devices)
+    try {
+      await Filesystem.writeFile({
+        path: 'Download/' + name,
+        data: b64,
+        directory: 'EXTERNAL_STORAGE',
+        recursive: true
+      });
+    } catch (e3) {
+      try {
+        await Filesystem.writeFile({
+          path: 'Download/' + name,
+          data: b64,
+          directory: 'EXTERNAL',
+          recursive: true
+        });
+      } catch (e4) {
+        /* optional */
+      }
+    }
+
+    // 3) Data directory backup
+    if (!saved) {
+      try {
+        saved = await Filesystem.writeFile({
+          path: name,
+          data: b64,
+          directory: 'DATA'
+        });
+      } catch (e5) {
+        errors.push(String(e5));
+      }
+    }
+
+    if (!saved) {
+      // last resort: share sheet so user can Save to Files/Downloads
+      var Share = Plugins.Share;
+      if (Share) {
+        var tmp = await Filesystem.writeFile({
+          path: name,
+          data: b64,
+          directory: 'CACHE'
+        });
+        await Share.share({
+          title: name,
+          url: tmp.uri,
+          dialogTitle: 'Hifadhi faili kwenye Downloads'
+        });
+        toast('Chagua “Save” / Files ili kuhifadhi faili.');
+        return;
+      }
+      throw new Error(errors.join(' | ') || 'save failed');
+    }
+
+    toast('✓ Imepakuliwa: ' + name);
+    return saved;
+  }
+
+  async function handleBlob(blob, filename){
+    if (isNative()) {
+      await nativeSaveBlob(blob, filename);
+    } else {
+      browserDownloadBlob(blob, filename);
     }
   }
 
@@ -895,64 +993,63 @@
     if (!name) {
       var cd = res.headers.get('Content-Disposition') || '';
       var m = cd.match(/filename\*?=(?:UTF-8'')?["']?([^\"';]+)/i);
-      name = m ? m[1] : ('download_' + Date.now());
+      name = m ? decodeURIComponent(m[1]) : ('download_' + Date.now());
     }
-    await saveAndShare(blob, name);
+    await handleBlob(blob, name);
   }
 
-  // Intercept <a download> and known download links inside APK
-  document.addEventListener('click', function(ev){
-    if (!isNative()) return;
-    var a = ev.target.closest && ev.target.closest('a');
-    if (!a) return;
+  function isDownloadLink(a){
     var href = a.getAttribute('href') || '';
-    if (!href || href === '#' || href.indexOf('javascript:') === 0) return;
-    var isDl = a.hasAttribute('download')
+    if (!href || href === '#' || href.indexOf('javascript:') === 0) return false;
+    return a.hasAttribute('download')
       || href.indexOf('/api/download') !== -1
       || href.indexOf('/export_pdf') !== -1
       || href.indexOf('/static/downloads/') !== -1
       || /\.(apk|pdf|csv|xlsx?)($|\?)/i.test(href);
-    if (!isDl) return;
+  }
+
+  // APK only: intercept links (Chrome keeps normal download)
+  document.addEventListener('click', function(ev){
+    if (!isNative()) return;
+    var a = ev.target.closest && ev.target.closest('a');
+    if (!a || !isDownloadLink(a)) return;
     ev.preventDefault();
     ev.stopPropagation();
     var fname = a.getAttribute('download') || '';
-    var url = absUrl(href);
+    var url = absUrl(a.getAttribute('href'));
     a.style.opacity = '0.6';
+    toast('Inapakua...');
     downloadUrl(url, fname).catch(function(err){
       console.warn(err);
-      // Fallback: Browser plugin
-      var Browser = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Browser;
-      if (Browser) {
-        Browser.open({ url: url });
-      } else {
-        alert('Imeshindikana kupakua. Jaribu tena au tumia Chrome.');
-      }
+      toast('Imeshindikana kupakua. Jaribu tena.');
     }).finally(function(){ a.style.opacity = ''; });
   }, true);
 
-  // Intercept PDF export forms (POST → fetch blob)
+  // APK only: PDF form → fetch + save direct
   document.addEventListener('submit', function(ev){
     if (!isNative()) return;
     var form = ev.target;
     if (!form || !form.action) return;
-    var action = form.getAttribute('action') || '';
-    if (action.indexOf('export_pdf') === -1 && !(form.action + '').includes('export_pdf')) return;
+    var action = (form.getAttribute('action') || form.action || '') + '';
+    if (action.indexOf('export_pdf') === -1) return;
     ev.preventDefault();
     var fd = new FormData(form);
     var btn = form.querySelector('[type=submit]');
     if (btn) btn.disabled = true;
+    toast('Inatengeneza PDF...');
     fetch(absUrl(form.action), {
       method: (form.method || 'POST').toUpperCase(),
       body: fd,
       credentials: 'same-origin'
     }).then(function(res){
       if (!res.ok) throw new Error('status ' + res.status);
-      return res.blob();
-    }).then(function(blob){
-      return saveAndShare(blob, 'NEKEZA_Ripoti.pdf');
+      var cd = res.headers.get('Content-Disposition') || '';
+      var m = cd.match(/filename\*?=(?:UTF-8'')?["']?([^\"';]+)/i);
+      var name = m ? decodeURIComponent(m[1]) : 'NEKEZA_Ripoti.pdf';
+      return res.blob().then(function(blob){ return handleBlob(blob, name); });
     }).catch(function(err){
       console.warn(err);
-      alert('Imeshindikana kupakua PDF. Hakikisha umelogin.');
+      toast('Imeshindikana kupakua PDF.');
     }).finally(function(){
       if (btn) btn.disabled = false;
     });
