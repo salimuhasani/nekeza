@@ -2,52 +2,111 @@
 {% block title %}Tuma Notification · {{ app_name }}{% endblock %}
 {% block content %}
 <style>
-.ns-wrap { max-width: 520px; margin: 0 auto; padding: 0 2px 20px; }
+.ns-wrap { max-width: 560px; margin: 0 auto; padding: 0 2px 24px; }
 .ns-back {
   display: inline-flex; align-items: center; gap: 4px;
   font-size: 0.78rem; font-weight: 600; color: #64748b; text-decoration: none; margin-bottom: 8px;
 }
 .ns-back:hover { color: #1e3a8a; }
 .ns-card {
-  background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
-  padding: 14px; box-shadow: 0 2px 8px rgba(15,23,42,.05);
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+  padding: 14px; box-shadow: 0 2px 10px rgba(15,23,42,.05);
 }
 .ns-card h1 {
   margin: 0 0 12px; font-size: 1.05rem; font-weight: 700; color: #1e3a8a;
   display: flex; align-items: center; gap: 8px;
 }
 .ns-card h1 svg { width: 18px; height: 18px; }
-.field { margin-bottom: 10px; }
-.field label {
-  display: block; font-size: 0.72rem; font-weight: 600; color: #475569; margin-bottom: 3px;
+
+.field { margin-bottom: 12px; }
+.field > label {
+  display: block; font-size: 0.72rem; font-weight: 600; color: #475569; margin-bottom: 4px;
 }
 .field input[type="text"],
-.field input:not([type]),
-.field select,
-.field textarea {
+.field input:not([type="file"]):not([type="radio"]):not([type="checkbox"]),
+.field select {
   width: 100%; padding: 8px 10px; border: 1.5px solid #e2e8f0; border-radius: 8px;
-  font-size: 0.85rem; font-family: inherit; background: #f8fafc; outline: none; line-height: 1.5;
+  font-size: 0.85rem; background: #f8fafc; outline: none;
 }
-.field textarea { min-height: 110px; resize: vertical; white-space: pre-wrap; }
-.field input:focus, .field select:focus, .field textarea:focus {
-  border-color: #3b82f6; background: #fff;
+.field input:focus, .field select:focus { border-color: #3b82f6; background: #fff; }
+
+/* Editor */
+.editor-shell {
+  border: 1.5px solid #e2e8f0; border-radius: 10px; background: #fff; overflow: hidden;
+}
+.editor-bar {
+  display: flex; flex-wrap: wrap; gap: 4px; align-items: center;
+  padding: 6px 8px; border-bottom: 1px solid #eef2f7; background: #f8fafc;
+}
+.eb-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 30px; min-width: 30px; padding: 0 8px;
+  border: 1px solid #e2e8f0; border-radius: 6px; background: #fff;
+  font-size: 0.75rem; font-weight: 700; color: #334155; cursor: pointer;
+}
+.eb-btn:hover { background: #eff6ff; border-color: #93c5fd; color: #1e3a8a; }
+.eb-btn svg { width: 14px; height: 14px; }
+.eb-select {
+  height: 30px; border: 1px solid #e2e8f0; border-radius: 6px;
+  font-size: 0.72rem; font-weight: 600; padding: 0 6px; background: #fff; color: #334155;
 }
 
-.toolbar {
-  display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; align-items: center;
+.editor {
+  min-height: 160px; max-height: 360px; overflow-y: auto;
+  padding: 12px 14px; font-size: 0.9rem; line-height: 1.6; color: #0f172a;
+  outline: none; word-break: break-word;
 }
-.tb-btn {
+.editor:empty:before {
+  content: attr(data-placeholder); color: #94a3b8; pointer-events: none;
+}
+.editor img {
+  max-width: 100%; height: auto; border-radius: 6px; margin: 8px 0;
+  display: block; cursor: pointer;
+}
+.editor p { margin: 0 0 0.6em; }
+.editor strong, .editor b { font-weight: 800; }
+
+/* Floating toolbar on selection */
+.float-tb {
+  position: absolute; z-index: 5000;
+  display: none; align-items: center; gap: 2px;
+  padding: 4px; background: #0f172a; border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(15,23,42,.28);
+}
+.float-tb.show { display: flex; }
+.float-tb button, .float-tb label {
   display: inline-flex; align-items: center; justify-content: center;
-  min-width: 32px; height: 30px; padding: 0 8px;
-  border: 1.5px solid #e2e8f0; border-radius: 7px;
-  background: #fff; font-size: 0.78rem; font-weight: 700; cursor: pointer; color: #1e3a8a;
+  width: 32px; height: 30px; border: 0; border-radius: 7px;
+  background: transparent; color: #fff; cursor: pointer; font-weight: 800; font-size: 13px;
 }
-.tb-btn:hover { background: #eff6ff; border-color: #93c5fd; }
-.tb-btn.active { background: #1e3a8a; color: #fff; border-color: #1e3a8a; }
-.tb-select {
-  height: 30px; padding: 0 8px; border: 1.5px solid #e2e8f0; border-radius: 7px;
-  font-size: 0.75rem; font-weight: 600; background: #fff; color: #334155;
+.float-tb button:hover, .float-tb label:hover { background: rgba(255,255,255,.15); }
+.float-tb input[type="color"] {
+  width: 22px; height: 22px; border: 0; padding: 0; background: none; cursor: pointer;
 }
+.float-tb .sep { width: 1px; height: 18px; background: rgba(255,255,255,.2); margin: 0 2px; }
+
+/* Crop modal */
+.crop-modal {
+  display: none; position: fixed; inset: 0; z-index: 6000;
+  background: rgba(15,23,42,.7); align-items: center; justify-content: center; padding: 16px;
+}
+.crop-modal.open { display: flex; }
+.crop-panel {
+  background: #fff; border-radius: 12px; width: min(480px, 100%);
+  padding: 12px; box-shadow: 0 20px 50px rgba(0,0,0,.3);
+}
+.crop-panel h3 { margin: 0 0 8px; font-size: 0.95rem; color: #1e3a8a; }
+.crop-stage { max-height: 300px; background: #0f172a; border-radius: 8px; overflow: hidden; }
+.crop-stage img { max-width: 100%; display: block; }
+.crop-controls { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; align-items: center; }
+.crop-controls label { font-size: 0.72rem; font-weight: 600; color: #64748b; }
+.crop-controls input[type=range] { flex: 1; min-width: 80px; }
+.crop-actions { display: flex; gap: 8px; margin-top: 10px; justify-content: flex-end; }
+.crop-actions button {
+  padding: 7px 14px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; border: 0;
+}
+.crop-actions .cancel { background: #f1f5f9; color: #334155; }
+.crop-actions .ok { background: #1e3a8a; color: #fff; }
 
 .mode-label { font-weight: 700; font-size: 0.72rem; color: #475569; display: block; margin-bottom: 6px; }
 .mode-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
@@ -58,7 +117,7 @@
 }
 .mode-row input { accent-color: #1e3a8a; }
 .targets {
-  max-height: 160px; overflow: auto; border: 1px solid #e2e8f0; border-radius: 8px;
+  max-height: 150px; overflow: auto; border: 1px solid #e2e8f0; border-radius: 8px;
   padding: 6px; margin-bottom: 12px; background: #f8fafc;
 }
 .targets label {
@@ -69,39 +128,12 @@
 .targets.disabled { opacity: .45; pointer-events: none; }
 .targets .muted { color: #94a3b8; font-size: 0.72rem; }
 
-/* Image crop UI */
-.img-box {
-  border: 1.5px dashed #cbd5e1; border-radius: 10px; padding: 10px;
-  background: #f8fafc; margin-bottom: 10px;
-}
-.img-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
-.img-actions .tb-btn { font-size: 0.72rem; }
-.crop-area {
-  display: none; max-height: 280px; overflow: hidden; background: #0f172a;
-  border-radius: 8px; margin-bottom: 8px;
-}
-.crop-area.active { display: block; }
-.crop-area img { display: block; max-width: 100%; }
-.preview-row {
-  display: none; align-items: center; gap: 10px; margin-top: 8px;
-}
-.preview-row.show { display: flex; }
-.preview-row img {
-  width: 72px; height: 72px; object-fit: cover; border-radius: 8px; border: 1px solid #e2e8f0;
-}
-.preview-row .meta { font-size: 0.72rem; color: #64748b; }
-.range-row {
-  display: none; gap: 8px; align-items: center; margin-top: 8px; flex-wrap: wrap;
-}
-.range-row.show { display: flex; }
-.range-row label { font-size: 0.7rem; font-weight: 600; color: #64748b; margin: 0; }
-.range-row input[type=range] { flex: 1; min-width: 100px; }
-
 .btn-submit {
-  width: 100%; padding: 10px; border: none; border-radius: 8px;
-  font-size: 0.88rem; font-weight: 600; background: #1e3a8a; color: #fff; cursor: pointer;
+  width: 100%; padding: 11px; border: none; border-radius: 8px;
+  font-size: 0.9rem; font-weight: 600; background: #1e3a8a; color: #fff; cursor: pointer;
 }
 .btn-submit:hover { background: #1e40af; }
+.hint-mini { font-size: 0.7rem; color: #94a3b8; margin: 4px 0 0; }
 </style>
 
 <div class="ns-wrap">
@@ -120,48 +152,26 @@
 
       <div class="field">
         <label>Ujumbe</label>
-        <div class="toolbar">
-          <button type="button" class="tb-btn" id="btnBold" title="Bold">B</button>
-          <select class="tb-select" id="fontSelect" name="style_font">
-            <option value="default">Font: Default</option>
-            <option value="serif">Serif</option>
-            <option value="georgia">Georgia</option>
-            <option value="mono">Mono</option>
-            <option value="roboto">Roboto</option>
-            <option value="cursive">Cursive</option>
-          </select>
+        <div class="editor-shell">
+          <div class="editor-bar">
+            <button type="button" class="eb-btn" id="btnInsertImg" title="Ingiza picha">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+              Picha
+            </button>
+            <select class="eb-select" id="fontSelect" title="Font ya default">
+              <option value="">Font</option>
+              <option value="Inter, system-ui, sans-serif">Default</option>
+              <option value="Georgia, serif">Georgia</option>
+              <option value="Times New Roman, serif">Times</option>
+              <option value="ui-monospace, Consolas, monospace">Mono</option>
+              <option value="Roboto, Inter, sans-serif">Roboto</option>
+            </select>
+          </div>
+          <div class="editor" id="editor" contenteditable="true" data-placeholder="Andika ujumbe hapa…."></div>
         </div>
-        <textarea name="body" id="bodyInput" required maxlength="2000" rows="6" placeholder="Andika ujumbe...&#10;&#10;Enter = aya mpya&#10;Chagua maneno kisha B = bold"></textarea>
-      </div>
-
-      <div class="field">
-        <label>Picha (hiari)</label>
-        <div class="img-box">
-          <div class="img-actions">
-            <button type="button" class="tb-btn" id="btnPickImg">Chagua picha</button>
-            <button type="button" class="tb-btn" id="btnCrop" style="display:none">Crop</button>
-            <button type="button" class="tb-btn" id="btnClearImg" style="display:none">Ondoa</button>
-          </div>
-          <input type="file" id="imgFile" accept="image/*" style="display:none">
-          <input type="file" name="image" id="imgFinal" accept="image/*" style="display:none">
-          <div class="crop-area" id="cropArea">
-            <img id="cropImg" alt="">
-          </div>
-          <div class="range-row" id="sizeRow">
-            <label>Ukubwa</label>
-            <input type="range" id="sizeRange" min="40" max="100" value="85">
-            <span id="sizeLabel" style="font-size:0.7rem;font-weight:600;color:#64748b">85%</span>
-          </div>
-          <div class="range-row" id="qualityRow">
-            <label>Quality</label>
-            <input type="range" id="qualityRange" min="40" max="92" value="72">
-            <span id="qualityLabel" style="font-size:0.7rem;font-weight:600;color:#64748b">72</span>
-          </div>
-          <div class="preview-row" id="previewRow">
-            <img id="previewImg" alt="">
-            <div class="meta" id="previewMeta"></div>
-          </div>
-        </div>
+        <input type="hidden" name="body" id="bodyHidden">
+        <input type="hidden" name="style_font" id="styleFont" value="default">
+        <p class="hint-mini"></p>
       </div>
 
       <div class="field">
@@ -191,17 +201,57 @@
     </form>
   </div>
 </div>
+
+<!-- Floating selection toolbar -->
+<div class="float-tb" id="floatTb">
+  <button type="button" id="ftBold" title="Bold"><b>B</b></button>
+  <span class="sep"></span>
+  <label title="Rangi">
+    <input type="color" id="ftColor" value="#1e3a8a">
+  </label>
+  <button type="button" id="ftColorApply" title="Weka rangi">A</button>
+</div>
+
+<!-- Hidden file input + crop modal -->
+<input type="file" id="imgPick" accept="image/*" style="display:none">
+<div class="crop-modal" id="cropModal">
+  <div class="crop-panel">
+    <h3>Crop &amp; punguza picha</h3>
+    <div class="crop-stage"><img id="cropImg" alt=""></div>
+    <div class="crop-controls">
+      <label>Ukubwa</label>
+      <input type="range" id="sizeRange" min="30" max="100" value="80">
+      <span id="sizeLbl" style="font-size:0.72rem;font-weight:600;width:36px">80%</span>
+    </div>
+    <div class="crop-controls">
+      <label>Quality</label>
+      <input type="range" id="qRange" min="40" max="92" value="75">
+      <span id="qLbl" style="font-size:0.72rem;font-weight:600;width:28px">75</span>
+    </div>
+    <div class="crop-actions">
+      <button type="button" class="cancel" id="cropCancel">Ghairi</button>
+      <button type="button" class="ok" id="cropOk">Weka kwenye barua</button>
+    </div>
+  </div>
+</div>
 {% endblock %}
+
 {% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
+<script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
 <script>
 (function(){
-  /* recipients */
+  var editor = document.getElementById('editor');
+  var floatTb = document.getElementById('floatTb');
+  var bodyHidden = document.getElementById('bodyHidden');
+  var form = document.getElementById('notifyForm');
+  var savedRange = null;
+
+  /* ---------- recipients ---------- */
   var box = document.getElementById('targetsBox');
   var radios = document.querySelectorAll('input[name=mode]');
   var checks = document.querySelectorAll('.uid');
-  function sync(){
+  function syncMode(){
     var mode = (document.querySelector('input[name=mode]:checked')||{}).value || 'all';
     if (mode === 'all') {
       box.classList.add('disabled');
@@ -217,140 +267,197 @@
       }
     }
   }
-  radios.forEach(function(r){ r.addEventListener('change', sync); });
-  sync();
+  radios.forEach(function(r){ r.addEventListener('change', syncMode); });
+  syncMode();
 
-  /* Bold: wrap selection with ** */
-  var body = document.getElementById('bodyInput');
-  var btnBold = document.getElementById('btnBold');
-  btnBold.addEventListener('click', function(){
-    var start = body.selectionStart, end = body.selectionEnd;
-    var val = body.value;
-    if (start === end) {
-      var insert = '**bold**';
-      body.value = val.slice(0, start) + insert + val.slice(end);
-      body.focus();
-      body.setSelectionRange(start + 2, start + 6);
+  /* ---------- selection helpers ---------- */
+  function getSel(){ return window.getSelection(); }
+  function saveSelection(){
+    var sel = getSel();
+    if (sel.rangeCount) savedRange = sel.getRangeAt(0).cloneRange();
+  }
+  function restoreSelection(){
+    if (!savedRange) return;
+    var sel = getSel();
+    sel.removeAllRanges();
+    sel.addRange(savedRange);
+  }
+  function selectionInsideEditor(){
+    var sel = getSel();
+    if (!sel.rangeCount) return false;
+    var node = sel.anchorNode;
+    if (!node) return false;
+    if (node.nodeType === 3) node = node.parentNode;
+    return editor.contains(node);
+  }
+  function hasTextSelection(){
+    var sel = getSel();
+    return sel && !sel.isCollapsed && selectionInsideEditor() && (sel.toString() || '').length > 0;
+  }
+
+  function positionFloat(){
+    if (!hasTextSelection()) { floatTb.classList.remove('show'); return; }
+    var sel = getSel();
+    var range = sel.getRangeAt(0);
+    var rect = range.getBoundingClientRect();
+    if (!rect || (rect.width === 0 && rect.height === 0)) { floatTb.classList.remove('show'); return; }
+    saveSelection();
+    floatTb.classList.add('show');
+    var tbW = floatTb.offsetWidth || 100;
+    var left = rect.left + window.scrollX + (rect.width / 2) - (tbW / 2);
+    var top = rect.top + window.scrollY - 42;
+    if (top < window.scrollY + 8) top = rect.bottom + window.scrollY + 8;
+    left = Math.max(8, Math.min(left, window.scrollX + window.innerWidth - tbW - 8));
+    floatTb.style.left = left + 'px';
+    floatTb.style.top = top + 'px';
+  }
+
+  function hideFloat(){ floatTb.classList.remove('show'); }
+
+  document.addEventListener('selectionchange', function(){
+    if (hasTextSelection()) positionFloat();
+    else hideFloat();
+  });
+  document.addEventListener('mousedown', function(e){
+    if (floatTb.contains(e.target)) return;
+    // allow click on toolbar
+  });
+  document.addEventListener('scroll', function(){ if (floatTb.classList.contains('show')) positionFloat(); }, true);
+
+  /* Bold on selection only */
+  document.getElementById('ftBold').addEventListener('mousedown', function(e){
+    e.preventDefault();
+    restoreSelection();
+    document.execCommand('bold', false, null);
+    saveSelection();
+    positionFloat();
+  });
+
+  /* Color on selection */
+  document.getElementById('ftColorApply').addEventListener('mousedown', function(e){
+    e.preventDefault();
+    restoreSelection();
+    var c = document.getElementById('ftColor').value;
+    document.execCommand('styleWithCSS', false, true);
+    document.execCommand('foreColor', false, c);
+    saveSelection();
+    positionFloat();
+  });
+  document.getElementById('ftColor').addEventListener('input', function(){
+    if (!hasTextSelection() && savedRange) restoreSelection();
+    if (!selectionInsideEditor()) return;
+    document.execCommand('styleWithCSS', false, true);
+    document.execCommand('foreColor', false, this.value);
+  });
+
+  /* Font for whole editor default (selected text uses execCommand fontName) */
+  document.getElementById('fontSelect').addEventListener('change', function(){
+    var f = this.value;
+    if (!f) return;
+    document.getElementById('styleFont').value = 'default';
+    if (hasTextSelection() || savedRange) {
+      restoreSelection();
+      document.execCommand('fontName', false, f);
     } else {
-      var selected = val.slice(start, end);
-      body.value = val.slice(0, start) + '**' + selected + '**' + val.slice(end);
-      body.focus();
-      body.setSelectionRange(start, end + 4);
+      editor.style.fontFamily = f;
     }
+    editor.focus();
   });
 
-  /* Font live preview on textarea */
-  var fontSelect = document.getElementById('fontSelect');
-  var fontMap = {
-    default: 'inherit',
-    serif: 'Georgia, Times New Roman, serif',
-    georgia: 'Georgia, serif',
-    mono: 'ui-monospace, Consolas, monospace',
-    roboto: 'Roboto, Inter, system-ui, sans-serif',
-    cursive: 'Segoe Script, Comic Sans MS, cursive'
-  };
-  fontSelect.addEventListener('change', function(){
-    body.style.fontFamily = fontMap[fontSelect.value] || 'inherit';
-  });
-
-  /* Image pick + crop + resize */
-  var btnPick = document.getElementById('btnPickImg');
-  var btnCrop = document.getElementById('btnCrop');
-  var btnClear = document.getElementById('btnClearImg');
-  var imgFile = document.getElementById('imgFile');
-  var imgFinal = document.getElementById('imgFinal');
-  var cropArea = document.getElementById('cropArea');
+  /* ---------- Image insert with crop ---------- */
+  var imgPick = document.getElementById('imgPick');
+  var cropModal = document.getElementById('cropModal');
   var cropImg = document.getElementById('cropImg');
-  var sizeRow = document.getElementById('sizeRow');
-  var qualityRow = document.getElementById('qualityRow');
-  var sizeRange = document.getElementById('sizeRange');
-  var qualityRange = document.getElementById('qualityRange');
-  var sizeLabel = document.getElementById('sizeLabel');
-  var qualityLabel = document.getElementById('qualityLabel');
-  var previewRow = document.getElementById('previewRow');
-  var previewImg = document.getElementById('previewImg');
-  var previewMeta = document.getElementById('previewMeta');
   var cropper = null;
   var objectUrl = null;
 
-  btnPick.addEventListener('click', function(){ imgFile.click(); });
-  imgFile.addEventListener('change', function(){
-    var f = imgFile.files && imgFile.files[0];
+  document.getElementById('btnInsertImg').addEventListener('click', function(){
+    saveSelection();
+    imgPick.click();
+  });
+
+  imgPick.addEventListener('change', function(){
+    var f = imgPick.files && imgPick.files[0];
     if (!f) return;
     if (objectUrl) URL.revokeObjectURL(objectUrl);
     objectUrl = URL.createObjectURL(f);
     cropImg.src = objectUrl;
-    cropArea.classList.add('active');
-    btnCrop.style.display = '';
-    btnClear.style.display = '';
-    sizeRow.classList.add('show');
-    qualityRow.classList.add('show');
+    cropModal.classList.add('open');
     if (cropper) { cropper.destroy(); cropper = null; }
-    cropper = new Cropper(cropImg, {
-      viewMode: 1,
-      autoCropArea: 0.9,
-      responsive: true,
-      background: false
-    });
+    setTimeout(function(){
+      cropper = new Cropper(cropImg, {
+        viewMode: 1,
+        autoCropArea: 0.9,
+        responsive: true,
+        background: false
+      });
+    }, 50);
   });
 
-  sizeRange.addEventListener('input', function(){ sizeLabel.textContent = sizeRange.value + '%'; });
-  qualityRange.addEventListener('input', function(){ qualityLabel.textContent = qualityRange.value; });
+  document.getElementById('sizeRange').addEventListener('input', function(){
+    document.getElementById('sizeLbl').textContent = this.value + '%';
+  });
+  document.getElementById('qRange').addEventListener('input', function(){
+    document.getElementById('qLbl').textContent = this.value;
+  });
 
-  function exportCrop(){
+  document.getElementById('cropCancel').addEventListener('click', function(){
+    cropModal.classList.remove('open');
+    if (cropper) { cropper.destroy(); cropper = null; }
+    imgPick.value = '';
+  });
+
+  document.getElementById('cropOk').addEventListener('click', function(){
     if (!cropper) return;
-    var scale = parseInt(sizeRange.value, 10) / 100;
-    var q = parseInt(qualityRange.value, 10) / 100;
+    var scale = parseInt(document.getElementById('sizeRange').value, 10) / 100;
+    var q = parseInt(document.getElementById('qRange').value, 10) / 100;
     var canvas = cropper.getCroppedCanvas({
-      maxWidth: Math.round(1280 * scale),
-      maxHeight: Math.round(1280 * scale),
+      maxWidth: Math.round(1000 * scale),
+      maxHeight: Math.round(1000 * scale),
       imageSmoothingEnabled: true,
       imageSmoothingQuality: 'high'
     });
     if (!canvas) return;
-    canvas.toBlob(function(blob){
-      if (!blob) return;
-      var file = new File([blob], 'notify.jpg', { type: 'image/jpeg' });
-      var dt = new DataTransfer();
-      dt.items.add(file);
-      imgFinal.files = dt.files;
-      previewImg.src = URL.createObjectURL(blob);
-      previewMeta.textContent = (blob.size / 1024).toFixed(0) + ' KB · ' + canvas.width + '×' + canvas.height;
-      previewRow.classList.add('show');
-    }, 'image/jpeg', q);
-  }
-
-  btnCrop.addEventListener('click', exportCrop);
-  sizeRange.addEventListener('change', function(){ if (cropper) exportCrop(); });
-  qualityRange.addEventListener('change', function(){ if (cropper) exportCrop(); });
-
-  btnClear.addEventListener('click', function(){
+    var dataUrl = canvas.toDataURL('image/jpeg', q);
+    // insert at saved cursor / end
+    editor.focus();
+    restoreSelection();
+    // if selection was text, collapse to end of selection
+    var sel = getSel();
+    if (sel.rangeCount) {
+      var range = sel.getRangeAt(0);
+      range.collapse(false);
+      var img = document.createElement('img');
+      img.src = dataUrl;
+      img.alt = '';
+      range.insertNode(img);
+      // add line break after
+      var br = document.createElement('br');
+      if (img.nextSibling) img.parentNode.insertBefore(br, img.nextSibling);
+      else img.parentNode.appendChild(br);
+      range.setStartAfter(br);
+      range.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(range);
+    } else {
+      editor.innerHTML += '<img src="'+dataUrl+'" alt=""><br>';
+    }
+    cropModal.classList.remove('open');
     if (cropper) { cropper.destroy(); cropper = null; }
-    if (objectUrl) { URL.revokeObjectURL(objectUrl); objectUrl = null; }
-    cropImg.src = '';
-    cropArea.classList.remove('active');
-    btnCrop.style.display = 'none';
-    btnClear.style.display = 'none';
-    sizeRow.classList.remove('show');
-    qualityRow.classList.remove('show');
-    previewRow.classList.remove('show');
-    imgFile.value = '';
-    imgFinal.value = '';
-    var dt = new DataTransfer();
-    imgFinal.files = dt.files;
+    imgPick.value = '';
+    hideFloat();
   });
 
-  /* ensure crop applied before submit if image selected but not cropped */
-  document.getElementById('notifyForm').addEventListener('submit', function(e){
-    if (cropper && (!imgFinal.files || !imgFinal.files.length)) {
+  /* ---------- submit: HTML body ---------- */
+  form.addEventListener('submit', function(e){
+    var html = editor.innerHTML.trim();
+    var text = (editor.innerText || '').trim();
+    if (!text && !editor.querySelector('img')) {
       e.preventDefault();
-      exportCrop();
-      setTimeout(function(){
-        if (imgFinal.files && imgFinal.files.length) {
-          document.getElementById('notifyForm').submit();
-        }
-      }, 350);
+      alert('Andika ujumbe.');
+      return;
     }
+    bodyHidden.value = html;
   });
 })();
 </script>
