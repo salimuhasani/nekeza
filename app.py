@@ -1014,6 +1014,117 @@ def sales():
     )
 
 
+# ====================== SALES REPORT (Jumla + Faida) ======================
+@app.route('/sales_report')
+@login_required
+@role_required(['boss', 'admin'])
+def sales_report():
+    """Onyesha orodha ya mauzo kwa kipindi + jumla + faida."""
+    boss_id = get_visible_boss_id()
+    period = (request.args.get('period') or '1m').strip().lower()
+    start_date = (request.args.get('start_date') or '').strip()
+    end_date = (request.args.get('end_date') or '').strip()
+
+    today = date.today()
+    report_title = "Ripoti ya Mauzo"
+    start_s = None
+    end_s = None
+
+    if period == '1m':
+        start_s = (today - timedelta(days=30)).strftime("%Y-%m-%d")
+        end_s = today.strftime("%Y-%m-%d")
+        report_title = f"Mwezi 1 — {start_s} hadi {end_s}"
+    elif period == '3m':
+        start_s = (today - timedelta(days=90)).strftime("%Y-%m-%d")
+        end_s = today.strftime("%Y-%m-%d")
+        report_title = f"Miezi 3 — {start_s} hadi {end_s}"
+    elif period == '6m':
+        start_s = (today - timedelta(days=180)).strftime("%Y-%m-%d")
+        end_s = today.strftime("%Y-%m-%d")
+        report_title = f"Miezi 6 — {start_s} hadi {end_s}"
+    elif period == 'custom' and start_date and end_date:
+        try:
+            datetime.strptime(start_date, "%Y-%m-%d")
+            datetime.strptime(end_date, "%Y-%m-%d")
+            start_s = start_date
+            end_s = end_date
+            if start_s == end_s:
+                report_title = f"Siku moja — {start_s}"
+            else:
+                report_title = f"Kutoka {start_s} hadi {end_s}"
+        except ValueError:
+            flash("Tarehe si sahihi. Tumia muundo YYYY-MM-DD.", "danger")
+            return redirect(url_for('sales'))
+    else:
+        # default: mwezi 1
+        period = '1m'
+        start_s = (today - timedelta(days=30)).strftime("%Y-%m-%d")
+        end_s = today.strftime("%Y-%m-%d")
+        report_title = f"Mwezi 1 — {start_s} hadi {end_s}"
+
+    conn = get_db()
+
+    # Query: mauzo yaliyokamilika (si void, si pending kasoro)
+    # Faida ≈ total - (buy_price * quantity) kutoka product ya sasa
+    base_sql = """
+        SELECT s.timestamp, s.quantity, s.total, p.name,
+               COALESCE(p.buy_price, 0) AS buy_price,
+               u.username AS employee,
+               (COALESCE(s.total, 0) - (COALESCE(p.buy_price, 0) * COALESCE(s.quantity, 0))) AS profit
+        FROM sales s
+        JOIN products p ON s.product_id = p.id
+        LEFT JOIN users u ON s.employee_id = u.id
+        WHERE s.is_void = 0
+          AND (s.status IS NULL OR s.status = '' OR s.status = 'approved')
+          AND s.timestamp >= ?
+          AND s.timestamp <= ?
+    """
+    params = [start_s + " 00:00:00", end_s + " 23:59:59"]
+
+    if boss_id is not None:
+        base_sql += " AND s.boss_id = ?"
+        params.append(boss_id)
+
+    base_sql += " ORDER BY s.timestamp DESC"
+
+    rows = conn.execute(base_sql, params).fetchall()
+    conn.close()
+
+    sales_out = []
+    grand_total = 0.0
+    grand_profit = 0.0
+    for r in rows:
+        try:
+            tot = float(r["total"] or 0)
+        except Exception:
+            tot = 0.0
+        try:
+            pr = float(r["profit"] or 0)
+        except Exception:
+            pr = 0.0
+        grand_total += tot
+        grand_profit += pr
+        sales_out.append({
+            "timestamp": r["timestamp"],
+            "name": r["name"],
+            "quantity": r["quantity"],
+            "total": tot,
+            "profit": pr,
+            "employee": r["employee"],
+        })
+
+    return render_template(
+        "sales_report.html",
+        sales=sales_out,
+        report_title=report_title,
+        period=period,
+        start_date=start_s,
+        end_date=end_s,
+        grand_total=round(grand_total, 0),
+        grand_profit=round(grand_profit, 0),
+        sales_count=len(sales_out),
+    )
+
 
 # ====================== MANAGE USERS ======================
 @app.route('/manage_employees', methods=['GET', 'POST'])
