@@ -577,17 +577,111 @@ def format_money(value):
 
 @app.template_filter('notify_body')
 def notify_body_filter(value):
-    """Escape + **bold** → <strong>, keep newlines for pre-wrap."""
+    """Safe HTML for rich notifications (bold, color, images) + **bold** markdown."""
     from markupsafe import Markup, escape
     if value is None:
         return ""
     text = str(value)
+    if "<" in text and ">" in text:
+        text = re.sub(r"(?is)<script[^>]*>.*?</script>", "", text)
+        text = re.sub(r"(?is)<iframe[^>]*>.*?</iframe>", "", text)
+        text = re.sub(r"(?is)<object[^>]*>.*?</object>", "", text)
+        text = re.sub(r"(?is)<embed[^>]*>.*?</embed>", "", text)
+        text = re.sub(r"(?is)\son\w+\s*=\s*([\"']).*?\1", "", text)
+        text = re.sub(r"(?is)\son\w+\s*=\s*[^\s>]+", "", text)
+        text = re.sub(r"(?is)javascript\s*:", "", text)
+
+        def _keep_tag(m):
+            tag = m.group(0)
+            name = re.match(r"</?\s*([a-z0-9]+)", tag, re.I)
+            if not name:
+                return ""
+            n = name.group(1).lower()
+            allowed = {
+                "b", "strong", "i", "em", "u", "br", "p", "div", "span",
+                "img", "font", "h1", "h2", "h3", "h4", "ul", "ol", "li",
+            }
+            if n not in allowed:
+                return ""
+            if n == "img":
+                src = re.search(r"""src\s*=\s*([\"'])(.*?)\1""", tag, re.I)
+                if not src:
+                    return ""
+                s = src.group(2).strip()
+                if not (
+                    s.startswith("data:image/")
+                    or s.startswith("/static/")
+                    or s.startswith("https://")
+                    or s.startswith("http://")
+                ):
+                    return ""
+                alt = re.search(r"""alt\s*=\s*([\"'])(.*?)\1""", tag, re.I)
+                alt_v = alt.group(2) if alt else ""
+                return f'<img src="{escape(s)}" alt="{escape(alt_v)}" style="max-width:100%;height:auto;border-radius:6px">'
+            if n in ("span", "font", "p", "div"):
+                style = re.search(r"""style\s*=\s*([\"'])(.*?)\1""", tag, re.I)
+                color = re.search(r"""color\s*=\s*([\"'])(.*?)\1""", tag, re.I)
+                face = re.search(r"""face\s*=\s*([\"'])(.*?)\1""", tag, re.I)
+                attrs = []
+                if style:
+                    st = style.group(2)
+                    parts = []
+                    for part in st.split(";"):
+                        p = part.strip().lower()
+                        if p.startswith("color:") or p.startswith("font-family:") or p.startswith("font-size:"):
+                            parts.append(part.strip())
+                    if parts:
+                        attrs.append(f'style="{escape("; ".join(parts))}"')
+                if color:
+                    attrs.append(f'color="{escape(color.group(2))}"')
+                if face:
+                    attrs.append(f'face="{escape(face.group(2))}"')
+                if tag.startswith("</"):
+                    return f"</{n}>"
+                return f"<{n}" + ((" " + " ".join(attrs)) if attrs else "") + ">"
+            if tag.startswith("</"):
+                return f"</{n}>"
+            if n == "br":
+                return "<br>"
+            return f"<{n}>" if not tag.startswith("</") else f"</{n}>"
+
+        text = re.sub(r"</?[^>]+>", _keep_tag, text)
+        return Markup(text)
     esc = str(escape(text))
-    # **bold**
     esc = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", esc, flags=re.DOTALL)
     return Markup(esc)
 
 
+
+
+
+def _html_to_plain(value, limit=120):
+    """Convert HTML / rich text to clean plain text for push notifications."""
+    if value is None:
+        return ""
+    s = str(value)
+    # decode common entities
+    s = (
+        s.replace("&nbsp;", " ")
+        .replace("&amp;", "&")
+        .replace("&lt;", "<")
+        .replace("&gt;", ">")
+        .replace("&quot;", '"')
+        .replace("&#39;", "'")
+        .replace("<br>", " ")
+        .replace("<br/>", " ")
+        .replace("<br />", " ")
+        .replace("</p>", " ")
+        .replace("</div>", " ")
+    )
+    s = re.sub(r"(?is)<style[^>]*>.*?</style>", " ", s)
+    s = re.sub(r"(?is)<script[^>]*>.*?</script>", " ", s)
+    s = re.sub(r"<[^>]+>", " ", s)
+    s = s.replace("**", "")
+    s = re.sub(r"\s+", " ", s).strip()
+    if limit and len(s) > limit:
+        s = s[: limit - 1].rstrip() + "…"
+    return s
 
 
 def _notify_users(user_ids, title, body="", link="/", sender_id=None, kind="manual", image_url=None, style_font=None):
@@ -608,7 +702,7 @@ def _notify_users(user_ids, title, body="", link="/", sender_id=None, kind="manu
     if not ids:
         return 0
     title = (title or APP_NAME)[:120]
-    body = (body or "")[:2000]
+    body = (body or "")[:8000]
     link = link or "/"
     image_url = (image_url or "")[:500] or None
     # whitelist fonts only
@@ -664,7 +758,7 @@ def _notify_users(user_ids, title, body="", link="/", sender_id=None, kind="manu
     finally:
         conn.close()
     try:
-        push_body = body.replace("**", "")[:120]
+        push_body = _html_to_plain(body, 120)
         _send_web_push(ids, title, push_body, link)
     except Exception as e:
         print("notify push:", e)
@@ -1977,6 +2071,9 @@ def _send_web_push(user_ids, title, body="", link="/"):
     """Web Push (VAPID) + Firebase FCM. FCM kwanza ikiwa imesanidiwa."""
     if not user_ids:
         return
+    # Always plain text in system tray (never HTML)
+    title = _html_to_plain(title, 80) or APP_NAME
+    body = _html_to_plain(body, 160)
     # 1) Firebase FCM (haraka, app imefungwa)
     try:
         _send_fcm(user_ids, title, body, link)
@@ -2135,8 +2232,8 @@ def notifications_send():
 
     if request.method == "POST":
         title = (request.form.get("title") or "").strip()[:120]
-        # keep internal newlines; only strip ends
-        body = (request.form.get("body") or "").strip("\r\n \t")[:2000]
+        # HTML from rich editor (or plain text)
+        body = (request.form.get("body") or "").strip()[:8000]
         mode = request.form.get("mode") or "all"  # one | many | all
         link = (request.form.get("link") or "/notifications").strip() or "/notifications"
         style_font = (request.form.get("style_font") or "default").strip().lower()
@@ -2211,6 +2308,81 @@ def notifications_send():
     conn.close()
     return render_template(
         "notifications_send.html",
+        targets=targets,
+        audience_label=audience_label,
+        role=role,
+    )
+
+
+
+
+@app.route("/barua", methods=["GET", "POST"])
+@app.route("/barua/andika", methods=["GET", "POST"])
+@login_required
+@role_required(["admin", "boss"])
+def barua_andika():
+    """Andika barua → inafika kama notification (kind=barua)."""
+    role = session["role"]
+    conn = get_db()
+    if role == "admin":
+        targets = conn.execute(
+            "SELECT id, username, role FROM users WHERE role=? ORDER BY username",
+            ("boss",),
+        ).fetchall()
+        audience_label = "Boss"
+    else:
+        targets = conn.execute(
+            "SELECT id, username, role FROM users WHERE role=? AND boss_id=? ORDER BY username",
+            ("employee", session["user_id"]),
+        ).fetchall()
+        audience_label = "Mfanyakazi"
+
+    if request.method == "POST":
+        title = (request.form.get("title") or "").strip()[:120]
+        body = (request.form.get("body") or "").strip()[:8000]
+        mode = request.form.get("mode") or "all"
+        link = (request.form.get("link") or "/notifications").strip() or "/notifications"
+        style_font = (request.form.get("style_font") or "default").strip().lower()
+        if len(title) < 2 or len(body) < 1:
+            conn.close()
+            flash("Andika kichwa na yaliyomo ya barua.", "danger")
+            return redirect(url_for("barua_andika"))
+
+        selected = request.form.getlist("user_ids")
+        ids = []
+        if mode == "all":
+            ids = [t["id"] for t in targets]
+        elif mode in ("one", "many"):
+            for s in selected:
+                try:
+                    ids.append(int(s))
+                except Exception:
+                    pass
+            allowed = {t["id"] for t in targets}
+            ids = [i for i in ids if i in allowed]
+
+        if not ids:
+            conn.close()
+            flash("Chagua angalau mpokeaji mmoja.", "danger")
+            return redirect(url_for("barua_andika"))
+
+        n = _notify_users(
+            ids,
+            title,
+            body,
+            link,
+            sender_id=session.get("user_id"),
+            kind="barua",
+            image_url=None,
+            style_font=style_font,
+        )
+        conn.close()
+        flash(f"Barua imetumwa kwa watu {n}.", "success")
+        return redirect(url_for("notifications_list"))
+
+    conn.close()
+    return render_template(
+        "barua_andika.html",
         targets=targets,
         audience_label=audience_label,
         role=role,
