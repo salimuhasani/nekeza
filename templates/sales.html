@@ -2,64 +2,63 @@
 {% block content %}
 
 <style>
-    body {
-        background: #f4f7fc;
-    }
+    body { background: #f4f7fc; }
 
     .header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 20px;
+        margin-bottom: 12px;
     }
 
     .header h1 {
         color: #1e3a8a;
-        font-size: 1.75rem;
-        font-weight: 600;
+        font-size: 1.15rem;
+        font-weight: 700;
+        margin: 0;
     }
 
-    /* Form - Compact for Employees */
     .sale-card {
         background: white;
-        padding: 20px;
-        border-radius: 16px;
-        box-shadow: 0 6px 20px rgba(0,0,0,0.07);
-        margin-bottom: 25px;
+        padding: 14px;
+        border-radius: 12px;
+        box-shadow: 0 3px 12px rgba(0,0,0,0.06);
+        margin-bottom: 14px;
     }
 
     .form-title {
-        font-size: 1.25rem;
+        font-size: 0.95rem;
         color: #1e3a8a;
-        margin-bottom: 18px;
+        margin: 0 0 12px;
         text-align: center;
+        font-weight: 700;
     }
 
     label {
         display: block;
-        margin-bottom: 6px;
+        margin-bottom: 4px;
         font-weight: 600;
         color: #374151;
-        font-size: 0.95rem;
+        font-size: 0.78rem;
     }
 
     select, input[type="number"] {
         width: 100%;
-        padding: 12px 14px;
-        border: 2px solid #e2e8f0;
-        border-radius: 10px;
-        font-size: 16px;
-        margin-bottom: 16px;
+        padding: 9px 11px;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 0.88rem;
+        margin-bottom: 10px;
     }
 
     .btn {
         width: 100%;
-        padding: 14px;
+        padding: 10px;
         background: linear-gradient(135deg, #1e3a8a, #3b82f6);
         color: white;
         border: none;
-        border-radius: 10px;
-        font-size: 1.05rem;
+        border-radius: 8px;
+        font-size: 0.88rem;
         font-weight: 600;
         cursor: pointer;
     }
@@ -68,124 +67,113 @@
         background: linear-gradient(135deg, #1e40af, #2563eb);
     }
 
-    /* Table */
     .table-container {
         background: white;
-        border-radius: 16px;
-        box-shadow: 0 6px 20px rgba(0,0,0,0.07);
+        border-radius: 10px;
+        box-shadow: 0 3px 12px rgba(0,0,0,0.06);
         overflow-x: auto;
     }
 
     table {
         width: 100%;
         border-collapse: collapse;
+        font-size: 0.78rem;
     }
 
     th {
         background: #1e3a8a;
         color: white;
-        padding: 14px 12px;
+        padding: 7px 6px;
         text-align: left;
         font-weight: 500;
         white-space: nowrap;
+        font-size: 0.7rem;
     }
 
     td {
-        padding: 14px 12px;
-        border-bottom: 1px solid #e2e8f0;
-        font-size: 15px;
+        padding: 6px;
+        border-bottom: 1px solid #eef2f7;
+        font-size: 0.78rem;
+        vertical-align: middle;
     }
 
-    .product-name {
-        font-weight: 600;
-        color: #1f2937;
-    }
+    .product-name { font-weight: 600; color: #1f2937; }
+    .amount { font-weight: 700; color: #166534; }
+    .date-col { color: #64748b; font-size: 0.72rem; white-space: nowrap; }
 
-    .amount {
-        font-weight: 700;
-        color: #166534;
-    }
-
-    .date-col {
-        color: #64748b;
-        font-size: 14px;
-    }
+    th:nth-child(3), td:nth-child(3) { text-align: center; }
+    th:nth-child(4), td:nth-child(4) { text-align: right; }
 
     .empty {
         text-align: center;
-        padding: 50px 20px;
+        padding: 28px 12px;
         color: #64748b;
+        font-size: 0.82rem;
     }
-
-    .note {
-        text-align: center;
-        margin-top: 20px;
-        color: #64748b;
-        font-size: 14px;
-    }
-
-    th:nth-child(1), td:nth-child(1) { text-align: left; }
-    th:nth-child(2), td:nth-child(2) { text-align: left; }
-    th:nth-child(3), td:nth-child(3) { text-align: center; }
-    th:nth-child(4), td:nth-child(4) { text-align: right; }
 
     .action-buttons {
         display: flex;
         justify-content: center;
-        gap: 15px;
-        margin: 25px 0 30px 0;
+        gap: 8px;
+        margin: 12px 0 14px;
         flex-wrap: wrap;
     }
 
     .action-btn {
-        padding: 14px 28px;
+        padding: 8px 14px;
         border: none;
-        border-radius: 12px;
-        font-size: 1.05rem;
+        border-radius: 8px;
+        font-size: 0.8rem;
         font-weight: 600;
         text-decoration: none;
         display: inline-flex;
         align-items: center;
-        gap: 8px;
-        transition: all 0.3s;
+        gap: 5px;
     }
 
     .record-btn { background: #ef4444; color: white; }
     .approval-btn { background: #f59e0b; color: white; }
 
-    .action-btn:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+    .section-title {
+        text-align: center;
+        color: #1e3a8a;
+        margin: 10px 0 8px;
+        font-size: 0.88rem;
+        font-weight: 700;
     }
 
-    /* Button moja ndogo ya ripoti */
+    .section-title span {
+        background: #e0e7ff;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        margin-left: 4px;
+    }
+
     .report-btn-wrap {
         text-align: center;
-        margin: 28px 0 36px;
+        margin: 16px 0 20px;
     }
 
     .report-btn {
         display: inline-flex;
         align-items: center;
-        gap: 8px;
-        padding: 10px 20px;
-        font-size: 0.92rem;
+        gap: 6px;
+        padding: 7px 14px;
+        font-size: 0.8rem;
         font-weight: 600;
         color: #1e3a8a;
         background: white;
-        border: 2px solid #93c5fd;
+        border: 1.5px solid #93c5fd;
         border-radius: 999px;
         text-decoration: none;
-        box-shadow: 0 2px 8px rgba(30, 58, 138, 0.08);
-        transition: all 0.2s ease;
     }
 
     .report-btn:hover {
         background: #1e3a8a;
         color: white;
         border-color: #1e3a8a;
-        box-shadow: 0 4px 14px rgba(30, 58, 138, 0.25);
-        transform: translateY(-1px);
     }
 </style>
 
@@ -195,62 +183,37 @@
 
 <div class="action-buttons">
     {% if session['role'] == 'employee' %}
-        <a href="{{ url_for('record_defect') }}" class="action-btn record-btn">
-             Rekodi Kasoro / Expired
-        </a>
+        <a href="{{ url_for('record_defect') }}" class="action-btn record-btn">Rekodi Kasoro</a>
     {% endif %}
-
     {% if session['role'] == 'boss' %}
-        <a href="{{ url_for('pending_approvals') }}" class="action-btn approval-btn">
-            ⏳ Kasoro Zinazosubiri Approval
-        </a>
+        <a href="{{ url_for('pending_approvals') }}" class="action-btn approval-btn">⏳ Approvals</a>
     {% endif %}
 </div>
 
-<!-- FORM -->
 {% if session['role'] == 'employee' %}
 <div class="sale-card">
-    <h2 class="form-title">Rekodi Mauzo Mapya</h2>
-
+    <h2 class="form-title">Mauzo Mapya</h2>
     <form method="POST">
         <label>Bidhaa</label>
         <select name="product_id" required>
-            <option value="">-- Chagua Bidhaa --</option>
+            <option value="">-- Chagua --</option>
             {% for p in products %}
-            <option value="{{ p.id }}">
-                {{ p.name }} — {{ p.price | int }} TZS
-            </option>
+            <option value="{{ p.id }}">{{ p.name }} — {{ p.price | int }} TZS</option>
             {% endfor %}
         </select>
-
         <label>Idadi</label>
         <input type="number" name="quantity" min="1" required>
-
-        <button type="submit" class="btn"> Rekodi Mauzo</button>
+        <button type="submit" class="btn">Rekodi</button>
     </form>
 </div>
-{% endif %}  <!--  HII NDIO FIX -->
-
-<!-- HEADER -->
-{% if session['role'] == 'employee' %}
-
-<h2 style="text-align:center; color:#1e3a8a; margin:15px 0; font-size:18px; white-space:nowrap;">
-     Mauzo Yangu Leo
-    <span style="background:#e0e7ff; padding:2px 8px; border-radius:12px; font-size:12px;">
-        {{ today }}
-    </span>
-</h2>
-
-{% else %}
-<h2 style="text-align:center; color:#1e3a8a; margin:20px 0;">
-     Mauzo Yote
-    <span style="background:#f1f5f9; padding:4px 10px; border-radius:20px;">
-        History
-    </span>
-</h2>
 {% endif %}
 
-<!-- TABLE -->
+{% if session['role'] == 'employee' %}
+<h2 class="section-title">Mauzo Yangu Leo <span>{{ today }}</span></h2>
+{% else %}
+<h2 class="section-title">Mauzo Yote</h2>
+{% endif %}
+
 <div class="table-container">
     <table>
         <thead>
@@ -265,9 +228,9 @@
             {% for sale in sales %}
             <tr>
                 <td class="date-col">{{ sale.timestamp | tz }}</td>
-                <td class="product-name">{{ sale.name or 'Bidhaa haipo' }}</td>
+                <td class="product-name">{{ sale.name or '-' }}</td>
                 <td>{{ sale.quantity }}</td>
-                <td class="amount">{{ sale.total | format_money }} TZS</td>
+                <td class="amount">{{ sale.total | format_money }}</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -275,24 +238,12 @@
 </div>
 
 {% if not sales %}
-<div class="empty">
-    <p>Hakuna mauzo yaliyorekodiwa bado.</p>
-</div>
+<div class="empty"><p>Hakuna mauzo.</p></div>
 {% endif %}
-
-<div class="note">
-    {% if session['role'] == 'boss' %}
-        Unaona mauzo yote ya wafanyakazi wako hapa.
-    {% elif session['role'] == 'employee' %}
-        Unaweza tu kurekodi mauzo. Kila kitu kinarekodiwa kwa Boss wako.
-    {% endif %}
-</div>
 
 {% if session['role'] in ['boss', 'admin'] %}
 <div class="report-btn-wrap">
-    <a href="{{ url_for('sales_report', period='1m') }}" class="report-btn">
-        📊 Ripoti ya Mauzo
-    </a>
+    <a href="{{ url_for('sales_report', period='1m') }}" class="report-btn">📊 Ripoti</a>
 </div>
 {% endif %}
 
