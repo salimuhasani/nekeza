@@ -3,142 +3,197 @@
 {% block content %}
 <style>
 .n-wrap { max-width: 520px; margin: 0 auto; padding: 0 2px 18px; }
-
 .n-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 12px;
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 8px; flex-wrap: wrap; margin-bottom: 12px;
 }
 .n-head h1 {
-  margin: 0;
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: #1e3a8a;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  margin: 0; font-size: 1.15rem; font-weight: 700; color: #1e3a8a;
+  display: flex; align-items: center; gap: 8px;
 }
-.n-head h1 svg { width: 20px; height: 20px; flex-shrink: 0; }
-
+.n-head h1 svg { width: 20px; height: 20px; }
 .btn-send {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 7px 12px;
-  border-radius: 8px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  background: #1e3a8a;
-  color: #fff;
-  text-decoration: none;
-  border: none;
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 7px 12px; border-radius: 8px; font-size: 0.78rem; font-weight: 600;
+  background: #1e3a8a; color: #fff; text-decoration: none;
 }
 .btn-send:hover { background: #1e40af; }
 .btn-send svg { width: 13px; height: 13px; }
 
 .n-item {
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 11px 12px;
-  margin-bottom: 8px;
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+  padding: 11px 12px; margin-bottom: 8px;
   box-shadow: 0 2px 6px rgba(15,23,42,.04);
-  display: block;
-  text-decoration: none;
-  color: inherit;
+  display: block; text-decoration: none; color: inherit;
 }
-.n-item.unread {
-  border-color: #93c5fd;
-  background: #f8fbff;
-}
+.n-item.unread { border-color: #93c5fd; background: #f8fbff; }
 .n-item .top {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  align-items: flex-start;
-  margin-bottom: 4px;
+  display: flex; justify-content: space-between; gap: 8px;
+  align-items: flex-start; margin-bottom: 4px;
 }
-.n-item .title {
-  font-weight: 700;
-  font-size: 0.85rem;
-  color: #0f172a;
-  line-height: 1.3;
-}
+.n-item .title { font-weight: 700; font-size: 0.85rem; color: #0f172a; line-height: 1.3; }
 .n-item .body {
-  font-size: 0.8rem;
-  color: #334155;
-  line-height: 1.55;
-  white-space: pre-wrap;
-  word-break: break-word;
+  font-size: 0.8rem; color: #334155; line-height: 1.55;
+  white-space: pre-wrap; word-break: break-word;
 }
+.n-item .body.font-serif { font-family: Georgia, "Times New Roman", serif; }
+.n-item .body.font-mono { font-family: ui-monospace, Consolas, monospace; font-size: 0.78rem; }
+.n-item .body.font-cursive { font-family: "Segoe Script", "Comic Sans MS", cursive; }
+.n-item .body.font-georgia { font-family: Georgia, serif; }
+.n-item .body.font-roboto { font-family: Roboto, Inter, system-ui, sans-serif; }
+.n-item .body strong { font-weight: 800; color: #0f172a; }
+
+.n-item .body-clamp {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  overflow: hidden;
+  max-height: 5.5em;
+}
+.n-item .body-clamp.expanded {
+  display: block;
+  -webkit-line-clamp: unset;
+  max-height: none;
+  overflow: visible;
+}
+.see-more {
+  display: none;
+  margin-top: 4px;
+  border: 0; background: none; padding: 0;
+  font-size: 0.75rem; font-weight: 700; color: #2563eb; cursor: pointer;
+}
+.see-more.show { display: inline-block; }
+
+.n-img {
+  margin-top: 8px; border-radius: 8px; overflow: hidden;
+  border: 1px solid #e2e8f0; max-height: 220px;
+}
+.n-img img {
+  display: block; width: 100%; max-height: 220px;
+  object-fit: cover; cursor: pointer;
+}
+
 .n-item .meta {
-  margin-top: 6px;
-  font-size: 0.68rem;
-  color: #94a3b8;
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
+  margin-top: 6px; font-size: 0.68rem; color: #94a3b8;
+  display: flex; justify-content: space-between; gap: 8px;
 }
 .n-empty {
-  text-align: center;
-  padding: 28px 12px;
-  color: #94a3b8;
-  font-size: 0.85rem;
-  background: #fff;
-  border-radius: 10px;
-  border: 1px solid #e2e8f0;
+  text-align: center; padding: 28px 12px; color: #94a3b8;
+  font-size: 0.85rem; background: #fff; border-radius: 10px; border: 1px solid #e2e8f0;
 }
 .kind {
-  display: inline-block;
-  font-size: 0.62rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  padding: 2px 7px;
-  border-radius: 999px;
-  background: #e2e8f0;
-  color: #475569;
-  flex-shrink: 0;
+  display: inline-block; font-size: 0.62rem; font-weight: 700;
+  text-transform: uppercase; padding: 2px 7px; border-radius: 999px;
+  background: #e2e8f0; color: #475569; flex-shrink: 0;
 }
 .kind.sale { background: #ecfdf5; color: #065f46; }
 .kind.product { background: #eff6ff; color: #1e40af; }
 .kind.manual { background: #fef3c7; color: #92400e; }
 .badge-new { color: #2563eb; font-weight: 700; }
+
+/* lightbox */
+.n-lightbox {
+  display: none; position: fixed; inset: 0; z-index: 9999;
+  background: rgba(15,23,42,.85); align-items: center; justify-content: center;
+  padding: 16px;
+}
+.n-lightbox.open { display: flex; }
+.n-lightbox img {
+  max-width: 100%; max-height: 90vh; border-radius: 10px;
+  object-fit: contain;
+}
+.n-lightbox-close {
+  position: absolute; top: 12px; right: 16px;
+  background: #fff; border: 0; border-radius: 999px;
+  width: 36px; height: 36px; font-size: 18px; font-weight: 700;
+  cursor: pointer;
+}
 </style>
 
 <div class="n-wrap">
   <div class="n-head">
     <h1>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-      </svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
       Notifications
     </h1>
     {% if session.get('role') in ['admin','boss'] %}
     <a class="btn-send" href="{{ url_for('notifications_send') }}">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       Tuma
     </a>
     {% endif %}
   </div>
 
   {% for n in items %}
-  <a href="{{ n.link or url_for('notifications_list') }}" class="n-item {% if not n.is_read %}unread{% endif %}">
+  {% set sf = (n.style_font or 'default')|lower %}
+  {% set font_cls = '' %}
+  {% if sf == 'serif' or sf == 'georgia' %}{% set font_cls = 'font-serif' if sf == 'serif' else 'font-georgia' %}
+  {% elif sf == 'mono' %}{% set font_cls = 'font-mono' %}
+  {% elif sf == 'cursive' %}{% set font_cls = 'font-cursive' %}
+  {% elif sf == 'roboto' %}{% set font_cls = 'font-roboto' %}
+  {% endif %}
+  <div class="n-item {% if not n.is_read %}unread{% endif %}" data-nid="{{ n.id }}">
     <div class="top">
       <div class="title">{{ n.title }}</div>
       <span class="kind {{ n.kind or 'manual' }}">{{ n.kind or 'manual' }}</span>
     </div>
-    <div class="body">{{ n.body }}</div>
+    <div class="body body-clamp {{ font_cls }}" data-body>{{ n.body | notify_body }}</div>
+    <button type="button" class="see-more" data-more>Angalia zaidi</button>
+    {% if n.image_url %}
+    <div class="n-img">
+      <img src="{{ n.image_url }}" alt="" loading="lazy" data-full="{{ n.image_url }}">
+    </div>
+    {% endif %}
     <div class="meta">
       <span>{{ n.created_at }}</span>
       {% if not n.is_read %}<span class="badge-new">Mpya</span>{% endif %}
     </div>
-  </a>
+  </div>
   {% else %}
   <div class="n-empty">Hakuna notification.</div>
   {% endfor %}
 </div>
+
+<div class="n-lightbox" id="nLightbox">
+  <button type="button" class="n-lightbox-close" id="nLbClose">&times;</button>
+  <img src="" alt="" id="nLbImg">
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function(){
+  // See more
+  document.querySelectorAll('.n-item').forEach(function(item){
+    var body = item.querySelector('[data-body]');
+    var btn = item.querySelector('[data-more]');
+    if(!body || !btn) return;
+    // detect overflow
+    if(body.scrollHeight > body.clientHeight + 4){
+      btn.classList.add('show');
+    }
+    btn.addEventListener('click', function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      var open = body.classList.toggle('expanded');
+      btn.textContent = open ? 'Ficha' : 'Angalia zaidi';
+    });
+  });
+
+  // Image lightbox
+  var lb = document.getElementById('nLightbox');
+  var lbImg = document.getElementById('nLbImg');
+  var lbClose = document.getElementById('nLbClose');
+  document.querySelectorAll('.n-img img').forEach(function(img){
+    img.addEventListener('click', function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      lbImg.src = img.getAttribute('data-full') || img.src;
+      lb.classList.add('open');
+    });
+  });
+  function closeLb(){ lb.classList.remove('open'); lbImg.src=''; }
+  if(lbClose) lbClose.addEventListener('click', closeLb);
+  if(lb) lb.addEventListener('click', function(e){ if(e.target===lb) closeLb(); });
+})();
+</script>
 {% endblock %}
