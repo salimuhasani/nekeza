@@ -2,142 +2,495 @@
 {% block content %}
 
 <style>
-.container {
-    max-width: 900px;
-    margin: 40px auto;
-    padding: 0 15px;
-}
+    body {
+        background: #f4f7fc;
+    }
 
-.page-title {
-    text-align: center;
-    color: #1e3a8a;
-    margin-bottom: 30px;
-    font-weight: 600;
-}
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
 
-.pending-card {
-    background: #ffffff;
-    border-radius: 16px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.06);
-    padding: 20px;
-    margin-bottom: 20px;
-    transition: 0.2s;
-}
+    .header h1 {
+        color: #1e3a8a;
+        font-size: 1.75rem;
+        font-weight: 600;
+    }
 
-.pending-card:hover {
-    transform: translateY(-3px);
-}
+    /* Form - Compact for Employees */
+    .sale-card {
+        background: white;
+        padding: 20px;
+        border-radius: 16px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.07);
+        margin-bottom: 25px;
+    }
 
-.info-group {
-    margin-bottom: 8px;
-    font-size: 15px;
-}
+    .form-title {
+        font-size: 1.25rem;
+        color: #1e3a8a;
+        margin-bottom: 18px;
+        text-align: center;
+    }
 
-.label {
-    font-weight: 600;
-    color: #374151;
-}
+    label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: 600;
+        color: #374151;
+        font-size: 0.95rem;
+    }
 
-.actions {
-    margin-top: 20px;
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-}
+    select, input[type="number"] {
+        width: 100%;
+        padding: 12px 14px;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        font-size: 16px;
+        margin-bottom: 16px;
+    }
 
-.btn {
-    padding: 10px 18px;
-    border: none;
-    border-radius: 10px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: 0.2s;
-}
+    .btn {
+        width: 100%;
+        padding: 14px;
+        background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 1.05rem;
+        font-weight: 600;
+        cursor: pointer;
+    }
 
-.btn-approve {
-    background: #16a34a;
-    color: white;
-}
+    .btn:hover {
+        background: linear-gradient(135deg, #1e40af, #2563eb);
+    }
 
-.btn-approve:hover {
-    background: #15803d;
-}
+    /* Table */
+    .table-container {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.07);
+        overflow-x: auto;
+    }
 
-.btn-reject {
-    background: #ef4444;
-    color: white;
-}
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
 
-.btn-reject:hover {
-    background: #dc2626;
-}
+    th {
+        background: #1e3a8a;
+        color: white;
+        padding: 14px 12px;
+        text-align: left;
+        font-weight: 500;
+        white-space: nowrap;
+    }
 
-.empty-state {
-    text-align: center;
-    padding: 60px 20px;
-    background: #ffffff;
-    border-radius: 16px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.05);
-}
+    td {
+        padding: 14px 12px;
+        border-bottom: 1px solid #e2e8f0;
+        font-size: 15px;
+    }
 
-.empty-state p {
-    color: #6b7280;
-}
+    .product-name {
+        font-weight: 600;
+        color: #1f2937;
+    }
+
+    .amount {
+        font-weight: 700;
+        color: #166534;
+    }
+
+    .date-col {
+        color: #64748b;
+        font-size: 14px;
+    }
+
+    .empty {
+        text-align: center;
+        padding: 50px 20px;
+        color: #64748b;
+    }
+
+    .note {
+        text-align: center;
+        margin-top: 20px;
+        color: #64748b;
+        font-size: 14px;
+    }
+
+    th:nth-child(1), td:nth-child(1) { text-align: left; }
+    th:nth-child(2), td:nth-child(2) { text-align: left; }
+    th:nth-child(3), td:nth-child(3) { text-align: center; }
+    th:nth-child(4), td:nth-child(4) { text-align: right; }
+
+    .action-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin: 25px 0 30px 0;
+        flex-wrap: wrap;
+    }
+
+    .action-btn {
+        padding: 14px 28px;
+        border: none;
+        border-radius: 12px;
+        font-size: 1.05rem;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s;
+    }
+
+    .record-btn { background: #ef4444; color: white; }
+    .approval-btn { background: #f59e0b; color: white; }
+
+    .action-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+    }
+
+    /* ===== RIPOTI YA MAUZO (chini ya orodha) ===== */
+    .report-section {
+        margin-top: 36px;
+        margin-bottom: 40px;
+    }
+
+    .report-card {
+        background: linear-gradient(145deg, #ffffff 0%, #f0f7ff 100%);
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(30, 58, 138, 0.12);
+        border: 1px solid #dbeafe;
+        overflow: hidden;
+    }
+
+    .report-card-header {
+        background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+        color: white;
+        padding: 18px 22px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .report-card-header h3 {
+        margin: 0;
+        font-size: 1.2rem;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+    }
+
+    .report-card-header .icon {
+        font-size: 1.5rem;
+        line-height: 1;
+    }
+
+    .report-card-body {
+        padding: 22px 20px 26px;
+    }
+
+    .report-subtitle {
+        color: #64748b;
+        font-size: 0.92rem;
+        margin: 0 0 18px 0;
+        text-align: center;
+    }
+
+    .period-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-bottom: 22px;
+    }
+
+    @media (max-width: 520px) {
+        .period-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .period-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 16px 12px;
+        border-radius: 14px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.95rem;
+        color: #1e3a8a;
+        background: white;
+        border: 2px solid #bfdbfe;
+        transition: all 0.25s ease;
+        box-shadow: 0 2px 8px rgba(30, 58, 138, 0.06);
+    }
+
+    .period-btn:hover {
+        background: #1e3a8a;
+        color: white;
+        border-color: #1e3a8a;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(30, 58, 138, 0.25);
+    }
+
+    .period-btn .period-label {
+        font-size: 1.05rem;
+    }
+
+    .period-btn .period-hint {
+        font-size: 0.75rem;
+        font-weight: 500;
+        opacity: 0.75;
+    }
+
+    .period-btn:hover .period-hint {
+        opacity: 0.9;
+    }
+
+    .custom-date-box {
+        background: white;
+        border: 2px dashed #93c5fd;
+        border-radius: 16px;
+        padding: 18px 16px;
+        margin-top: 4px;
+    }
+
+    .custom-date-title {
+        font-weight: 600;
+        color: #1e3a8a;
+        font-size: 0.98rem;
+        margin-bottom: 14px;
+        text-align: center;
+    }
+
+    .date-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 14px;
+    }
+
+    @media (max-width: 480px) {
+        .date-row {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .date-field label {
+        font-size: 0.85rem;
+        color: #475569;
+        margin-bottom: 4px;
+    }
+
+    .date-field input[type="date"] {
+        width: 100%;
+        padding: 11px 12px;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        font-size: 15px;
+        margin-bottom: 0;
+        background: #f8fafc;
+        color: #1e293b;
+    }
+
+    .date-field input[type="date"]:focus {
+        outline: none;
+        border-color: #3b82f6;
+        background: white;
+    }
+
+    .report-submit {
+        width: 100%;
+        padding: 13px;
+        border: none;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        background: linear-gradient(135deg, #0f766e, #14b8a6);
+        color: white;
+        transition: all 0.25s ease;
+        box-shadow: 0 4px 14px rgba(15, 118, 110, 0.3);
+    }
+
+    .report-submit:hover {
+        background: linear-gradient(135deg, #0d9488, #2dd4bf);
+        transform: translateY(-1px);
+        box-shadow: 0 6px 18px rgba(15, 118, 110, 0.4);
+    }
+
+    .report-hint {
+        text-align: center;
+        font-size: 0.8rem;
+        color: #94a3b8;
+        margin-top: 12px;
+        margin-bottom: 0;
+    }
 </style>
 
-<div class="container">
+<div class="header">
+    <h1>Rekodi Mauzo</h1>
+</div>
 
-    <h2 class="page-title">⏳ Kasoro Zinazosubiri Approval</h2>
-
-    {% if pending %}
-        {% for item in pending %}
-        <div class="pending-card">
-
-            <div class="info-group">
-                <span class="label">Bidhaa:</span> {{ item.name }}
-            </div>
-
-            <div class="info-group">
-                <span class="label">Mfanyakazi:</span> {{ item.employee or 'Unknown' }}
-            </div>
-
-            <div class="info-group">
-                <span class="label">Idadi:</span> {{ item.quantity }}
-            </div>
-
-            <div class="info-group">
-                <span class="label">Sababu:</span> {{ item.reason }}
-            </div>
-
-            <div class="info-group">
-                <span class="label">Tarehe:</span> {{ item.timestamp[:16] }}
-            </div>
-
-            <div class="actions">
-
-                <form method="POST" action="{{ url_for('approve_sale', sale_id=item.id) }}">
-                    <button type="submit" class="btn btn-approve">
-                         Approve (Punguza Stock)
-                    </button>
-                </form>
-
-                <form method="POST" action="{{ url_for('reject_sale', sale_id=item.id) }}">
-                    <button type="submit" class="btn btn-reject">
-                         Reject & Futa
-                    </button>
-                </form>
-
-            </div>
-
-        </div>
-        {% endfor %}
-    {% else %}
-        <div class="empty-state">
-            <h3>Hakuna Pending</h3>
-            <p>Hakuna kasoro zinazosubiri approval kwa sasa.</p>
-        </div>
+<div class="action-buttons">
+    {% if session['role'] == 'employee' %}
+        <a href="{{ url_for('record_defect') }}" class="action-btn record-btn">
+             Rekodi Kasoro / Expired
+        </a>
     {% endif %}
 
+    {% if session['role'] == 'boss' %}
+        <a href="{{ url_for('pending_approvals') }}" class="action-btn approval-btn">
+            ⏳ Kasoro Zinazosubiri Approval
+        </a>
+    {% endif %}
 </div>
+
+<!-- FORM -->
+{% if session['role'] == 'employee' %}
+<div class="sale-card">
+    <h2 class="form-title">Rekodi Mauzo Mapya</h2>
+
+    <form method="POST">
+        <label>Bidhaa</label>
+        <select name="product_id" required>
+            <option value="">-- Chagua Bidhaa --</option>
+            {% for p in products %}
+            <option value="{{ p.id }}">
+                {{ p.name }} — {{ p.price | int }} TZS
+            </option>
+            {% endfor %}
+        </select>
+
+        <label>Idadi</label>
+        <input type="number" name="quantity" min="1" required>
+
+        <button type="submit" class="btn"> Rekodi Mauzo</button>
+    </form>
+</div>
+{% endif %}  <!--  HII NDIO FIX -->
+
+<!-- HEADER -->
+{% if session['role'] == 'employee' %}
+
+<h2 style="text-align:center; color:#1e3a8a; margin:15px 0; font-size:18px; white-space:nowrap;">
+     Mauzo Yangu Leo
+    <span style="background:#e0e7ff; padding:2px 8px; border-radius:12px; font-size:12px;">
+        {{ today }}
+    </span>
+</h2>
+
+{% else %}
+<h2 style="text-align:center; color:#1e3a8a; margin:20px 0;">
+     Mauzo Yote
+    <span style="background:#f1f5f9; padding:4px 10px; border-radius:20px;">
+        History
+    </span>
+</h2>
+{% endif %}
+
+<!-- TABLE -->
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Tarehe</th>
+                <th>Bidhaa</th>
+                <th>Idadi</th>
+                <th>Jumla</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sale in sales %}
+            <tr>
+                <td class="date-col">{{ sale.timestamp | tz }}</td>
+                <td class="product-name">{{ sale.name or 'Bidhaa haipo' }}</td>
+                <td>{{ sale.quantity }}</td>
+                <td class="amount">{{ sale.total | format_money }} TZS</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if not sales %}
+<div class="empty">
+    <p>Hakuna mauzo yaliyorekodiwa bado.</p>
+</div>
+{% endif %}
+
+<div class="note">
+    {% if session['role'] == 'boss' %}
+        Unaona mauzo yote ya wafanyakazi wako hapa.
+    {% elif session['role'] == 'employee' %}
+        Unaweza tu kurekodi mauzo. Kila kitu kinarekodiwa kwa Boss wako.
+    {% endif %}
+</div>
+
+{# ===== RIPOTI: Boss / Admin — chini ya orodha ===== #}
+{% if session['role'] in ['boss', 'admin'] %}
+<div class="report-section">
+    <div class="report-card">
+        <div class="report-card-header">
+            <span class="icon">📊</span>
+            <h3>Ripoti ya Mauzo — Jumla &amp; Faida</h3>
+        </div>
+        <div class="report-card-body">
+            <p class="report-subtitle">
+                Chagua kipindi kuona orodha ya mauzo, jumla ya pesa, na faida.
+            </p>
+
+            <div class="period-grid">
+                <a href="{{ url_for('sales_report', period='1m') }}" class="period-btn">
+                    <span class="period-label">Mwezi 1</span>
+                    <span class="period-hint">Siku 30 zilizopita</span>
+                </a>
+                <a href="{{ url_for('sales_report', period='3m') }}" class="period-btn">
+                    <span class="period-label">Miezi 3</span>
+                    <span class="period-hint">Siku 90 zilizopita</span>
+                </a>
+                <a href="{{ url_for('sales_report', period='6m') }}" class="period-btn">
+                    <span class="period-label">Miezi 6</span>
+                    <span class="period-hint">Siku 180 zilizopita</span>
+                </a>
+            </div>
+
+            <div class="custom-date-box">
+                <div class="custom-date-title">📅 Au chagua tarehe mwenyewe</div>
+                <form method="GET" action="{{ url_for('sales_report') }}">
+                    <input type="hidden" name="period" value="custom">
+                    <div class="date-row">
+                        <div class="date-field">
+                            <label for="start_date">Kutoka (tarehe)</label>
+                            <input type="date" id="start_date" name="start_date" required>
+                        </div>
+                        <div class="date-field">
+                            <label for="end_date">Hadi (tarehe)</label>
+                            <input type="date" id="end_date" name="end_date" required>
+                        </div>
+                    </div>
+                    <p class="report-hint" style="margin-top:0; margin-bottom:12px;">
+                        Siku moja: weka tarehe ile ile kwenye <strong>Kutoka</strong> na <strong>Hadi</strong>.
+                    </p>
+                    <button type="submit" class="report-submit">Onesha Ripoti</button>
+                </form>
+            </div>
+            <p class="report-hint">
+                Ripoti inaonyesha mauzo yaliyokamilika (si kasoro zinazosubiri) pamoja na faida iliyokadiriwa.
+            </p>
+        </div>
+    </div>
+</div>
+{% endif %}
 
 {% endblock %}
