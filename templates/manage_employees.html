@@ -1,357 +1,333 @@
 {% extends "base.html" %}
-{% block title %}Tuma Notification · {{ app_name }}{% endblock %}
+{% block title %}Watumiaji · {{ app_name }}{% endblock %}
 {% block content %}
 <style>
-.ns-wrap { max-width: 520px; margin: 0 auto; padding: 0 2px 20px; }
-.ns-back {
-  display: inline-flex; align-items: center; gap: 4px;
-  font-size: 0.78rem; font-weight: 600; color: #64748b; text-decoration: none; margin-bottom: 8px;
-}
-.ns-back:hover { color: #1e3a8a; }
-.ns-card {
-  background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
-  padding: 14px; box-shadow: 0 2px 8px rgba(15,23,42,.05);
-}
-.ns-card h1 {
-  margin: 0 0 12px; font-size: 1.05rem; font-weight: 700; color: #1e3a8a;
-  display: flex; align-items: center; gap: 8px;
-}
-.ns-card h1 svg { width: 18px; height: 18px; }
-.field { margin-bottom: 10px; }
-.field label {
-  display: block; font-size: 0.72rem; font-weight: 600; color: #475569; margin-bottom: 3px;
-}
-.field input[type="text"],
-.field input:not([type]),
-.field select,
-.field textarea {
-  width: 100%; padding: 8px 10px; border: 1.5px solid #e2e8f0; border-radius: 8px;
-  font-size: 0.85rem; font-family: inherit; background: #f8fafc; outline: none; line-height: 1.5;
-}
-.field textarea { min-height: 110px; resize: vertical; white-space: pre-wrap; }
-.field input:focus, .field select:focus, .field textarea:focus {
-  border-color: #3b82f6; background: #fff;
-}
+  .users-page { max-width: 1000px; margin: 0 auto; padding: 0 2px 18px; }
 
-.toolbar {
-  display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; align-items: center;
-}
-.tb-btn {
-  display: inline-flex; align-items: center; justify-content: center;
-  min-width: 32px; height: 30px; padding: 0 8px;
-  border: 1.5px solid #e2e8f0; border-radius: 7px;
-  background: #fff; font-size: 0.78rem; font-weight: 700; cursor: pointer; color: #1e3a8a;
-}
-.tb-btn:hover { background: #eff6ff; border-color: #93c5fd; }
-.tb-btn.active { background: #1e3a8a; color: #fff; border-color: #1e3a8a; }
-.tb-select {
-  height: 30px; padding: 0 8px; border: 1.5px solid #e2e8f0; border-radius: 7px;
-  font-size: 0.75rem; font-weight: 600; background: #fff; color: #334155;
-}
+  .users-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .users-header h1 {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #1e3a8a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .users-header h1 svg { width: 20px; height: 20px; flex-shrink: 0; }
 
-.mode-label { font-weight: 700; font-size: 0.72rem; color: #475569; display: block; margin-bottom: 6px; }
-.mode-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
-.mode-row label {
-  display: inline-flex; align-items: center; gap: 5px;
-  padding: 5px 10px; border: 1.5px solid #e2e8f0; border-radius: 999px;
-  font-size: 0.75rem; font-weight: 600; cursor: pointer; background: #f8fafc;
-}
-.mode-row input { accent-color: #1e3a8a; }
-.targets {
-  max-height: 160px; overflow: auto; border: 1px solid #e2e8f0; border-radius: 8px;
-  padding: 6px; margin-bottom: 12px; background: #f8fafc;
-}
-.targets label {
-  display: flex; align-items: center; gap: 8px; padding: 6px 8px;
-  border-radius: 6px; font-size: 0.8rem; cursor: pointer;
-}
-.targets label:hover { background: #fff; }
-.targets.disabled { opacity: .45; pointer-events: none; }
-.targets .muted { color: #94a3b8; font-size: 0.72rem; }
+  .card-box {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px 14px;
+    box-shadow: 0 2px 8px rgba(15,23,42,.05);
+    margin-bottom: 12px;
+  }
+  .card-box h2 {
+    margin: 0 0 10px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #1e3a8a;
+  }
 
-/* Image crop UI */
-.img-box {
-  border: 1.5px dashed #cbd5e1; border-radius: 10px; padding: 10px;
-  background: #f8fafc; margin-bottom: 10px;
-}
-.img-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
-.img-actions .tb-btn { font-size: 0.72rem; }
-.crop-area {
-  display: none; max-height: 280px; overflow: hidden; background: #0f172a;
-  border-radius: 8px; margin-bottom: 8px;
-}
-.crop-area.active { display: block; }
-.crop-area img { display: block; max-width: 100%; }
-.preview-row {
-  display: none; align-items: center; gap: 10px; margin-top: 8px;
-}
-.preview-row.show { display: flex; }
-.preview-row img {
-  width: 72px; height: 72px; object-fit: cover; border-radius: 8px; border: 1px solid #e2e8f0;
-}
-.preview-row .meta { font-size: 0.72rem; color: #64748b; }
-.range-row {
-  display: none; gap: 8px; align-items: center; margin-top: 8px; flex-wrap: wrap;
-}
-.range-row.show { display: flex; }
-.range-row label { font-size: 0.7rem; font-weight: 600; color: #64748b; margin: 0; }
-.range-row input[type=range] { flex: 1; min-width: 100px; }
+  .field { margin-bottom: 10px; }
+  .field label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 3px;
+  }
+  .field input,
+  .field select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    background: #f8fafc;
+    outline: none;
+  }
+  .field input:focus,
+  .field select:focus {
+    border-color: #3b82f6;
+    background: #fff;
+  }
 
-.btn-submit {
-  width: 100%; padding: 10px; border: none; border-radius: 8px;
-  font-size: 0.88rem; font-weight: 600; background: #1e3a8a; color: #fff; cursor: pointer;
-}
-.btn-submit:hover { background: #1e40af; }
+  .btn-sm {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 7px 12px;
+    border: none;
+    border-radius: 7px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    color: #fff;
+    background: #1e3a8a;
+    min-height: 32px;
+  }
+  .btn-sm:hover { filter: brightness(1.06); }
+  .btn-sm svg { width: 13px; height: 13px; }
+  .btn-sec {
+    background: #fff;
+    color: #334155;
+    border: 1.5px solid #e2e8f0;
+  }
+  .btn-ok { background: #059669; }
+  .btn-warn {
+    background: #fff;
+    color: #b45309;
+    border: 1.5px solid #fbbf24;
+  }
+  .btn-danger { background: #dc2626; }
+  .btn-block { width: 100%; }
+
+  .page-search {
+    width: 100%;
+    max-width: 220px;
+    margin-bottom: 10px;
+    padding: 7px 10px 7px 30px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M21 21l-4.3-4.3'/%3E%3C/svg%3E") no-repeat 9px center;
+    outline: none;
+  }
+  .page-search:focus { border-color: #3b82f6; }
+
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table.users-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+    min-width: 640px;
+  }
+  .users-table th,
+  .users-table td {
+    padding: 6px 7px;
+    border-bottom: 1px solid #eef2f7;
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+  .users-table th {
+    background: #1e3a8a;
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: .2px;
+    text-align: left;
+  }
+  .users-table tbody tr:hover { background: #f8fafc; }
+  .users-table tbody tr:last-child td { border-bottom: none; }
+
+  .uname { font-weight: 700; color: #0f172a; }
+  .role-tag {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    background: #e0e7ff;
+    color: #1e3a8a;
+  }
+  .st-active { color: #059669; font-weight: 700; font-size: 0.72rem; }
+  .st-blocked { color: #dc2626; font-weight: 800; font-size: 0.72rem; }
+  .st-expired { color: #dc2626; font-weight: 800; font-size: 0.72rem; }
+  .days-num { font-weight: 700; }
+  .muted-sm { color: #94a3b8; font-size: 0.72rem; }
+
+  .act-col { min-width: 110px; }
+  .act-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .act-stack .btn-sm {
+    width: 100%;
+    min-height: 28px;
+    padding: 4px 8px;
+    font-size: 0.7rem;
+  }
+
+  .extend-box {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .extend-row {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .extend-row input[type="number"],
+  .extend-row input[type="date"] {
+    padding: 4px 6px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    background: #f8fafc;
+  }
+  .extend-row input[type="number"] { width: 56px; }
+  .extend-row .btn-sm {
+    min-height: 26px;
+    padding: 3px 7px;
+    font-size: 0.68rem;
+  }
+
+  .empty-cell {
+    text-align: center;
+    padding: 24px 12px !important;
+    color: #94a3b8;
+    font-size: 0.82rem;
+  }
+
+  @media (max-width: 600px) {
+    .users-header h1 { font-size: 1.05rem; }
+    .users-table th, .users-table td { padding: 5px 5px; font-size: 0.72rem; }
+    table.users-table { min-width: 560px; }
+  }
 </style>
 
-<div class="ns-wrap">
-  <a href="{{ url_for('notifications_list') }}" class="ns-back">← Rudi</a>
-  <div class="ns-card">
+<div class="users-page">
+  <div class="users-header">
     <h1>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-      Tuma notification
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+      Watumiaji
     </h1>
+  </div>
 
-    <form method="post" enctype="multipart/form-data" id="notifyForm">
+  <div class="card-box">
+    <h2>Ongeza</h2>
+    <form method="post">
       <div class="field">
-        <label>Kichwa</label>
-        <input name="title" required maxlength="120" placeholder="Kichwa cha ujumbe">
+        <label>Username</label>
+        <input name="username" required maxlength="80">
       </div>
-
       <div class="field">
-        <label>Ujumbe</label>
-        <div class="toolbar">
-          <button type="button" class="tb-btn" id="btnBold" title="Bold">B</button>
-          <select class="tb-select" id="fontSelect" name="style_font">
-            <option value="default">Font: Default</option>
-            <option value="serif">Serif</option>
-            <option value="georgia">Georgia</option>
-            <option value="mono">Mono</option>
-            <option value="roboto">Roboto</option>
-            <option value="cursive">Cursive</option>
-          </select>
-        </div>
-        <textarea name="body" id="bodyInput" required maxlength="2000" rows="6" placeholder="Andika ujumbe...&#10;&#10;Enter = aya mpya&#10;Chagua maneno kisha B = bold"></textarea>
+        <label>PIN / Password</label>
+        <input name="initial_pin" required minlength="4">
       </div>
-
       <div class="field">
-        <label>Picha (hiari)</label>
-        <div class="img-box">
-          <div class="img-actions">
-            <button type="button" class="tb-btn" id="btnPickImg">Chagua picha</button>
-            <button type="button" class="tb-btn" id="btnCrop" style="display:none">Crop</button>
-            <button type="button" class="tb-btn" id="btnClearImg" style="display:none">Ondoa</button>
-          </div>
-          <input type="file" id="imgFile" accept="image/*" style="display:none">
-          <input type="file" name="image" id="imgFinal" accept="image/*" style="display:none">
-          <div class="crop-area" id="cropArea">
-            <img id="cropImg" alt="">
-          </div>
-          <div class="range-row" id="sizeRow">
-            <label>Ukubwa</label>
-            <input type="range" id="sizeRange" min="40" max="100" value="85">
-            <span id="sizeLabel" style="font-size:0.7rem;font-weight:600;color:#64748b">85%</span>
-          </div>
-          <div class="range-row" id="qualityRow">
-            <label>Quality</label>
-            <input type="range" id="qualityRange" min="40" max="92" value="72">
-            <span id="qualityLabel" style="font-size:0.7rem;font-weight:600;color:#64748b">72</span>
-          </div>
-          <div class="preview-row" id="previewRow">
-            <img id="previewImg" alt="">
-            <div class="meta" id="previewMeta"></div>
-          </div>
-        </div>
+        <label>Role</label>
+        <select name="role" required>
+          {% if session.get('role') == 'admin' %}
+          <option value="boss">Boss</option>
+          {% else %}
+          <option value="employee">Employee</option>
+          {% endif %}
+        </select>
       </div>
-
-      <div class="field">
-        <label>Link (hiari)</label>
-        <input name="link" value="/notifications" maxlength="200" placeholder="/sales">
-      </div>
-
-      <span class="mode-label">Mpokeaji</span>
-      <div class="mode-row">
-        <label><input type="radio" name="mode" value="one"> Mmoja</label>
-        <label><input type="radio" name="mode" value="many"> Kadhaa</label>
-        <label><input type="radio" name="mode" value="all" checked> Wote ({{ audience_label }})</label>
-      </div>
-
-      <div class="targets" id="targetsBox">
-        {% for t in targets %}
-        <label>
-          <input type="checkbox" name="user_ids" value="{{ t.id }}" class="uid">
-          <span><strong>{{ t.username }}</strong> <span class="muted">({{ t.role }})</span></span>
-        </label>
-        {% else %}
-        <p class="muted" style="padding:8px;margin:0">Hakuna {{ audience_label|lower }}.</p>
-        {% endfor %}
-      </div>
-
-      <button class="btn-submit" type="submit">Tuma</button>
+      <button class="btn-sm" type="submit">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Ongeza
+      </button>
     </form>
   </div>
+
+  <div class="card-box">
+    <h2>Orodha</h2>
+    <input type="search" class="page-search" placeholder="Tafuta..." autocomplete="off">
+    <div class="table-wrap">
+      <table class="users-table">
+        <thead>
+          <tr>
+            <th>Username</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Siku</th>
+            <th>Expiry</th>
+            {% if session.get('role') == 'admin' %}<th>Muda</th>{% endif %}
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for item in users_info|default([]) %}
+          {% set u = item.user %}
+          {% set blocked = u.is_blocked if u.is_blocked is defined else false %}
+          <tr data-search-row data-search-text="{{ u.username }} {{ u.role }}">
+            <td class="uname">{{ u.username }}</td>
+            <td><span class="role-tag">{{ u.role }}</span></td>
+            <td>
+              {% if blocked %}
+                <span class="st-blocked">BLOCKED</span>
+              {% else %}
+                <span class="st-active">Active</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if item.days_left is not none %}
+                {% if item.days_left < 0 %}<span class="st-expired">Imeisha</span>
+                {% else %}<span class="days-num">{{ item.days_left }}</span>{% endif %}
+              {% else %}<span class="muted-sm">—</span>{% endif %}
+            </td>
+            <td class="muted-sm">{{ item.pin_expiry or '—' }}</td>
+            {% if session.get('role') == 'admin' and u.role == 'boss' %}
+            <td>
+              <div class="extend-box">
+                <form method="post" action="{{ url_for('admin_extend_account', user_id=u.id) }}" class="extend-row">
+                  <input type="number" name="days" value="30" min="1" max="3650">
+                  <button class="btn-sm" type="submit">+</button>
+                </form>
+                <form method="post" action="{{ url_for('admin_set_expiry', user_id=u.id) }}" class="extend-row">
+                  <input type="date" name="expiry_date" required>
+                  <button class="btn-sm btn-sec" type="submit">Set</button>
+                </form>
+              </div>
+            </td>
+            {% elif session.get('role') == 'admin' %}
+            <td class="muted-sm">—</td>
+            {% endif %}
+            <td class="act-col">
+              <div class="act-stack">
+                <a class="btn-sm btn-sec" href="{{ url_for('reset_pin', user_id=u.id) }}">Reset PIN</a>
+                {% if session.get('role') == 'admin' %}
+                  {% if blocked %}
+                  <form method="post" action="{{ url_for('admin_unblock_user', user_id=u.id) }}" onsubmit="return confirm('Fungua {{ u.username }}?')">
+                    <button class="btn-sm btn-ok btn-block" type="submit">Unblock</button>
+                  </form>
+                  {% else %}
+                  <form method="post" action="{{ url_for('admin_block_user', user_id=u.id) }}" onsubmit="return confirm('Zuia {{ u.username }}?')">
+                    <button class="btn-sm btn-warn btn-block" type="submit">Block</button>
+                  </form>
+                  {% endif %}
+                  <form method="post" action="{{ url_for('delete_user', user_id=u.id) }}" onsubmit="return confirm('Futa {{ u.username }}?')">
+                    <button class="btn-sm btn-danger btn-block" type="submit">Futa</button>
+                  </form>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+        {% else %}
+          {% for u in users %}
+          <tr>
+            <td class="uname">{{ u.username }}</td>
+            <td><span class="role-tag">{{ u.role }}</span></td>
+            <td colspan="{% if session.get('role') == 'admin' %}5{% else %}4{% endif %}" class="muted-sm">—</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="{% if session.get('role') == 'admin' %}7{% else %}6{% endif %}" class="empty-cell">Hakuna watumiaji.</td></tr>
+          {% endfor %}
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
 </div>
-{% endblock %}
-{% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
-<script>
-(function(){
-  /* recipients */
-  var box = document.getElementById('targetsBox');
-  var radios = document.querySelectorAll('input[name=mode]');
-  var checks = document.querySelectorAll('.uid');
-  function sync(){
-    var mode = (document.querySelector('input[name=mode]:checked')||{}).value || 'all';
-    if (mode === 'all') {
-      box.classList.add('disabled');
-      checks.forEach(function(c){ c.checked = false; });
-    } else {
-      box.classList.remove('disabled');
-      if (mode === 'one') {
-        checks.forEach(function(c){
-          c.onchange = function(){
-            if (c.checked) checks.forEach(function(o){ if (o !== c) o.checked = false; });
-          };
-        });
-      }
-    }
-  }
-  radios.forEach(function(r){ r.addEventListener('change', sync); });
-  sync();
-
-  /* Bold: wrap selection with ** */
-  var body = document.getElementById('bodyInput');
-  var btnBold = document.getElementById('btnBold');
-  btnBold.addEventListener('click', function(){
-    var start = body.selectionStart, end = body.selectionEnd;
-    var val = body.value;
-    if (start === end) {
-      var insert = '**bold**';
-      body.value = val.slice(0, start) + insert + val.slice(end);
-      body.focus();
-      body.setSelectionRange(start + 2, start + 6);
-    } else {
-      var selected = val.slice(start, end);
-      body.value = val.slice(0, start) + '**' + selected + '**' + val.slice(end);
-      body.focus();
-      body.setSelectionRange(start, end + 4);
-    }
-  });
-
-  /* Font live preview on textarea */
-  var fontSelect = document.getElementById('fontSelect');
-  var fontMap = {
-    default: 'inherit',
-    serif: 'Georgia, Times New Roman, serif',
-    georgia: 'Georgia, serif',
-    mono: 'ui-monospace, Consolas, monospace',
-    roboto: 'Roboto, Inter, system-ui, sans-serif',
-    cursive: 'Segoe Script, Comic Sans MS, cursive'
-  };
-  fontSelect.addEventListener('change', function(){
-    body.style.fontFamily = fontMap[fontSelect.value] || 'inherit';
-  });
-
-  /* Image pick + crop + resize */
-  var btnPick = document.getElementById('btnPickImg');
-  var btnCrop = document.getElementById('btnCrop');
-  var btnClear = document.getElementById('btnClearImg');
-  var imgFile = document.getElementById('imgFile');
-  var imgFinal = document.getElementById('imgFinal');
-  var cropArea = document.getElementById('cropArea');
-  var cropImg = document.getElementById('cropImg');
-  var sizeRow = document.getElementById('sizeRow');
-  var qualityRow = document.getElementById('qualityRow');
-  var sizeRange = document.getElementById('sizeRange');
-  var qualityRange = document.getElementById('qualityRange');
-  var sizeLabel = document.getElementById('sizeLabel');
-  var qualityLabel = document.getElementById('qualityLabel');
-  var previewRow = document.getElementById('previewRow');
-  var previewImg = document.getElementById('previewImg');
-  var previewMeta = document.getElementById('previewMeta');
-  var cropper = null;
-  var objectUrl = null;
-
-  btnPick.addEventListener('click', function(){ imgFile.click(); });
-  imgFile.addEventListener('change', function(){
-    var f = imgFile.files && imgFile.files[0];
-    if (!f) return;
-    if (objectUrl) URL.revokeObjectURL(objectUrl);
-    objectUrl = URL.createObjectURL(f);
-    cropImg.src = objectUrl;
-    cropArea.classList.add('active');
-    btnCrop.style.display = '';
-    btnClear.style.display = '';
-    sizeRow.classList.add('show');
-    qualityRow.classList.add('show');
-    if (cropper) { cropper.destroy(); cropper = null; }
-    cropper = new Cropper(cropImg, {
-      viewMode: 1,
-      autoCropArea: 0.9,
-      responsive: true,
-      background: false
-    });
-  });
-
-  sizeRange.addEventListener('input', function(){ sizeLabel.textContent = sizeRange.value + '%'; });
-  qualityRange.addEventListener('input', function(){ qualityLabel.textContent = qualityRange.value; });
-
-  function exportCrop(){
-    if (!cropper) return;
-    var scale = parseInt(sizeRange.value, 10) / 100;
-    var q = parseInt(qualityRange.value, 10) / 100;
-    var canvas = cropper.getCroppedCanvas({
-      maxWidth: Math.round(1280 * scale),
-      maxHeight: Math.round(1280 * scale),
-      imageSmoothingEnabled: true,
-      imageSmoothingQuality: 'high'
-    });
-    if (!canvas) return;
-    canvas.toBlob(function(blob){
-      if (!blob) return;
-      var file = new File([blob], 'notify.jpg', { type: 'image/jpeg' });
-      var dt = new DataTransfer();
-      dt.items.add(file);
-      imgFinal.files = dt.files;
-      previewImg.src = URL.createObjectURL(blob);
-      previewMeta.textContent = (blob.size / 1024).toFixed(0) + ' KB · ' + canvas.width + '×' + canvas.height;
-      previewRow.classList.add('show');
-    }, 'image/jpeg', q);
-  }
-
-  btnCrop.addEventListener('click', exportCrop);
-  sizeRange.addEventListener('change', function(){ if (cropper) exportCrop(); });
-  qualityRange.addEventListener('change', function(){ if (cropper) exportCrop(); });
-
-  btnClear.addEventListener('click', function(){
-    if (cropper) { cropper.destroy(); cropper = null; }
-    if (objectUrl) { URL.revokeObjectURL(objectUrl); objectUrl = null; }
-    cropImg.src = '';
-    cropArea.classList.remove('active');
-    btnCrop.style.display = 'none';
-    btnClear.style.display = 'none';
-    sizeRow.classList.remove('show');
-    qualityRow.classList.remove('show');
-    previewRow.classList.remove('show');
-    imgFile.value = '';
-    imgFinal.value = '';
-    var dt = new DataTransfer();
-    imgFinal.files = dt.files;
-  });
-
-  /* ensure crop applied before submit if image selected but not cropped */
-  document.getElementById('notifyForm').addEventListener('submit', function(e){
-    if (cropper && (!imgFinal.files || !imgFinal.files.length)) {
-      e.preventDefault();
-      exportCrop();
-      setTimeout(function(){
-        if (imgFinal.files && imgFinal.files.length) {
-          document.getElementById('notifyForm').submit();
-        }
-      }, 350);
-    }
-  });
-})();
-</script>
 {% endblock %}
