@@ -1,118 +1,333 @@
 {% extends "base.html" %}
 {% block title %}Watumiaji · {{ app_name }}{% endblock %}
 {% block content %}
-<h1>Watumiaji</h1>
-<p class="muted" style="margin-bottom:14px">Simamia boss / wafanyakazi, block, futa na muda wa akaunti.</p>
+<style>
+  .users-page { max-width: 1000px; margin: 0 auto; padding: 0 2px 18px; }
 
-<div class="card" style="margin-bottom:16px">
-  <h2>Ongeza mtumiaji</h2>
-  <form method="post">
-    <div class="field">
-      <label>Username</label>
-      <input name="username" required maxlength="80">
-    </div>
-    <div class="field">
-      <label>Initial PIN / Password</label>
-      <input name="initial_pin" required minlength="4">
-    </div>
-    <div class="field">
-      <label>Role</label>
-      <select name="role" required>
-        {% if session.get('role') == 'admin' %}
-        <option value="boss">Boss</option>
-        {% else %}
-        <option value="employee">Employee</option>
-        {% endif %}
-      </select>
-    </div>
-    <button class="btn" type="submit"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg> Ongeza</button>
-  </form>
-</div>
+  .users-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .users-header h1 {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #1e3a8a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .users-header h1 svg { width: 20px; height: 20px; flex-shrink: 0; }
 
-<div class="card">
-  <h2>Orodha</h2>
-  <input type="search" class="page-search" placeholder="Tafuta mtumiaji..." autocomplete="off">
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Username</th>
-          <th>Role</th>
-          <th>Status</th>
-          <th>Siku zilizobaki</th>
-          <th>Expiry</th>
-          {% if session.get('role') == 'admin' %}<th>Ongeza muda</th>{% endif %}
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-      {% for item in users_info|default([]) %}
-        {% set u = item.user %}
-        {% set blocked = u.is_blocked if u.is_blocked is defined else false %}
-        <tr data-search-row data-search-text="{{ u.username }} {{ u.role }}">
-          <td><strong>{{ u.username }}</strong></td>
-          <td>{{ u.role }}</td>
-          <td>
-            {% if blocked %}
-              <span style="color:var(--red);font-weight:800;font-size:11px">BLOCKED</span>
-            {% else %}
-              <span style="color:#059669;font-weight:700;font-size:11px">Active</span>
-            {% endif %}
-          </td>
-          <td>
-            {% if item.days_left is not none %}
-              {% if item.days_left < 0 %}<span style="color:var(--red);font-weight:800">Imeisha</span>
-              {% else %}<strong>{{ item.days_left }}</strong> siku{% endif %}
-            {% else %}—{% endif %}
-          </td>
-          <td class="small muted">{{ item.pin_expiry or '—' }}</td>
-          {% if session.get('role') == 'admin' and u.role == 'boss' %}
-          <td>
-            <form method="post" action="{{ url_for('admin_extend_account', user_id=u.id) }}" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-              <input type="number" name="days" value="30" min="1" max="3650" style="width:72px;padding:8px;border-radius:8px;border:1px solid var(--border)">
-              <button class="btn" type="submit" style="min-height:36px;padding:8px 10px;font-size:11px">+ Siku</button>
-            </form>
-            <form method="post" action="{{ url_for('admin_set_expiry', user_id=u.id) }}" style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
-              <input type="date" name="expiry_date" required style="padding:8px;border-radius:8px;border:1px solid var(--border)">
-              <button class="btn btn-secondary" type="submit" style="min-height:36px;padding:8px 10px;font-size:11px">Set date</button>
-            </form>
-          </td>
-          {% elif session.get('role') == 'admin' %}
-          <td>—</td>
+  .card-box {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px 14px;
+    box-shadow: 0 2px 8px rgba(15,23,42,.05);
+    margin-bottom: 12px;
+  }
+  .card-box h2 {
+    margin: 0 0 10px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #1e3a8a;
+  }
+
+  .field { margin-bottom: 10px; }
+  .field label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 3px;
+  }
+  .field input,
+  .field select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    background: #f8fafc;
+    outline: none;
+  }
+  .field input:focus,
+  .field select:focus {
+    border-color: #3b82f6;
+    background: #fff;
+  }
+
+  .btn-sm {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 7px 12px;
+    border: none;
+    border-radius: 7px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    color: #fff;
+    background: #1e3a8a;
+    min-height: 32px;
+  }
+  .btn-sm:hover { filter: brightness(1.06); }
+  .btn-sm svg { width: 13px; height: 13px; }
+  .btn-sec {
+    background: #fff;
+    color: #334155;
+    border: 1.5px solid #e2e8f0;
+  }
+  .btn-ok { background: #059669; }
+  .btn-warn {
+    background: #fff;
+    color: #b45309;
+    border: 1.5px solid #fbbf24;
+  }
+  .btn-danger { background: #dc2626; }
+  .btn-block { width: 100%; }
+
+  .page-search {
+    width: 100%;
+    max-width: 220px;
+    margin-bottom: 10px;
+    padding: 7px 10px 7px 30px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M21 21l-4.3-4.3'/%3E%3C/svg%3E") no-repeat 9px center;
+    outline: none;
+  }
+  .page-search:focus { border-color: #3b82f6; }
+
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table.users-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+    min-width: 640px;
+  }
+  .users-table th,
+  .users-table td {
+    padding: 6px 7px;
+    border-bottom: 1px solid #eef2f7;
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+  .users-table th {
+    background: #1e3a8a;
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: .2px;
+    text-align: left;
+  }
+  .users-table tbody tr:hover { background: #f8fafc; }
+  .users-table tbody tr:last-child td { border-bottom: none; }
+
+  .uname { font-weight: 700; color: #0f172a; }
+  .role-tag {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    background: #e0e7ff;
+    color: #1e3a8a;
+  }
+  .st-active { color: #059669; font-weight: 700; font-size: 0.72rem; }
+  .st-blocked { color: #dc2626; font-weight: 800; font-size: 0.72rem; }
+  .st-expired { color: #dc2626; font-weight: 800; font-size: 0.72rem; }
+  .days-num { font-weight: 700; }
+  .muted-sm { color: #94a3b8; font-size: 0.72rem; }
+
+  .act-col { min-width: 110px; }
+  .act-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .act-stack .btn-sm {
+    width: 100%;
+    min-height: 28px;
+    padding: 4px 8px;
+    font-size: 0.7rem;
+  }
+
+  .extend-box {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .extend-row {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .extend-row input[type="number"],
+  .extend-row input[type="date"] {
+    padding: 4px 6px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    background: #f8fafc;
+  }
+  .extend-row input[type="number"] { width: 56px; }
+  .extend-row .btn-sm {
+    min-height: 26px;
+    padding: 3px 7px;
+    font-size: 0.68rem;
+  }
+
+  .empty-cell {
+    text-align: center;
+    padding: 24px 12px !important;
+    color: #94a3b8;
+    font-size: 0.82rem;
+  }
+
+  @media (max-width: 600px) {
+    .users-header h1 { font-size: 1.05rem; }
+    .users-table th, .users-table td { padding: 5px 5px; font-size: 0.72rem; }
+    table.users-table { min-width: 560px; }
+  }
+</style>
+
+<div class="users-page">
+  <div class="users-header">
+    <h1>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+      Watumiaji
+    </h1>
+  </div>
+
+  <div class="card-box">
+    <h2>Ongeza</h2>
+    <form method="post">
+      <div class="field">
+        <label>Username</label>
+        <input name="username" required maxlength="80">
+      </div>
+      <div class="field">
+        <label>PIN / Password</label>
+        <input name="initial_pin" required minlength="4">
+      </div>
+      <div class="field">
+        <label>Role</label>
+        <select name="role" required>
+          {% if session.get('role') == 'admin' %}
+          <option value="boss">Boss</option>
+          {% else %}
+          <option value="employee">Employee</option>
           {% endif %}
-          <td style="min-width:140px">
-            <div style="display:flex;flex-direction:column;gap:6px">
-              <a class="btn btn-secondary" style="min-height:32px;padding:6px 10px;font-size:11px;text-align:center" href="{{ url_for('reset_pin', user_id=u.id) }}">Reset PIN</a>
-              {% if session.get('role') == 'admin' %}
-                {% if blocked %}
-                <form method="post" action="{{ url_for('admin_unblock_user', user_id=u.id) }}" onsubmit="return confirm('Fungua akaunti ya {{ u.username }}?')">
-                  <button class="btn btn-success" type="submit" style="min-height:32px;padding:6px 10px;font-size:11px;width:100%">Unblock</button>
-                </form>
-                {% else %}
-                <form method="post" action="{{ url_for('admin_block_user', user_id=u.id) }}" onsubmit="return confirm('Zuia akaunti ya {{ u.username }}?')">
-                  <button class="btn btn-secondary" type="submit" style="min-height:32px;padding:6px 10px;font-size:11px;width:100%;border-color:#f59e0b;color:#b45309">Block</button>
-                </form>
-                {% endif %}
-                <form method="post" action="{{ url_for('delete_user', user_id=u.id) }}" onsubmit="return confirm('FUTA kabisa akaunti ya {{ u.username }}? Hatuwezi kurudisha.')">
-                  <button class="btn btn-danger" type="submit" style="min-height:32px;padding:6px 10px;font-size:11px;width:100%">Futa</button>
-                </form>
+        </select>
+      </div>
+      <button class="btn-sm" type="submit">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Ongeza
+      </button>
+    </form>
+  </div>
+
+  <div class="card-box">
+    <h2>Orodha</h2>
+    <input type="search" class="page-search" placeholder="Tafuta..." autocomplete="off">
+    <div class="table-wrap">
+      <table class="users-table">
+        <thead>
+          <tr>
+            <th>Username</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Siku</th>
+            <th>Expiry</th>
+            {% if session.get('role') == 'admin' %}<th>Muda</th>{% endif %}
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for item in users_info|default([]) %}
+          {% set u = item.user %}
+          {% set blocked = u.is_blocked if u.is_blocked is defined else false %}
+          <tr data-search-row data-search-text="{{ u.username }} {{ u.role }}">
+            <td class="uname">{{ u.username }}</td>
+            <td><span class="role-tag">{{ u.role }}</span></td>
+            <td>
+              {% if blocked %}
+                <span class="st-blocked">BLOCKED</span>
+              {% else %}
+                <span class="st-active">Active</span>
               {% endif %}
-            </div>
-          </td>
-        </tr>
-      {% else %}
-        {% for u in users %}
-        <tr>
-          <td>{{ u.username }}</td>
-          <td>{{ u.role }}</td>
-          <td colspan="5">—</td>
-        </tr>
+            </td>
+            <td>
+              {% if item.days_left is not none %}
+                {% if item.days_left < 0 %}<span class="st-expired">Imeisha</span>
+                {% else %}<span class="days-num">{{ item.days_left }}</span>{% endif %}
+              {% else %}<span class="muted-sm">—</span>{% endif %}
+            </td>
+            <td class="muted-sm">{{ item.pin_expiry or '—' }}</td>
+            {% if session.get('role') == 'admin' and u.role == 'boss' %}
+            <td>
+              <div class="extend-box">
+                <form method="post" action="{{ url_for('admin_extend_account', user_id=u.id) }}" class="extend-row">
+                  <input type="number" name="days" value="30" min="1" max="3650">
+                  <button class="btn-sm" type="submit">+</button>
+                </form>
+                <form method="post" action="{{ url_for('admin_set_expiry', user_id=u.id) }}" class="extend-row">
+                  <input type="date" name="expiry_date" required>
+                  <button class="btn-sm btn-sec" type="submit">Set</button>
+                </form>
+              </div>
+            </td>
+            {% elif session.get('role') == 'admin' %}
+            <td class="muted-sm">—</td>
+            {% endif %}
+            <td class="act-col">
+              <div class="act-stack">
+                <a class="btn-sm btn-sec" href="{{ url_for('reset_pin', user_id=u.id) }}">Reset PIN</a>
+                {% if session.get('role') == 'admin' %}
+                  {% if blocked %}
+                  <form method="post" action="{{ url_for('admin_unblock_user', user_id=u.id) }}" onsubmit="return confirm('Fungua {{ u.username }}?')">
+                    <button class="btn-sm btn-ok btn-block" type="submit">Unblock</button>
+                  </form>
+                  {% else %}
+                  <form method="post" action="{{ url_for('admin_block_user', user_id=u.id) }}" onsubmit="return confirm('Zuia {{ u.username }}?')">
+                    <button class="btn-sm btn-warn btn-block" type="submit">Block</button>
+                  </form>
+                  {% endif %}
+                  <form method="post" action="{{ url_for('delete_user', user_id=u.id) }}" onsubmit="return confirm('Futa {{ u.username }}?')">
+                    <button class="btn-sm btn-danger btn-block" type="submit">Futa</button>
+                  </form>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
         {% else %}
-        <tr><td colspan="7" class="muted">Hakuna watumiaji.</td></tr>
+          {% for u in users %}
+          <tr>
+            <td class="uname">{{ u.username }}</td>
+            <td><span class="role-tag">{{ u.role }}</span></td>
+            <td colspan="{% if session.get('role') == 'admin' %}5{% else %}4{% endif %}" class="muted-sm">—</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="{% if session.get('role') == 'admin' %}7{% else %}6{% endif %}" class="empty-cell">Hakuna watumiaji.</td></tr>
+          {% endfor %}
         {% endfor %}
-      {% endfor %}
-      </tbody>
-    </table>
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
 {% endblock %}
