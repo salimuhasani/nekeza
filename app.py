@@ -428,11 +428,18 @@ def init_db():
                         is_read BOOLEAN DEFAULT FALSE,
                         sender_id INTEGER,
                         kind TEXT DEFAULT 'manual',
+                        image_url TEXT,
+                        style_font TEXT,
                         created_at TEXT DEFAULT CURRENT_TIMESTAMP
                     )
                 """)
             except Exception:
                 pass
+            for col, typ in (("image_url", "TEXT"), ("style_font", "TEXT")):
+                try:
+                    cur.execute(f"ALTER TABLE notifications ADD COLUMN IF NOT EXISTS {col} {typ}")
+                except Exception:
+                    pass
             conn.commit()
         else:
             conn.executescript(ddl)
@@ -470,9 +477,20 @@ def init_db():
                         is_read INTEGER DEFAULT 0,
                         sender_id INTEGER,
                         kind TEXT DEFAULT 'manual',
+                        image_url TEXT,
+                        style_font TEXT,
                         created_at TEXT DEFAULT CURRENT_TIMESTAMP
                     )
                 """)
+                try:
+                    ninfo = raw.execute("PRAGMA table_info(notifications)").fetchall()
+                    ncols = {row[1] for row in ninfo}
+                    if "image_url" not in ncols:
+                        raw.execute("ALTER TABLE notifications ADD COLUMN image_url TEXT")
+                    if "style_font" not in ncols:
+                        raw.execute("ALTER TABLE notifications ADD COLUMN style_font TEXT")
+                except Exception:
+                    pass
                 raw.commit()
                 raw.close()
             except Exception:
@@ -557,9 +575,22 @@ def format_money(value):
         return "0"
 
 
+@app.template_filter('notify_body')
+def notify_body_filter(value):
+    """Escape + **bold** → <strong>, keep newlines for pre-wrap."""
+    from markupsafe import Markup, escape
+    if value is None:
+        return ""
+    text = str(value)
+    esc = str(escape(text))
+    # **bold**
+    esc = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", esc, flags=re.DOTALL)
+    return Markup(esc)
 
 
-def _notify_users(user_ids, title, body="", link="/", sender_id=None, kind="manual"):
+
+
+def _notify_users(user_ids, title, body="", link="/", sender_id=None, kind="manual", image_url=None, style_font=None):
     """Hifadhi notification in-app + tuma push/FCM."""
     if not user_ids:
         return 0
@@ -577,16 +608,25 @@ def _notify_users(user_ids, title, body="", link="/", sender_id=None, kind="manu
     if not ids:
         return 0
     title = (title or APP_NAME)[:120]
-    body = (body or "")[:500]
+    body = (body or "")[:2000]
     link = link or "/"
+    image_url = (image_url or "")[:500] or None
+    # whitelist fonts only
+    allowed_fonts = {
+        "default", "inter", "serif", "mono", "cursive", "georgia", "roboto"
+    }
+    sf = (style_font or "default").strip().lower()
+    if sf not in allowed_fonts:
+        sf = "default"
     conn = get_db()
     try:
         for uid in ids:
             try:
                 conn.execute(
                     """
-                    INSERT INTO notifications (user_id, title, body, link, is_read, sender_id, kind)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    INSERT INTO notifications
+                    (user_id, title, body, link, is_read, sender_id, kind, image_url, style_font)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         uid,
@@ -596,15 +636,36 @@ def _notify_users(user_ids, title, body="", link="/", sender_id=None, kind="manu
                         False if USE_PG else 0,
                         sender_id,
                         kind or "manual",
+                        image_url,
+                        sf,
                     ),
                 )
             except Exception as e:
-                print("notify insert:", e)
+                # fallback bila columns mpya
+                try:
+                    conn.execute(
+                        """
+                        INSERT INTO notifications (user_id, title, body, link, is_read, sender_id, kind)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)
+                        """,
+                        (
+                            uid,
+                            title,
+                            body,
+                            link,
+                            False if USE_PG else 0,
+                            sender_id,
+                            kind or "manual",
+                        ),
+                    )
+                except Exception as e2:
+                    print("notify insert:", e, e2)
         conn.commit()
     finally:
         conn.close()
     try:
-        _send_web_push(ids, title, body, link)
+        push_body = body.replace("**", "")[:120]
+        _send_web_push(ids, title, push_body, link)
     except Exception as e:
         print("notify push:", e)
     return len(ids)
@@ -2074,9 +2135,11 @@ def notifications_send():
 
     if request.method == "POST":
         title = (request.form.get("title") or "").strip()[:120]
-        body = (request.form.get("body") or "").strip()[:500]
+        # keep internal newlines; only strip ends
+        body = (request.form.get("body") or "").strip("\r\n \t")[:2000]
         mode = request.form.get("mode") or "all"  # one | many | all
         link = (request.form.get("link") or "/notifications").strip() or "/notifications"
+        style_font = (request.form.get("style_font") or "default").strip().lower()
         if len(title) < 2 or len(body) < 1:
             conn.close()
             flash("Andika kichwa na ujumbe.", "danger")
@@ -2092,7 +2155,6 @@ def notifications_send():
                     ids.append(int(s))
                 except Exception:
                     pass
-            # security: only allowed targets
             allowed = {t["id"] for t in targets}
             ids = [i for i in ids if i in allowed]
         else:
@@ -2103,6 +2165,35 @@ def notifications_send():
             flash("Chagua angalau mpokeaji mmoja.", "danger")
             return redirect(url_for("notifications_send"))
 
+        # Optional image (already cropped/resized client-side as JPEG)
+        image_url = None
+        f = request.files.get("image")
+        if f and f.filename:
+            try:
+                import uuid
+                from werkzeug.utils import secure_filename
+                upload_dir = os.path.join(app.root_path, "static", "uploads", "notifications")
+                os.makedirs(upload_dir, exist_ok=True)
+                ext = ".jpg"
+                fname = secure_filename(f.filename) or "img"
+                if "." in fname:
+                    raw_ext = fname.rsplit(".", 1)[-1].lower()
+                    if raw_ext in ("jpg", "jpeg", "png", "webp", "gif"):
+                        ext = "." + ("jpg" if raw_ext == "jpeg" else raw_ext)
+                name = f"{session['user_id']}_{uuid.uuid4().hex[:12]}{ext}"
+                path = os.path.join(upload_dir, name)
+                f.save(path)
+                # size limit ~1.5MB after client compress
+                if os.path.getsize(path) > 1_800_000:
+                    os.remove(path)
+                    flash("Picha ni kubwa mno. Punguza ukubwa kisha jaribu tena.", "danger")
+                    conn.close()
+                    return redirect(url_for("notifications_send"))
+                image_url = f"/static/uploads/notifications/{name}"
+            except Exception as exc:
+                print("notify image:", exc)
+                flash("Imeshindikana kuhifadhi picha.", "warning")
+
         n = _notify_users(
             ids,
             title,
@@ -2110,6 +2201,8 @@ def notifications_send():
             link,
             sender_id=session.get("user_id"),
             kind="manual",
+            image_url=image_url,
+            style_font=style_font,
         )
         conn.close()
         flash(f"Notification imetumwa kwa watu {n}.", "success")
