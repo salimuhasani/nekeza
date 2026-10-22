@@ -157,6 +157,36 @@
         transform: translateY(-3px);
         box-shadow: 0 6px 18px rgba(0,0,0,0.2);
     }
+
+    /* Button moja ndogo ya ripoti */
+    .report-btn-wrap {
+        text-align: center;
+        margin: 28px 0 36px;
+    }
+
+    .report-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        font-size: 0.92rem;
+        font-weight: 600;
+        color: #1e3a8a;
+        background: white;
+        border: 2px solid #93c5fd;
+        border-radius: 999px;
+        text-decoration: none;
+        box-shadow: 0 2px 8px rgba(30, 58, 138, 0.08);
+        transition: all 0.2s ease;
+    }
+
+    .report-btn:hover {
+        background: #1e3a8a;
+        color: white;
+        border-color: #1e3a8a;
+        box-shadow: 0 4px 14px rgba(30, 58, 138, 0.25);
+        transform: translateY(-1px);
+    }
 </style>
 
 <div class="header">
@@ -257,5 +287,13 @@
         Unaweza tu kurekodi mauzo. Kila kitu kinarekodiwa kwa Boss wako.
     {% endif %}
 </div>
+
+{% if session['role'] in ['boss', 'admin'] %}
+<div class="report-btn-wrap">
+    <a href="{{ url_for('sales_report', period='1m') }}" class="report-btn">
+        📊 Ripoti ya Mauzo
+    </a>
+</div>
+{% endif %}
 
 {% endblock %}
