@@ -5,9 +5,9 @@
     body { background: #f4f7fc; }
 
     .report-page {
-        max-width: 960px;
+        max-width: 920px;
         margin: 0 auto;
-        padding-bottom: 40px;
+        padding: 0 4px 28px;
     }
 
     .report-top {
@@ -15,13 +15,13 @@
         flex-wrap: wrap;
         justify-content: space-between;
         align-items: center;
-        gap: 12px;
-        margin-bottom: 20px;
+        gap: 8px;
+        margin-bottom: 12px;
     }
 
     .report-top h1 {
         color: #1e3a8a;
-        font-size: 1.5rem;
+        font-size: 1.15rem;
         font-weight: 700;
         margin: 0;
     }
@@ -29,156 +29,48 @@
     .back-link {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
-        padding: 10px 16px;
+        padding: 6px 12px;
         background: white;
         color: #1e3a8a;
-        border: 2px solid #bfdbfe;
-        border-radius: 10px;
+        border: 1.5px solid #bfdbfe;
+        border-radius: 8px;
         text-decoration: none;
         font-weight: 600;
-        font-size: 0.95rem;
-        transition: all 0.2s;
+        font-size: 0.8rem;
     }
 
     .back-link:hover {
         background: #1e3a8a;
         color: white;
-        border-color: #1e3a8a;
     }
 
     .period-badge {
         display: inline-block;
         background: #e0e7ff;
         color: #1e3a8a;
-        padding: 6px 14px;
-        border-radius: 20px;
-        font-size: 0.9rem;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 0.78rem;
         font-weight: 600;
-        margin-bottom: 18px;
+        margin-bottom: 10px;
     }
 
-    /* Summary cards */
-    .summary-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 14px;
-        margin-bottom: 24px;
-    }
-
-    @media (max-width: 640px) {
-        .summary-grid { grid-template-columns: 1fr; }
-    }
-
-    .summary-card {
-        background: white;
-        border-radius: 16px;
-        padding: 18px 16px;
-        box-shadow: 0 6px 18px rgba(0,0,0,0.06);
-        border: 1px solid #e2e8f0;
-        text-align: center;
-    }
-
-    .summary-card .label {
-        font-size: 0.82rem;
-        color: #64748b;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-        margin-bottom: 8px;
-    }
-
-    .summary-card .value {
-        font-size: 1.35rem;
-        font-weight: 700;
-        color: #0f172a;
-        word-break: break-word;
-    }
-
-    .summary-card.sales-total .value { color: #1e3a8a; }
-    .summary-card.profit-card .value { color: #166534; }
-    .summary-card.count-card .value { color: #7c3aed; }
-
-    .summary-card.profit-card {
-        background: linear-gradient(145deg, #ecfdf5, #ffffff);
-        border-color: #a7f3d0;
-    }
-
-    .summary-card.sales-total {
-        background: linear-gradient(145deg, #eff6ff, #ffffff);
-        border-color: #bfdbfe;
-    }
-
-    /* Table */
-    .table-container {
-        background: white;
-        border-radius: 16px;
-        box-shadow: 0 6px 20px rgba(0,0,0,0.07);
-        overflow-x: auto;
-    }
-
-    table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-
-    th {
-        background: #1e3a8a;
-        color: white;
-        padding: 13px 10px;
-        text-align: left;
-        font-weight: 500;
-        white-space: nowrap;
-        font-size: 0.9rem;
-    }
-
-    td {
-        padding: 12px 10px;
-        border-bottom: 1px solid #e2e8f0;
-        font-size: 14px;
-    }
-
-    .product-name { font-weight: 600; color: #1f2937; }
-    .amount { font-weight: 700; color: #166534; }
-    .profit-cell { font-weight: 600; color: #0f766e; }
-    .date-col { color: #64748b; font-size: 13px; }
-    .emp-col { color: #475569; font-size: 13px; }
-
-    .empty {
-        text-align: center;
-        padding: 48px 20px;
-        color: #64748b;
-        background: white;
-        border-radius: 16px;
-        box-shadow: 0 6px 20px rgba(0,0,0,0.07);
-    }
-
-    .footer-note {
-        text-align: center;
-        margin-top: 18px;
-        font-size: 0.82rem;
-        color: #94a3b8;
-    }
-
-    /* Quick period switch */
     .quick-periods {
         display: flex;
         flex-wrap: wrap;
-        gap: 8px;
-        margin-bottom: 20px;
-        justify-content: center;
+        gap: 6px;
+        margin-bottom: 10px;
     }
 
     .quick-btn {
-        padding: 8px 14px;
-        border-radius: 20px;
-        font-size: 0.85rem;
+        padding: 5px 11px;
+        border-radius: 14px;
+        font-size: 0.75rem;
         font-weight: 600;
         text-decoration: none;
         color: #1e3a8a;
         background: white;
         border: 1.5px solid #bfdbfe;
-        transition: all 0.2s;
     }
 
     .quick-btn:hover, .quick-btn.active {
@@ -189,54 +81,152 @@
 
     .custom-mini {
         background: white;
-        border: 1.5px dashed #93c5fd;
-        border-radius: 12px;
-        padding: 14px;
-        margin-bottom: 20px;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 10px;
+        margin-bottom: 14px;
     }
 
     .custom-mini form {
         display: flex;
         flex-wrap: wrap;
-        gap: 10px;
+        gap: 8px;
         align-items: flex-end;
-        justify-content: center;
     }
 
     .custom-mini label {
         display: block;
-        font-size: 0.78rem;
+        font-size: 0.7rem;
         color: #64748b;
         font-weight: 600;
-        margin-bottom: 4px;
+        margin-bottom: 2px;
     }
 
     .custom-mini input[type="date"] {
-        padding: 8px 10px;
+        padding: 5px 8px;
         border: 1.5px solid #e2e8f0;
-        border-radius: 8px;
-        font-size: 14px;
+        border-radius: 6px;
+        font-size: 0.8rem;
         background: #f8fafc;
     }
 
     .custom-mini button {
-        padding: 9px 18px;
+        padding: 6px 14px;
         border: none;
-        border-radius: 8px;
+        border-radius: 6px;
         background: #0f766e;
         color: white;
         font-weight: 600;
-        font-size: 0.9rem;
+        font-size: 0.8rem;
         cursor: pointer;
     }
 
     .custom-mini button:hover { background: #0d9488; }
+
+    .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-bottom: 14px;
+    }
+
+    @media (max-width: 520px) {
+        .summary-grid { grid-template-columns: 1fr; }
+    }
+
+    .summary-card {
+        background: white;
+        border-radius: 10px;
+        padding: 10px 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        border: 1px solid #e2e8f0;
+        text-align: center;
+    }
+
+    .summary-card .label {
+        font-size: 0.65rem;
+        color: #64748b;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        margin-bottom: 4px;
+    }
+
+    .summary-card .value {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #0f172a;
+        word-break: break-word;
+    }
+
+    .summary-card.sales-total {
+        background: linear-gradient(145deg, #eff6ff, #ffffff);
+        border-color: #bfdbfe;
+    }
+    .summary-card.sales-total .value { color: #1e3a8a; }
+
+    .summary-card.profit-card {
+        background: linear-gradient(145deg, #ecfdf5, #ffffff);
+        border-color: #a7f3d0;
+    }
+    .summary-card.profit-card .value { color: #166534; }
+
+    .summary-card.count-card .value { color: #7c3aed; }
+
+    .table-container {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        overflow-x: auto;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.8rem;
+    }
+
+    th {
+        background: #1e3a8a;
+        color: white;
+        padding: 7px 6px;
+        text-align: left;
+        font-weight: 500;
+        white-space: nowrap;
+        font-size: 0.72rem;
+    }
+
+    td {
+        padding: 6px;
+        border-bottom: 1px solid #eef2f7;
+        font-size: 0.78rem;
+        vertical-align: middle;
+    }
+
+    .product-name { font-weight: 600; color: #1f2937; }
+    .amount { font-weight: 700; color: #166534; }
+    .profit-cell { font-weight: 600; color: #0f766e; }
+    .date-col { color: #64748b; font-size: 0.72rem; white-space: nowrap; }
+    .emp-col { color: #475569; font-size: 0.72rem; }
+
+    th:nth-child(4), td:nth-child(4) { text-align: center; }
+    th:nth-child(5), td:nth-child(5),
+    th:nth-child(6), td:nth-child(6) { text-align: right; }
+
+    .empty {
+        text-align: center;
+        padding: 32px 16px;
+        color: #64748b;
+        background: white;
+        border-radius: 10px;
+        font-size: 0.85rem;
+    }
 </style>
 
 <div class="report-page">
     <div class="report-top">
         <h1>📊 Ripoti ya Mauzo</h1>
-        <a href="{{ url_for('sales') }}" class="back-link">← Rudi Mauzo</a>
+        <a href="{{ url_for('sales') }}" class="back-link">← Rudi</a>
     </div>
 
     <div class="period-badge">{{ report_title }}</div>
@@ -264,15 +254,15 @@
 
     <div class="summary-grid">
         <div class="summary-card sales-total">
-            <div class="label">Jumla ya Mauzo</div>
-            <div class="value">{{ grand_total | format_money }} TZS</div>
+            <div class="label">Jumla</div>
+            <div class="value">{{ grand_total | format_money }}</div>
         </div>
         <div class="summary-card profit-card">
-            <div class="label">Faida (iliyokadiriwa)</div>
-            <div class="value">{{ grand_profit | format_money }} TZS</div>
+            <div class="label">Faida</div>
+            <div class="value">{{ grand_profit | format_money }}</div>
         </div>
         <div class="summary-card count-card">
-            <div class="label">Idadi ya Mauzo</div>
+            <div class="label">Idadi</div>
             <div class="value">{{ sales_count }}</div>
         </div>
     </div>
@@ -295,10 +285,10 @@
                 <tr>
                     <td class="date-col">{{ sale.timestamp | tz }}</td>
                     <td class="emp-col">{{ sale.employee or '-' }}</td>
-                    <td class="product-name">{{ sale.name or 'Bidhaa haipo' }}</td>
-                    <td style="text-align:center;">{{ sale.quantity }}</td>
-                    <td class="amount" style="text-align:right;">{{ sale.total | format_money }}</td>
-                    <td class="profit-cell" style="text-align:right;">{{ sale.profit | format_money }}</td>
+                    <td class="product-name">{{ sale.name or '-' }}</td>
+                    <td>{{ sale.quantity }}</td>
+                    <td class="amount">{{ sale.total | format_money }}</td>
+                    <td class="profit-cell">{{ sale.profit | format_money }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -306,13 +296,9 @@
     </div>
     {% else %}
     <div class="empty">
-        <p>Hakuna mauzo katika kipindi hiki.</p>
+        <p>Hakuna mauzo.</p>
     </div>
     {% endif %}
-
-    <p class="footer-note">
-        Faida = Jumla ya mauzo − (bei ya kununua × idadi). Bei ya kununua inatokana na stock ya sasa.
-    </p>
 </div>
 
 {% endblock %}
