@@ -1,0 +1,318 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+    body { background: #f4f7fc; }
+
+    .report-page {
+        max-width: 960px;
+        margin: 0 auto;
+        padding-bottom: 40px;
+    }
+
+    .report-top {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .report-top h1 {
+        color: #1e3a8a;
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 10px 16px;
+        background: white;
+        color: #1e3a8a;
+        border: 2px solid #bfdbfe;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.95rem;
+        transition: all 0.2s;
+    }
+
+    .back-link:hover {
+        background: #1e3a8a;
+        color: white;
+        border-color: #1e3a8a;
+    }
+
+    .period-badge {
+        display: inline-block;
+        background: #e0e7ff;
+        color: #1e3a8a;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-bottom: 18px;
+    }
+
+    /* Summary cards */
+    .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin-bottom: 24px;
+    }
+
+    @media (max-width: 640px) {
+        .summary-grid { grid-template-columns: 1fr; }
+    }
+
+    .summary-card {
+        background: white;
+        border-radius: 16px;
+        padding: 18px 16px;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+        border: 1px solid #e2e8f0;
+        text-align: center;
+    }
+
+    .summary-card .label {
+        font-size: 0.82rem;
+        color: #64748b;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-bottom: 8px;
+    }
+
+    .summary-card .value {
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: #0f172a;
+        word-break: break-word;
+    }
+
+    .summary-card.sales-total .value { color: #1e3a8a; }
+    .summary-card.profit-card .value { color: #166534; }
+    .summary-card.count-card .value { color: #7c3aed; }
+
+    .summary-card.profit-card {
+        background: linear-gradient(145deg, #ecfdf5, #ffffff);
+        border-color: #a7f3d0;
+    }
+
+    .summary-card.sales-total {
+        background: linear-gradient(145deg, #eff6ff, #ffffff);
+        border-color: #bfdbfe;
+    }
+
+    /* Table */
+    .table-container {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.07);
+        overflow-x: auto;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    th {
+        background: #1e3a8a;
+        color: white;
+        padding: 13px 10px;
+        text-align: left;
+        font-weight: 500;
+        white-space: nowrap;
+        font-size: 0.9rem;
+    }
+
+    td {
+        padding: 12px 10px;
+        border-bottom: 1px solid #e2e8f0;
+        font-size: 14px;
+    }
+
+    .product-name { font-weight: 600; color: #1f2937; }
+    .amount { font-weight: 700; color: #166534; }
+    .profit-cell { font-weight: 600; color: #0f766e; }
+    .date-col { color: #64748b; font-size: 13px; }
+    .emp-col { color: #475569; font-size: 13px; }
+
+    .empty {
+        text-align: center;
+        padding: 48px 20px;
+        color: #64748b;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.07);
+    }
+
+    .footer-note {
+        text-align: center;
+        margin-top: 18px;
+        font-size: 0.82rem;
+        color: #94a3b8;
+    }
+
+    /* Quick period switch */
+    .quick-periods {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 20px;
+        justify-content: center;
+    }
+
+    .quick-btn {
+        padding: 8px 14px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-decoration: none;
+        color: #1e3a8a;
+        background: white;
+        border: 1.5px solid #bfdbfe;
+        transition: all 0.2s;
+    }
+
+    .quick-btn:hover, .quick-btn.active {
+        background: #1e3a8a;
+        color: white;
+        border-color: #1e3a8a;
+    }
+
+    .custom-mini {
+        background: white;
+        border: 1.5px dashed #93c5fd;
+        border-radius: 12px;
+        padding: 14px;
+        margin-bottom: 20px;
+    }
+
+    .custom-mini form {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: flex-end;
+        justify-content: center;
+    }
+
+    .custom-mini label {
+        display: block;
+        font-size: 0.78rem;
+        color: #64748b;
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+
+    .custom-mini input[type="date"] {
+        padding: 8px 10px;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 14px;
+        background: #f8fafc;
+    }
+
+    .custom-mini button {
+        padding: 9px 18px;
+        border: none;
+        border-radius: 8px;
+        background: #0f766e;
+        color: white;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+    }
+
+    .custom-mini button:hover { background: #0d9488; }
+</style>
+
+<div class="report-page">
+    <div class="report-top">
+        <h1>📊 Ripoti ya Mauzo</h1>
+        <a href="{{ url_for('sales') }}" class="back-link">← Rudi Mauzo</a>
+    </div>
+
+    <div class="period-badge">{{ report_title }}</div>
+
+    <div class="quick-periods">
+        <a href="{{ url_for('sales_report', period='1m') }}" class="quick-btn {% if period == '1m' %}active{% endif %}">Mwezi 1</a>
+        <a href="{{ url_for('sales_report', period='3m') }}" class="quick-btn {% if period == '3m' %}active{% endif %}">Miezi 3</a>
+        <a href="{{ url_for('sales_report', period='6m') }}" class="quick-btn {% if period == '6m' %}active{% endif %}">Miezi 6</a>
+    </div>
+
+    <div class="custom-mini">
+        <form method="GET" action="{{ url_for('sales_report') }}">
+            <input type="hidden" name="period" value="custom">
+            <div>
+                <label>Kutoka</label>
+                <input type="date" name="start_date" value="{{ start_date or '' }}" required>
+            </div>
+            <div>
+                <label>Hadi</label>
+                <input type="date" name="end_date" value="{{ end_date or '' }}" required>
+            </div>
+            <button type="submit">Onesha</button>
+        </form>
+    </div>
+
+    <div class="summary-grid">
+        <div class="summary-card sales-total">
+            <div class="label">Jumla ya Mauzo</div>
+            <div class="value">{{ grand_total | format_money }} TZS</div>
+        </div>
+        <div class="summary-card profit-card">
+            <div class="label">Faida (iliyokadiriwa)</div>
+            <div class="value">{{ grand_profit | format_money }} TZS</div>
+        </div>
+        <div class="summary-card count-card">
+            <div class="label">Idadi ya Mauzo</div>
+            <div class="value">{{ sales_count }}</div>
+        </div>
+    </div>
+
+    {% if sales %}
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Tarehe</th>
+                    <th>Mfanyakazi</th>
+                    <th>Bidhaa</th>
+                    <th>Idadi</th>
+                    <th>Jumla</th>
+                    <th>Faida</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sale in sales %}
+                <tr>
+                    <td class="date-col">{{ sale.timestamp | tz }}</td>
+                    <td class="emp-col">{{ sale.employee or '-' }}</td>
+                    <td class="product-name">{{ sale.name or 'Bidhaa haipo' }}</td>
+                    <td style="text-align:center;">{{ sale.quantity }}</td>
+                    <td class="amount" style="text-align:right;">{{ sale.total | format_money }}</td>
+                    <td class="profit-cell" style="text-align:right;">{{ sale.profit | format_money }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty">
+        <p>Hakuna mauzo katika kipindi hiki.</p>
+    </div>
+    {% endif %}
+
+    <p class="footer-note">
+        Faida = Jumla ya mauzo − (bei ya kununua × idadi). Bei ya kununua inatokana na stock ya sasa.
+    </p>
+</div>
+
+{% endblock %}
