@@ -534,16 +534,6 @@
 <script>document.body.classList.add('has-bnav');</script>
 {% endif %}
 
-<footer class="footer">
-  © 2026 {{ app_name|default('NEKEZA') }} · Mfumo wa mauzo na stock
-  <div style="margin-top:8px">
-    <a href="{{ url_for('privacy') }}">Privacy</a>
-    <a href="{{ url_for('terms') }}">Terms</a>
-    <a href="{{ url_for('support') if not session.get('user_id') else url_for('chat') }}">Customer Care</a>
-    <a href="{{ url_for('download_app') }}">Download App</a>
-  </div>
-</footer>
-
 {% block scripts %}{% endblock %}
 <script>
 (function(){
