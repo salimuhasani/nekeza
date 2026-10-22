@@ -3,92 +3,108 @@
 {% block content %}
 <style>
     .products-page {
-        max-width: 1250px;
+        max-width: 1100px;
         margin: 0 auto;
-        padding: 0 4px 20px;
+        padding: 0 2px 18px;
     }
     .products-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        gap: 12px;
+        gap: 10px;
         flex-wrap: wrap;
-        margin-bottom: 16px;
+        margin-bottom: 12px;
     }
     .products-header h1 {
         margin: 0;
-        font-size: 1.55rem;
+        font-size: 1.15rem;
         font-weight: 700;
-        color: #0f172a;
+        color: #1e3a8a;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
-    .products-header .muted.small {
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: .5px;
-        font-size: 0.72rem;
+    .products-header h1 svg {
+        width: 20px;
+        height: 20px;
+        flex-shrink: 0;
     }
     .products-actions {
         display: flex;
-        gap: 10px;
+        gap: 8px;
         flex-wrap: wrap;
         align-items: center;
     }
     .page-search {
-        padding: 9px 12px;
-        border: 1px solid #cbd5e1;
-        border-radius: 10px;
-        width: min(240px, 100%);
-        font-size: 0.9rem;
-        background: #fff;
+        padding: 7px 10px 7px 32px;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 8px;
+        width: min(200px, 100%);
+        font-size: 0.8rem;
+        background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M21 21l-4.3-4.3'/%3E%3C/svg%3E") no-repeat 10px center;
+        outline: none;
     }
     .page-search:focus {
-        outline: 2px solid #3b82f6;
         border-color: #3b82f6;
+        box-shadow: 0 0 0 2px rgba(59,130,246,.12);
     }
-    /* Inventory value cards — boss only */
+    .btn-add {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 7px 12px;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        background: #1e3a8a;
+        color: #fff;
+        text-decoration: none;
+        border: none;
+    }
+    .btn-add:hover { background: #1e40af; }
+    .btn-add svg { width: 14px; height: 14px; }
+
     .inv-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 12px;
-        margin-bottom: 16px;
+        gap: 8px;
+        margin-bottom: 12px;
     }
-    @media (max-width: 720px) {
+    @media (max-width: 640px) {
         .inv-grid { grid-template-columns: 1fr; }
     }
     .inv-stat {
         background: #fff;
-        border-radius: 14px;
-        padding: 14px 16px;
-        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+        border-radius: 10px;
+        padding: 10px 12px;
+        box-shadow: 0 2px 8px rgba(15,23,42,.05);
         border: 1px solid #e2e8f0;
     }
     .inv-stat .label {
-        font-size: 0.72rem;
+        font-size: 0.65rem;
         font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: .4px;
+        letter-spacing: .3px;
         color: #64748b;
-        margin-bottom: 6px;
+        margin-bottom: 4px;
     }
     .inv-stat .value {
-        font-size: 1.25rem;
+        font-size: 1rem;
         font-weight: 800;
         letter-spacing: -0.02em;
         line-height: 1.2;
     }
-    .inv-stat .hint {
-        font-size: 0.72rem;
-        color: #94a3b8;
-        margin-top: 4px;
-    }
-    .inv-cost .value { color: var(--primary, #1e3a8a); }
-    .inv-retail .value { color: var(--green, #16a34a); }
-    .inv-profit .value { color: var(--orange, #ea580c); }
+    .inv-cost { background: linear-gradient(145deg, #eff6ff, #fff); border-color: #bfdbfe; }
+    .inv-cost .value { color: #1e3a8a; }
+    .inv-retail { background: linear-gradient(145deg, #ecfdf5, #fff); border-color: #a7f3d0; }
+    .inv-retail .value { color: #166534; }
+    .inv-profit { background: linear-gradient(145deg, #fff7ed, #fff); border-color: #fed7aa; }
+    .inv-profit .value { color: #c2410c; }
 
     .table-card {
         background: #fff;
-        border-radius: 16px;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.07);
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,.05);
         overflow: hidden;
         border: 1px solid #e2e8f0;
     }
@@ -96,35 +112,28 @@
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
     }
-    .table-wrap::-webkit-scrollbar { height: 6px; }
-    .table-wrap::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
-        border-radius: 10px;
-    }
     table.products-table {
         width: 100%;
         border-collapse: collapse;
-        font-size: 0.84rem;
-        table-layout: auto;
+        font-size: 0.78rem;
     }
     {% if session.get('role') == 'boss' %}
-    table.products-table { min-width: 920px; }
-    {% else %}
-    table.products-table { min-width: 100%; }
+    table.products-table { min-width: 720px; }
     {% endif %}
     .products-table th,
     .products-table td {
-        padding: 8px 10px;
-        border-bottom: 1px solid #e2e8f0;
+        padding: 6px 8px;
+        border-bottom: 1px solid #eef2f7;
         white-space: nowrap;
+        vertical-align: middle;
     }
     .products-table th {
         background: #1e3a8a;
         color: #fff;
         font-weight: 600;
-        font-size: 0.78rem;
+        font-size: 0.68rem;
         text-transform: uppercase;
-        letter-spacing: .3px;
+        letter-spacing: .25px;
         position: sticky;
         top: 0;
         z-index: 1;
@@ -132,7 +141,6 @@
     .products-table tbody tr:hover { background: #f8fafc; }
     .products-table tbody tr:last-child td { border-bottom: none; }
 
-    /* Column alignment */
     .products-table th:nth-child(1),
     .products-table td:nth-child(1) { text-align: left; }
     .products-table th:nth-child(n+2),
@@ -145,7 +153,7 @@
     .col-name {
         font-weight: 700;
         color: #1e3a8a;
-        max-width: 160px;
+        max-width: 140px;
         overflow: hidden;
         text-overflow: ellipsis;
     }
@@ -158,56 +166,56 @@
     .cost-cell { color: #475569; font-weight: 600; }
     .empty-row td {
         text-align: center !important;
-        padding: 40px 16px;
+        padding: 28px 12px;
         color: #94a3b8;
-        font-weight: 500;
+        font-size: 0.82rem;
     }
 
     @media (max-width: 600px) {
-        .products-header h1 { font-size: 1.3rem; }
+        .products-header h1 { font-size: 1.05rem; }
         .products-table th,
-        .products-table td { padding: 7px 8px; font-size: 0.78rem; }
-        .inv-stat .value { font-size: 1.1rem; }
+        .products-table td { padding: 5px 6px; font-size: 0.72rem; }
+        .inv-stat .value { font-size: 0.92rem; }
         {% if session.get('role') == 'boss' %}
-        table.products-table { min-width: 780px; }
+        table.products-table { min-width: 640px; }
         {% endif %}
     }
 </style>
 
 <div class="products-page">
   <div class="products-header">
-    <div>
-      <div class="muted small">Inventory</div>
-      <h1>📦 Bidhaa &amp; Stock</h1>
-    </div>
+    <h1>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+        <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+        <line x1="12" y1="22.08" x2="12" y2="12"/>
+      </svg>
+      Bidhaa &amp; Stock
+    </h1>
     <div class="products-actions">
-      <input type="search" class="page-search" id="productSearch" placeholder="🔍 Tafuta bidhaa..." autocomplete="off">
+      <input type="search" class="page-search" id="productSearch" placeholder="Tafuta..." autocomplete="off">
       {% if session.get('role') == 'boss' %}
-      <a href="{{ url_for('add_product') }}" class="btn">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        Ongeza Bidhaa
+      <a href="{{ url_for('add_product') }}" class="btn-add">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Ongeza
       </a>
       {% endif %}
     </div>
   </div>
 
-  {# ——— Thamani ya duka / mauzo / faida — BOSS PEKEE ——— #}
   {% if session.get('role') == 'boss' and inventory %}
   <div class="inv-grid">
     <div class="inv-stat inv-cost">
-      <div class="label">Thamani ya duka (gharama)</div>
-      <div class="value">TSh {{ "{:,.0f}".format(inventory.cost_value) }}</div>
-      <div class="hint">buy_price × stock iliyopo</div>
+      <div class="label">Gharama</div>
+      <div class="value">{{ "{:,.0f}".format(inventory.cost_value) }}</div>
     </div>
     <div class="inv-stat inv-retail">
-      <div class="label">Thamani ya mauzo (bei)</div>
-      <div class="value">TSh {{ "{:,.0f}".format(inventory.retail_value) }}</div>
-      <div class="hint">price × stock iliyopo</div>
+      <div class="label">Bei ya mauzo</div>
+      <div class="value">{{ "{:,.0f}".format(inventory.retail_value) }}</div>
     </div>
     <div class="inv-stat inv-profit">
-      <div class="label">Faida inayotarajiwa</div>
-      <div class="value">TSh {{ "{:,.0f}".format(inventory.potential_profit) }}</div>
-      <div class="hint">kabla ya mauzo</div>
+      <div class="label">Faida</div>
+      <div class="value">{{ "{:,.0f}".format(inventory.potential_profit) }}</div>
     </div>
   </div>
   {% endif %}
@@ -247,14 +255,14 @@
               {{ "{:,.0f}".format((p.profit_per_unit or 0) * (p.sold_quantity or 0)) }}
             </td>
             <td class="cost-cell">
-              TSh {{ "{:,.0f}".format((p.buy_price or 0) * (p.quantity or 0)) }}
+              {{ "{:,.0f}".format((p.buy_price or 0) * (p.quantity or 0)) }}
             </td>
             {% endif %}
           </tr>
           {% else %}
           <tr class="empty-row">
             <td colspan="{% if session.get('role') == 'boss' %}9{% else %}4{% endif %}">
-              Hakuna bidhaa bado.
+              Hakuna bidhaa.
             </td>
           </tr>
           {% endfor %}
