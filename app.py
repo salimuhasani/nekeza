@@ -1127,7 +1127,7 @@ def sales():
 
     # ==================== GET - Onyesha Mauzo ====================
     if session['role'] == 'employee':
-        # Mfanyakazi anaona mauzo yake ya leo tu (isiyo void / pending)
+        # Mfanyakazi anaona mauzo yake ya leo tu
         sales_list = conn.execute("""
             SELECT s.*, p.name, p.buy_price,
                    (COALESCE(s.total, 0) - (COALESCE(p.buy_price, 0) * COALESCE(s.quantity, 0))) AS profit
@@ -1144,18 +1144,20 @@ def sales():
         )).fetchall()
 
     else:
-        # Boss anaona mauzo yote (full history, isiyo void)
+        # Boss anaona mauzo ya LEO TU (ya biashara yake)
         sales_list = conn.execute("""
             SELECT s.*, p.name, p.buy_price,
                    (COALESCE(s.total, 0) - (COALESCE(p.buy_price, 0) * COALESCE(s.quantity, 0))) AS profit
             FROM sales s
             JOIN products p ON s.product_id = p.id
             WHERE s.boss_id = ?
+              AND DATE(s.timestamp) = ?
               AND (s.is_void = 0 OR s.is_void IS NULL)
               AND (s.status IS NULL OR s.status = '' OR s.status = 'approved')
             ORDER BY s.timestamp DESC
         """, (
             boss_id,
+            today
         )).fetchall()
 
     # Bidhaa zinazoonekana kwenye form
