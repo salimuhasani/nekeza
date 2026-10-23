@@ -1,23 +1,19 @@
 {% extends "base.html" %}
 {% block content %}
-
 <style>
     body { background: #f4f7fc; }
-
     .header {
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin-bottom: 12px;
     }
-
     .header h1 {
         color: #1e3a8a;
         font-size: 1.15rem;
         font-weight: 700;
         margin: 0;
     }
-
     .sale-card {
         background: white;
         padding: 14px;
@@ -25,7 +21,6 @@
         box-shadow: 0 3px 12px rgba(0,0,0,0.06);
         margin-bottom: 14px;
     }
-
     .form-title {
         font-size: 0.95rem;
         color: #1e3a8a;
@@ -33,7 +28,6 @@
         text-align: center;
         font-weight: 700;
     }
-
     label {
         display: block;
         margin-bottom: 4px;
@@ -41,7 +35,6 @@
         color: #374151;
         font-size: 0.78rem;
     }
-
     select, input[type="number"] {
         width: 100%;
         padding: 9px 11px;
@@ -50,7 +43,6 @@
         font-size: 0.88rem;
         margin-bottom: 10px;
     }
-
     .btn {
         width: 100%;
         padding: 10px;
@@ -62,24 +54,20 @@
         font-weight: 600;
         cursor: pointer;
     }
-
     .btn:hover {
         background: linear-gradient(135deg, #1e40af, #2563eb);
     }
-
     .table-container {
         background: white;
         border-radius: 10px;
         box-shadow: 0 3px 12px rgba(0,0,0,0.06);
         overflow-x: auto;
     }
-
     table {
         width: 100%;
         border-collapse: collapse;
         font-size: 0.78rem;
     }
-
     th {
         background: #1e3a8a;
         color: white;
@@ -89,28 +77,23 @@
         white-space: nowrap;
         font-size: 0.7rem;
     }
-
     td {
         padding: 6px;
         border-bottom: 1px solid #eef2f7;
         font-size: 0.78rem;
         vertical-align: middle;
     }
-
     .product-name { font-weight: 600; color: #1f2937; }
     .amount { font-weight: 700; color: #166534; }
     .date-col { color: #64748b; font-size: 0.72rem; white-space: nowrap; }
-
     th:nth-child(3), td:nth-child(3) { text-align: center; }
     th:nth-child(4), td:nth-child(4) { text-align: right; }
-
     .empty {
         text-align: center;
         padding: 28px 12px;
         color: #64748b;
         font-size: 0.82rem;
     }
-
     .action-buttons {
         display: flex;
         justify-content: center;
@@ -118,7 +101,6 @@
         margin: 12px 0 14px;
         flex-wrap: wrap;
     }
-
     .action-btn {
         padding: 8px 14px;
         border: none;
@@ -130,10 +112,8 @@
         align-items: center;
         gap: 5px;
     }
-
     .record-btn { background: #ef4444; color: white; }
     .approval-btn { background: #f59e0b; color: white; }
-
     .section-title {
         text-align: center;
         color: #1e3a8a;
@@ -141,7 +121,6 @@
         font-size: 0.88rem;
         font-weight: 700;
     }
-
     .section-title span {
         background: #e0e7ff;
         padding: 2px 8px;
@@ -150,12 +129,10 @@
         font-weight: 600;
         margin-left: 4px;
     }
-
     .report-btn-wrap {
         text-align: center;
         margin: 16px 0 20px;
     }
-
     .report-btn {
         display: inline-flex;
         align-items: center;
@@ -169,11 +146,48 @@
         border-radius: 999px;
         text-decoration: none;
     }
-
     .report-btn:hover {
         background: #1e3a8a;
         color: white;
         border-color: #1e3a8a;
+    }
+
+    /* ===== SUMMARY BAR (kama cash account) ===== */
+    .summary-bar {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 3px 12px rgba(0,0,0,0.06);
+        margin-top: 10px;
+        padding: 12px 14px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .summary-item {
+        display: flex;
+        flex-direction: column;
+        min-width: 120px;
+    }
+    .summary-item .label {
+        font-size: 0.72rem;
+        color: #64748b;
+        font-weight: 600;
+        margin-bottom: 2px;
+    }
+    .summary-item .value {
+        font-size: 1rem;
+        font-weight: 700;
+    }
+    .summary-item .value.sales {
+        color: #1e3a8a;
+    }
+    .summary-item .value.profit {
+        color: #166534;
+    }
+    .summary-item .value.zero {
+        color: #94a3b8;
     }
 </style>
 
@@ -239,6 +253,25 @@
 
 {% if not sales %}
 <div class="empty"><p>Hakuna mauzo.</p></div>
+{% else %}
+{# ===== JUMLA + FAIDA (chini ya table) ===== #}
+{% set total_mauzo = sales | sum(attribute='total') %}
+<div class="summary-bar">
+    <div class="summary-item">
+        <span class="label">Jumla ya Mauzo</span>
+        <span class="value sales">{{ total_mauzo | format_money }}</span>
+    </div>
+    <div class="summary-item">
+        <span class="label">Faida (Leo)</span>
+        <span class="value {% if total_profit is defined and total_profit %}profit{% else %}zero{% endif %}">
+            {% if total_profit is defined %}
+                {{ total_profit | format_money }}
+            {% else %}
+                0 TZS
+            {% endif %}
+        </span>
+    </div>
+</div>
 {% endif %}
 
 {% if session['role'] in ['boss', 'admin'] %}
@@ -246,5 +279,4 @@
     <a href="{{ url_for('sales_report', period='1m') }}" class="report-btn">📊 Ripoti</a>
 </div>
 {% endif %}
-
 {% endblock %}
