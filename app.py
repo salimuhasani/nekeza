@@ -1127,13 +1127,16 @@ def sales():
 
     # ==================== GET - Onyesha Mauzo ====================
     if session['role'] == 'employee':
-        # Mfanyakazi anaona mauzo yake ya leo tu (FIX: DATE filter)
+        # Mfanyakazi anaona mauzo yake ya leo tu (isiyo void / pending)
         sales_list = conn.execute("""
-            SELECT s.*, p.name
+            SELECT s.*, p.name, p.buy_price,
+                   (COALESCE(s.total, 0) - (COALESCE(p.buy_price, 0) * COALESCE(s.quantity, 0))) AS profit
             FROM sales s
             JOIN products p ON s.product_id = p.id
             WHERE s.employee_id = ?
               AND DATE(s.timestamp) = ?
+              AND (s.is_void = 0 OR s.is_void IS NULL)
+              AND (s.status IS NULL OR s.status = '' OR s.status = 'approved')
             ORDER BY s.timestamp DESC
         """, (
             session['user_id'],
@@ -1141,12 +1144,15 @@ def sales():
         )).fetchall()
 
     else:
-        # Boss anaona mauzo yote (full history)
+        # Boss anaona mauzo yote (full history, isiyo void)
         sales_list = conn.execute("""
-            SELECT s.*, p.name
+            SELECT s.*, p.name, p.buy_price,
+                   (COALESCE(s.total, 0) - (COALESCE(p.buy_price, 0) * COALESCE(s.quantity, 0))) AS profit
             FROM sales s
             JOIN products p ON s.product_id = p.id
             WHERE s.boss_id = ?
+              AND (s.is_void = 0 OR s.is_void IS NULL)
+              AND (s.status IS NULL OR s.status = '' OR s.status = 'approved')
             ORDER BY s.timestamp DESC
         """, (
             boss_id,
@@ -1159,15 +1165,29 @@ def sales():
         WHERE boss_id=? AND quantity > 0
     """, (boss_id,)).fetchall()
 
+    # ===== Hesabu Jumla + Faida =====
+    total_mauzo = 0.0
+    total_profit = 0.0
+    for s in sales_list:
+        try:
+            total_mauzo += float(s["total"] or 0)
+        except Exception:
+            pass
+        try:
+            total_profit += float(s["profit"] or 0)
+        except Exception:
+            pass
+
     conn.close()
 
     return render_template(
         'sales.html',
         products=products,
         sales=sales_list,
-        today=today
+        today=today,
+        total_mauzo=round(total_mauzo, 0),
+        total_profit=round(total_profit, 0),
     )
-
 
 # ====================== SALES REPORT (Jumla + Faida) ======================
 @app.route('/sales_report')
