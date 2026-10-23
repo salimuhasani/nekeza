@@ -163,12 +163,12 @@
         justify-content: space-between;
         align-items: center;
         flex-wrap: wrap;
-        gap: 10px;
+        gap: 12px;
     }
     .summary-item {
         display: flex;
         flex-direction: column;
-        min-width: 120px;
+        min-width: 130px;
     }
     .summary-item .label {
         font-size: 0.72rem;
@@ -177,7 +177,7 @@
         margin-bottom: 2px;
     }
     .summary-item .value {
-        font-size: 1rem;
+        font-size: 1.05rem;
         font-weight: 700;
     }
     .summary-item .value.sales {
@@ -254,21 +254,16 @@
 {% if not sales %}
 <div class="empty"><p>Hakuna mauzo.</p></div>
 {% else %}
-{# ===== JUMLA + FAIDA (chini ya table) ===== #}
-{% set total_mauzo = sales | sum(attribute='total') %}
+{# ===== JUMLA + FAIDA chini ya table ===== #}
 <div class="summary-bar">
     <div class="summary-item">
         <span class="label">Jumla ya Mauzo</span>
-        <span class="value sales">{{ total_mauzo | format_money }}</span>
+        <span class="value sales">{{ total_mauzo | format_money }} TZS</span>
     </div>
     <div class="summary-item">
-        <span class="label">Faida (Leo)</span>
-        <span class="value {% if total_profit is defined and total_profit %}profit{% else %}zero{% endif %}">
-            {% if total_profit is defined %}
-                {{ total_profit | format_money }}
-            {% else %}
-                0 TZS
-            {% endif %}
+        <span class="label">Faida {% if session['role'] == 'employee' %}(Leo){% else %}(Yote){% endif %}</span>
+        <span class="value {% if total_profit %}profit{% else %}zero{% endif %}">
+            {{ total_profit | format_money }} TZS
         </span>
     </div>
 </div>
