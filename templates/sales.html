@@ -222,11 +222,14 @@
 </div>
 {% endif %}
 
-{% if session['role'] == 'employee' %}
-<h2 class="section-title">Mauzo Yangu Leo <span>{{ today }}</span></h2>
-{% else %}
-<h2 class="section-title">Mauzo Yote</h2>
-{% endif %}
+<h2 class="section-title">
+    {% if session['role'] == 'employee' %}
+        Mauzo Yangu Leo
+    {% else %}
+        Mauzo ya Leo
+    {% endif %}
+    <span>{{ today }}</span>
+</h2>
 
 <div class="table-container">
     <table>
@@ -261,7 +264,7 @@
         <span class="value sales">{{ total_mauzo | format_money }} TZS</span>
     </div>
     <div class="summary-item">
-        <span class="label">Faida {% if session['role'] == 'employee' %}(Leo){% else %}(Yote){% endif %}</span>
+        <span class="label">Faida (Leo)</span>
         <span class="value {% if total_profit %}profit{% else %}zero{% endif %}">
             {{ total_profit | format_money }} TZS
         </span>
